@@ -8,9 +8,15 @@ importers:
 
   .:
     dependencies:
+      '@astrojs/mdx':
+        specifier: ^5.0.4
+        version: 5.0.4(astro@6.3.1(@types/node@24.12.3)(rollup@4.60.3))
       '@astrojs/starlight':
         specifier: ^0.39.2
         version: 0.39.2(astro@6.3.1(@types/node@24.12.3)(rollup@4.60.3))
+      '@fontsource/plus-jakarta-sans':
+        specifier: ^5.2.8
+        version: 5.2.8
       astro:
         specifier: ^6.2.2
         version: 6.3.1(@types/node@24.12.3)(rollup@4.60.3)
@@ -254,6 +260,9 @@ packages:
 
   '@expressive-code/plugin-text-markers@0.42.0':
     resolution: {integrity: sha512-l59lUx8fq1v5g6SpmbDjiU0+7IdfbiWnAyRmtTVSpfhyq+nZMN4UcmYyu2b9Mynhzt7Gr+O+cXyEPDNb2AVWVQ==}
+
+  '@fontsource/plus-jakarta-sans@5.2.8':
+    resolution: {integrity: sha512-P5qE49fqdeD+7DXH1KBxmMPlB17LTz1zvBhFH0tFzfnYTKVJVyb0pR6plh0ZGXxcB+Oayb54FZZw3V42/DawTw==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -2015,6 +2024,8 @@ snapshots:
   '@expressive-code/plugin-text-markers@0.42.0':
     dependencies:
       '@expressive-code/core': 0.42.0
+
+  '@fontsource/plus-jakarta-sans@5.2.8': {}
 
   '@img/colour@1.1.0': {}
 
