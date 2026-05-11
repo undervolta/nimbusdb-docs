@@ -31,7 +31,7 @@ export default defineConfig({
 					label: 'Concepts',
 					items: [
 						{ label: 'Overview', slug: 'concepts/overview' },
-						{ label: 'Model vs Catalog', slug: 'concepts/model-vs-catalog' },
+						{ label: 'Architecture', slug: 'concepts/architecture' },
 						{ label: 'Data Access', slug: 'concepts/data-access' },
 					],
 				},
@@ -44,7 +44,6 @@ export default defineConfig({
 							{ label: 'Query', slug: 'core/model/query'},
 							{ label: 'Update', slug: 'core/model/update'},
 							{ label: 'Remove', slug: 'core/model/remove'},
-							{ label: 'Sort', slug: 'core/model/sort'},
 							{ label: 'Expose/Alias', slug: 'core/model/expose-alias'},
 							{ label: 'Cache/Temp', slug: 'core/model/cache-temp'},
 						] },
@@ -91,8 +90,8 @@ export default defineConfig({
 				{
 					label: 'Input/Output',
 					items: [
-						{ label: 'export', slug: 'io/export' },
-						{ label: 'import', slug: 'io/import' },
+						{ label: 'export', slug: 'io/exports' },
+						{ label: 'import', slug: 'io/imports' },
 					],
 				},
 				{
