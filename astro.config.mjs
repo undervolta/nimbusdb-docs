@@ -30,7 +30,6 @@ export default defineConfig({
 				{
 					label: 'Concepts',
 					items: [
-						{ label: 'Overview', slug: 'concepts/overview' },
 						{ label: 'Architecture', slug: 'concepts/architecture' },
 						{ label: 'Data Access', slug: 'concepts/data-access' },
 					],
@@ -90,8 +89,8 @@ export default defineConfig({
 				{
 					label: 'Input/Output',
 					items: [
-						{ label: 'export', slug: 'io/exports' },
-						{ label: 'import', slug: 'io/imports' },
+						{ label: 'Exports', slug: 'io/exports' },
+						{ label: 'Imports', slug: 'io/imports' },
 					],
 				},
 				{
