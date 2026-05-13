@@ -1,0 +1,184 @@
+---
+title: Data Access
+description: An introduction to how NimbusDB handles data access in queries, including the concepts of direct, linked, and isolated access.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+In this section, we will explore how **NimbusDB** handles data access in queries. Understanding the different types of data access is crucial for ensuring data integrity.
+
+**NimbusDB** categorizes data access into three types: direct access, linked access, and isolated access. Each type of access has its own rules and implications for how data is read and modified in queries.
+
+:::note
+We'll use the `.get_by_primary()` method as an example to illustrate the different types of data access. This method is commonly used to retrieve a specific record from a table based on its unique identifier. 
+
+We'll cover that method in more detail in the [query](/core/model/query) section, but for now, it's a useful example to understand the concepts of data access.
+:::
+
+We'll use this raw data as an example to illustrate the different types of data access:
+
+```ts
+var items_data = [
+    { id: 1, name: "Apple", price: 0.5 },
+    { id: 2, name: "Banana", price: 0.3 },
+    { id: 3, name: "Cherry", price: 0.8 }
+];
+
+// from this point, let's assume that the 'items' model is created and 
+// populated with the above data, and we will use it to demonstrate the 
+// different types of data access in queries.
+```
+
+
+## Direct Access
+
+Direct access is the most straightforward, yet the most dangerous type of data access. When a query result has direct access to a table, it can read and modify the data in that table without any restrictions. This means any modification to the result will directly affect the underlying data in the table.
+
+```
+.get_by_primary() with DIRECT access
+┌───────┐
+│ Model │
+└─┬─────┘           
+  │ ┌────────────┐  get the reference   ┌────────────┐
+  └─┤ { Data 1 } │ ───────────────────> │ { Data 1 } │
+    └────────────┘                      └────────────┘ 
+          ↑          update any field         │
+          │          in the result            │
+          └───────────────────────────────────┘
+```
+
+### Characteristics
+
+- **Data Instance**: The query result is an instance of `NimbusDBData`, which allows you to use built-in methods (such as `.inc()` and `.resolve()`) to manipulate the data.
+- **Unrestricted**: The query result can read and modify the data without any limitations.
+- **Immediate Effect**: Any changes made to the query result will immediately affect the underlying data in the model.
+- **Risk of Data Corruption**: If not used carefully, direct access can lead to unintended consequences and data corruption.
+
+### Example
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "DIRECT" "banana.price = 0.4"
+    var banana = items.get_by_primary(2, { 
+        access: NIMBUSDB_DATA_ACCESS.DIRECT
+    });
+
+    var banana_price = banana.price;    // 0.3
+    banana.price = 0.4;                 // This will directly update the price of the banana in the 'items' model
+
+    var price_after_update = banana.price;                // 0.4
+    var price_in_model = items.get_by_primary(2).price;   // 0.4, the price is updated in the 'items' model
+    ```
+    </TabItem>
+</Tabs>
+
+
+## Linked Access
+
+Linked access allows a query result to read data from a table, but it cannot modify the data directly unless you explicitly enable it. This type of access is safer than direct access, as it prevents unintended modifications to the data.
+
+```
+.get_by_primary() with LINKED access
+┌───────┐
+│ Model │
+└─┬─────┘           
+  │ ┌────────────┐    only get a copy   ┌────────────┐
+  └─┤ { Data 1 } │ -------------------> │ { Data 1 } │
+    └────────────┘ <──────────────────  └────────────┘ 
+          ↑       but has the reference       │
+          │       to the original data        │
+          │                                   │
+          └-----------------------------------┘
+          only if `write_through = true` is set
+```
+
+:::tip[FAQ]
+You may be wondering, if the query result is a copy of the data from the model, how can it update the original data in the model? 
+
+The answer is that the query result maintains a reference to the original data, and when you enable `write_through`, it allows you to update the original data through that reference. This way, you can have the safety of a copy while still having the flexibility to update the original data when needed.
+:::
+
+### Characteristics
+
+- **Data Instance**: The query result is an instance of `NimbusDBData`, which allows you to use built-in methods to manipulate the data.
+- **Detached Copy**: The query result is a copy of the data from the model, and modifications to it do not affect the original data unless `write_through` is enabled.
+- **Reference to Original Data**: The query result maintains a reference to the original data, allowing you to update the original data if needed by enabling `write_through`.
+- **Safer than Direct Access**: Linked access reduces the risk of unintended data modifications while still providing flexibility to update the original data when necessary.
+
+### Example
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+  ```ts "LINKED" "banana.price = 0.4" "write_through: true"
+  var banana = items.get_by_primary(2, { 
+      access: NIMBUSDB_DATA_ACCESS.LINKED
+  });
+  // or you can use `items.get_by_primary_linked(2)` or `items.find(2)` 
+  // as a shorthand for the above code
+
+  var banana_price = banana.price;    // 0.3
+  banana.price = 0.4;                 // This will NOT update the price of the banana in the 'items' model
+
+  var price_after_update = banana.price;                // 0.4, the price is updated in the query result
+  var price_in_model = items.get_by_primary(2).price;   // 0.3, the price in the 'items' model remains unchanged
+
+  // NimbusDBData has `.inc()` method to update the value of a numeric field
+  banana.inc("price", 0.1, { write_through: true });    // This will update the price of the banana in the 'items' model because `write_through` is enabled
+  var price_after_write_through = banana.price;         // 0.5, the price is updated in the query result
+  var price_in_model_after_write_through = items.get_by_primary(2).price;   // 0.5, the price in the 'items' model is updated to 0.5
+  ```
+  </TabItem>
+</Tabs>
+
+
+## Isolated Access
+
+Isolated access is the safest type of data access. When a query result has isolated access to a model, it means that any modifications to the query result will not affect the original data in the model, and the query result will not have a reference to the original data.
+
+```
+.get_by_primary() with ISOLATED access
+┌───────┐
+│ Model │
+└─┬─────┘           
+  │ ┌────────────┐    only get a copy   ┌────────────┐
+  └─┤ { Data 1 } │ -------------------> │ { Data 1 } │
+    └────────────┘                      └────────────┘ 
+```
+
+### Characteristics
+
+- **Anonymous Object**: The query result is a plain object (GML = struct) that does not have any reference to the original data in the model. It's not an instance of `NimbusDBData`, so it does not have access to any built-in methods for data manipulation.
+- **Completely Detached**: Modifications to the query result do not affect the original data in the model, and there is no way to update the original data through the query result.
+- **Safest Option**: Isolated access eliminates the risk of unintended data modifications, making it the perfect choice when you want to ensure that the original data remains unchanged.
+
+### Example
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "ISOLATED" "banana.price = 0.4" "get_by_primary(2)"
+    var banana = items.get_by_primary(2, { 
+        access: NIMBUSDB_DATA_ACCESS.ISOLATED
+    });
+    // or you can use `items.get_by_primary(2)`, because by default, the access type is ISOLATED
+
+    var banana_price = banana.price;    // 0.3
+    banana.price = 0.4;                 // This will NOT update the price of the banana in the 'items' model
+
+    var price_after_update = banana.price;                // 0.4
+    var price_in_model = items.get_by_primary(2).price;   // 0.3, the price in the 'items' model remains unchanged
+    ```
+    </TabItem>
+</Tabs>
+
+
+## Summary
+
+| Access Type | `NimbusDBData` Instance | Modifications Affect Original Data? | Reference to Original Data? | Use Case |
+|-------------|-------------------------|-------------------------------------|-----------------------------|----------|
+| Direct      | Yes                     | Yes                                 | Yes                         | Use with caution when you need to read and modify data directly, but be aware of the risks of unintended modifications. |
+| Linked      | Yes                     | No (unless `write_through` is enabled) | Yes                      | Use when you want to read data safely and have the option to update the original data when necessary by enabling `write_through`. |
+| Isolated    | No                      | No                                  | No                          | Use when you want to ensure that the original data remains unchanged and do not need to update the original data through the query result. |
+
+With this understanding of the different types of data access in **NimbusDB**, you can make informed decisions about how to structure your queries and manage data integrity effectively. 
+
+Always consider the implications of each access type and choose the one that best fits your use case while minimizing the risk of unintended data modifications.

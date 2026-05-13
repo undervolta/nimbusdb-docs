@@ -33,6 +33,7 @@ export default defineConfig({
 						{ label: 'Architecture', slug: 'concepts/architecture' },
 						{ label: 'Data Access', slug: 'concepts/data-access' },
 						{ label: 'Master Functions', slug: 'concepts/master-functions' },
+						{ label: 'Reading the API', slug: 'concepts/reading-the-api' },
 					],
 				},
 				{
