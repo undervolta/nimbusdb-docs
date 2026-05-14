@@ -1,0 +1,344 @@
+---
+title: Schema
+description: Learn about schema in NimbusDB, including how to define and manage your data structures effectively.
+---
+
+{/*(NimbusDBColumnRules, DATA_TYPE, CONSTRAINT, validator, default)*/}
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+In NimbusDB, a schema defines the structure of your data, including the types of data you can store and the rules for how that data is organized. A well-designed schema helps ensure data integrity and makes it easier to query and manage your data.
+
+
+## Schemaless Models
+
+You can create a model without defining a schema, which allows you to store any type of data without restrictions. However, this approach may lead to data inconsistency and makes it harder to manage your data effectively.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // `schema` is an optional parameter when creating a model, placed after the `name` parameter
+    // If you don't provide a schema, the model will be created with an empty schema, 
+    // which means you can store any data in the model without any restrictions
+    var model_no_schema = new NimbusDBModel("global", "items");
+    ```
+    </TabItem>
+</Tabs>
+
+
+## Defining a Schema
+
+A schema is defined as an object where each key represents a column name and the value defines the rules for that column. The rules can be as simple as specifying a data type or as complex as defining constraints, validators, and default values.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // Here's an example of a simple schema definition for an 'items' model
+    var simple_schema = {
+        id: NIMBUSDB_DATA_TYPE.INTEGER,
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: NIMBUSDB_DATA_TYPE.NUMBER
+    };
+    var model_with_schema = new NimbusDBModel("global", "items", simple_schema);
+
+    // You can define schema with union data types using arrays
+    var union_schema = {
+        id: NIMBUSDB_DATA_TYPE.INTEGER,
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: [NIMBUSDB_DATA_TYPE.NUMBER, NIMBUSDB_DATA_TYPE.STRING] // price can be a number or a string
+    };
+    var model_with_union_schema = new NimbusDBModel("global", "items", union_schema);
+
+    // Alternatively, you can define the schema using the object format
+    var object_schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY  // `id` column is the primary key of the model
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: [NIMBUSDB_DATA_TYPE.NUMBER, NIMBUSDB_DATA_TYPE.STRING]
+        }
+    };
+    var model_with_object_schema = new NimbusDBModel("global", "items", object_schema);
+    ```
+    </TabItem>
+</Tabs>
+
+You can choose to use the simple one (directly using data types or arrays of data types) or the advanced one (using the object format to specify constraints, validators, and default values) based on your needs. 
+
+:::tip
+If you don't provide certain column in the schema, you can still store data in that column for any record, but it won't have any constraints or validation rules applied to it. This can be useful for columns that are meant to be flexible or for storing additional information that doesn't fit into the defined schema.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var flexible_schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING
+    };
+    var model_flexible = new NimbusDBModel("global", "items", flexible_schema);
+
+    model_flexible.insert([
+        { id: 1, name: "Item 1", price: 10.99 }, // `price` is not defined in the schema, but we can still store it
+        { id: 2, name: "Item 2", price: "15.99", description: "A great item!" } // `description` is also not defined in the schema, but we can store it as well
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+:::
+
+### Data Types
+
+NimbusDB supports a variety of data types that you can use in your schema definitions, including primitive types like `NUMBER`, `STRING`, and `BOOLEAN`, as well as complex types like `STRUCT`, `METHOD`, and various asset types. 
+
+You can also define union data types using arrays, allowing a column to accept multiple types of data.
+
+:::tip
+`NUMBER` and `INTEGER` are different data types in NimbusDB. `NUMBER` can store both integers and floating-point numbers, while `INTEGER` can only store whole numbers. Choosing the appropriate data type for your columns can help ensure data integrity and optimize performance.
+:::
+
+### Constraints
+
+Constraints are rules that you can apply to your columns to enforce data integrity. For example, you can use the `PRIMARY_KEY` constraint to designate a column as the primary key of the model, or the `UNIQUE` constraint to ensure that all values in a column are unique.
+
+Here's an example of how to use constraints in your schema definition:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var schema_with_constraints = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY  // `id` column is the primary key of the model
+        },
+        name: {
+            type: NIMBUSDB_DATA_TYPE.STRING,
+            const: NIMBUSDB_CONSTRAINT.UNIQUE       // name must be unique across the model
+        },
+        price: {
+            type: [NIMBUSDB_DATA_TYPE.NUMBER, NIMBUSDB_DATA_TYPE.STRING]
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL     // is_locked is an optional column
+        },
+        sprite: {
+            type: NIMBUSDB_DATA_TYPE.ASSET_SPRITE,
+            const: [NIMBUSDB_CONSTRAINT.OPTIONAL, NIMBUSDB_CONSTRAINT.UNIQUE] // sprite is an optional column and its value must be unique if provided
+        }
+    };
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+By default, all columns are defined with the `NOT_NULL` constraint, which means that they must have a value when a new record is created. But if you want to allow a column to be optional, you can use the `OPTIONAL` constraint, which allows the column to have a `undefined` value.
+
+You can only have one primary key column in a model, and it must be of type `INTEGER` or `NUMBER`. The primary key column will automatically have the `AUTO_INCREMENT` constraint, which means that its value will be automatically incremented for each new record added to the model.
+:::
+
+### Validators and Default Values
+
+Validators are methods that you can define in your schema to validate the data before it's set to a column. If the validator fails (returns `false`):
+- If a `default_value` is provided, the column will be set to the default value instead of the new value, or call the method to get the default value if it's a method. 
+- Otherwise, the operation will be aborted and the data will not be inserted/updated in the model.
+
+Here's an example of how to use validators and default values in your schema definition:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var object_schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY 
+        },
+        name: {
+            type: NIMBUSDB_DATA_TYPE.STRING,
+            validator: function(data, value) {
+                return is_string(value) && string_length(value) > 0;    // name must be a non-empty string
+            }
+        },
+        price: {
+            type: [NIMBUSDB_DATA_TYPE.NUMBER, NIMBUSDB_DATA_TYPE.STRING],
+            validator: function(data, value) {
+                return is_numeric(value) ? (value >= 0) : (is_string(value) && real(value) >= 0); // price must be non-negative
+            },
+            default_value: 0    // default price is 0 if the validator fails
+            // you can also use a method to get the default value, for example:
+            // default_value: function(data, value) {
+            //     return 0;    // default price is 0 if the validator fails
+            // }
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false  // default is_locked is false if `is_locked` is not provided
+        }
+    };
+    var model_with_object_schema = new NimbusDBModel("global", "items", object_schema);
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+`validator` has different behavior for the insert and update operations. We'll cover that in each method's documentation, but in general:
+- For insert operations, the validator will be called with the new data being inserted, and if it fails, the default value will be used or the operation will be aborted.
+- For update operations, you can choose whether to use the validator or not. If you choose to use it, it will be called with the original data and the new value being updated, and if it fails, you can choose to either use the default value or keep the original value.
+:::
+
+:::tip
+With combination of `OPTIONAL` constraint and `default_value`, you can create a column that is optional but will have a default value if not provided. 
+
+For example, in the `is_locked` column in the above schema, it's defined as an optional boolean column with a default value of `false`. This means that when you insert a new record without providing a value for `is_locked`, it will automatically be set to `false`. However, if you do provide a value for `is_locked`, it will be validated to ensure it's a boolean, and if the validation fails, it will also default to `false`.
+:::
+
+
+## References
+
+### NimbusDBModel
+
+```ts title="model.d.ts"
+class NimbusDBModel {
+	constructor(
+		_root: Instance | "global",
+		_name: string,
+		_schema?: NimbusDBSchema,
+		_data?: Struct | Struct[],
+		_option?: NimbusDBModelOptions
+	);
+
+	cache: {
+		[key: number | string]: NimbusDBData;
+	};
+	custom_id: int;
+	data: NimbusDBData[];
+	debug: boolean | 2 | 3;
+	id: int;
+	name: string;
+	ref: {							// exposed data
+		[key: string]: NimbusDBData;
+	};
+	primary_key?: string;
+	temp?: Struct;					// temporary user data
+
+    static __id: int;
+	__root: Instance | "global";
+	__data_id: int;
+	__in_transaction: boolean;
+	__locked: boolean;
+	__column_names?: string[];
+	__relations: NimbusDBRelation[];
+	__schema?: NimbusDBSchema;
+	__sys_temp?: Struct;			// temporary system data
+
+    // ...public and internal methods
+}
+```
+
+### NimbusDBSchema
+
+```ts title="schema.d.ts"
+type NimbusDBSchema = {
+    [column_name: string]: NimbusDBColumnRules;
+};
+```
+
+### NimbusDBColumnRules
+
+```ts title="column_rules.d.ts"
+type NimbusDBColumnRules = 
+    | NIMBUSDB_DATA_TYPE
+    | NIMBUSDB_DATA_TYPE[]
+    | {
+        type: NIMBUSDB_DATA_TYPE | NIMBUSDB_DATA_TYPE[];
+        const?: NIMBUSDB_CONSTRAINT | NIMBUSDB_CONSTRAINT[]; // `const` is used to specify constraints for the column
+        validator?: (           // a function that validates the value before it's set to the column
+            data: Struct,		// new data (after calling the method if it's a method)
+            value: any,			// new value
+            temp: Struct,
+            model: NimbusDBModel
+        ) => boolean;
+        default_value?: any | ((    // a default value or a function that returns a default value when the validator fails or when the value is not provided
+            data: Struct,		    // original data
+            value: any,			    // original value
+            temp: Struct,
+            model: NimbusDBModel
+        ) => any);
+    }
+;
+```
+
+### NimbusDBModelOptions
+
+```ts title="model_options.d.ts"
+type NimbusDBModelOptions = Partial<{
+	column_order: string[];			// order of columns, default = undefined, use column_names
+	custom_id: int;					// set custom ID, default = 0
+	debug: boolean | 2 | 3;			// enable debugging, default = false, true/1 = ~warning, 2 = ~success, 3 = ~info
+	init_cache: boolean;	        // initialize cache for initial data, default = false, true/1 = cache all, array = cache specific data by index
+	in_tx: boolean;					// [INTERNAL] whether the model is in a transaction, default = false
+	force_insert: boolean;			// force insertion of initial data, default = false
+	start_id: int;					// start ID for auto-increment, default = 1
+	temp: Struct;					// set temporary data, default = undefined
+}>;
+```
+
+### NIMBUSDB_DATA_TYPE
+
+```ts title="data_types.d.ts"
+enum NIMBUSDB_DATA_TYPE {
+    ANY,
+    NUMBER,
+    INTEGER,
+    STRING,
+    BOOLEAN,
+    STRUCT,
+    METHOD,
+    INSTANCE,
+    ASSET_OBJECT,
+    ASSET_SPRITE,
+    ASSET_SOUND,
+    ASSET_ROOM,
+    ASSET_TILES,
+    ASSET_PATH,
+    ASSET_FONT,
+    ASSET_SHADER,
+    ARRAY_ANY,
+    ARRAY_NUMBER,
+    ARRAY_INTEGER,
+    ARRAY_STRING,
+    ARRAY_BOOLEAN,
+    ARRAY_STRUCT,
+    ARRAY_METHOD,
+    ARRAY_INSTANCE,
+    ARRAY_ASSET_OBJECT,
+    ARRAY_ASSET_SPRITE,
+    ARRAY_ASSET_SOUND,
+    ARRAY_ASSET_ROOM,
+    ARRAY_ASSET_TILES,
+    ARRAY_ASSET_PATH,
+    ARRAY_ASSET_FONT,
+    ARRAY_ASSET_SHADER
+}
+```
+
+### NIMBUSDB_CONSTRAINT
+
+```ts title="constraints.d.ts"
+enum NIMBUSDB_CONSTRAINT {
+    // NOT_NULL = set automatically when the column is defined with data type(s)
+    // CHECK = `validator` in the column rules
+    // DEFAULT = `default_value` in the column rules
+    // AUTO_INCREMENT = set automatically on a column with PRIMARY_KEY constraint
+    // FOREIGN_KEY = set automatically through `.define_relation()` method
+    NONE,
+    OPTIONAL,
+    UNIQUE,
+    PRIMARY_KEY
+}
+```
