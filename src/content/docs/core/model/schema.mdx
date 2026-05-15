@@ -3,8 +3,6 @@ title: Schema
 description: Learn about schema in NimbusDB, including how to define and manage your data structures effectively.
 ---
 
-{/*(NimbusDBColumnRules, DATA_TYPE, CONSTRAINT, validator, default)*/}
-
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 In NimbusDB, a schema defines the structure of your data, including the types of data you can store and the rules for how that data is organized. A well-designed schema helps ensure data integrity and makes it easier to query and manage your data.
@@ -160,7 +158,7 @@ Here's an example of how to use validators and default values in your schema def
         name: {
             type: NIMBUSDB_DATA_TYPE.STRING,
             validator: function(data, value) {
-                return is_string(value) && string_length(value) > 0;    // name must be a non-empty string
+                return string_length(value) > 0;    // name must be a non-empty string
             }
         },
         price: {
@@ -192,7 +190,7 @@ Here's an example of how to use validators and default values in your schema def
 :::
 
 :::tip
-With combination of `OPTIONAL` constraint and `default_value`, you can create a column that is optional but will have a default value if not provided. 
+With combination of `OPTIONAL` constraint and `default_value` option, you can create a column that is optional but will have a default value if not provided. 
 
 For example, in the `is_locked` column in the above schema, it's defined as an optional boolean column with a default value of `false`. This means that when you insert a new record without providing a value for `is_locked`, it will automatically be set to `false`. However, if you do provide a value for `is_locked`, it will be validated to ensure it's a boolean, and if the validation fails, it will also default to `false`.
 :::
@@ -256,16 +254,16 @@ type NimbusDBColumnRules =
     | NIMBUSDB_DATA_TYPE[]
     | {
         type: NIMBUSDB_DATA_TYPE | NIMBUSDB_DATA_TYPE[];
-        const?: NIMBUSDB_CONSTRAINT | NIMBUSDB_CONSTRAINT[]; // `const` is used to specify constraints for the column
-        validator?: (           // a function that validates the value before it's set to the column
-            data: Struct,		// new data (after calling the method if it's a method)
-            value: any,			// new value
+        const?: NIMBUSDB_CONSTRAINT | NIMBUSDB_CONSTRAINT[];    // `const` is used to specify constraints for the column
+        validator?: (               // a function that validates the value before it's set to the column
+            data: Struct,		    // new data (after calling the method if it's a method)
+            value: any,			    // new value
             temp: Struct,
             model: NimbusDBModel
         ) => boolean;
         default_value?: any | ((    // a default value or a function that returns a default value when the validator fails or when the value is not provided
-            data: Struct,		    // original data
-            value: any,			    // original value
+            data: Struct,           // original data
+            value: any,             // original value
             temp: Struct,
             model: NimbusDBModel
         ) => any);
@@ -331,14 +329,14 @@ enum NIMBUSDB_DATA_TYPE {
 
 ```ts title="constraints.d.ts"
 enum NIMBUSDB_CONSTRAINT {
+    NONE,
+    OPTIONAL,
+    UNIQUE,
+    PRIMARY_KEY
     // NOT_NULL = set automatically when the column is defined with data type(s)
     // CHECK = `validator` in the column rules
     // DEFAULT = `default_value` in the column rules
     // AUTO_INCREMENT = set automatically on a column with PRIMARY_KEY constraint
     // FOREIGN_KEY = set automatically through `.define_relation()` method
-    NONE,
-    OPTIONAL,
-    UNIQUE,
-    PRIMARY_KEY
 }
 ```

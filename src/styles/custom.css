@@ -31,3 +31,21 @@
 :root {
   --sl-font: 'Plus Jakarta Sans', sans-serif;
 }
+
+.sticky-code, .sticky-method {
+  z-index: 2;
+}
+
+@media (min-width: 1024px) {
+  .sticky-code {
+    position: sticky;
+    top: 1.5rem;
+    height: fit-content;
+  }
+
+  .sticky-method {
+    position: sticky;
+    top: -2rem;
+    height: fit-content;
+  }
+}

@@ -1,0 +1,259 @@
+---
+title: Insert
+description: Learn how to insert data into your models in NimbusDB, including best practices and implementation strategies.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+Inserting data into your models in NimbusDB is a fundamental operation that allows you to add new records to your database. The `insert()` method is used for this purpose, and it provides a straightforward way to create new entries based on the schema you've defined for your model.
+
+In this section, we'll use this schema and the `items` model as an example to demonstrate how to insert data into a model:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY 
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false  // default is_locked is false if `is_locked` is not provided
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema);
+    ```
+    </TabItem>
+</Tabs>
+
+
+## Inserting Data
+
+To insert data into the `items` model, you can use the `insert()` method, or pass the data directly to the model constructor (after schema definition). Here are some examples:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    // Using initial data in the constructor
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 }
+    ]);
+
+    // Using the insert() method
+    items.insert({ id: 3, name: "Cherry", price: 15 });
+
+    items.insert([
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 }
+    ]);
+
+    items.insert({ id: 6, name: "Fig", price: -10 }); // This will fail validation and won't be inserted
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+All methods set as the value of a column will be called with the new data, new value, and temp data. This allows you to create dynamic values based on the data being inserted. 
+
+For example, you can set the price of an item based on its index in the insert array:
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    items.insert({ id: 7, name: "Grape", price: function(data, index) {
+        return 5 * (index + 1);         // price will be set to 5 for the first record, 10 for the second, etc.
+    } });
+    ```
+    </TabItem>
+</Tabs>
+:::
+
+
+## Options
+
+The `insert()` method accepts an optional second parameter, which is an object of type `NimbusDBInsertOptions`. This allows you to customize the behavior of the insert operation.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "price: \"20\"" "force: true"
+    items.insert([
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, price: "20" }
+    ], {
+        force: true,
+        // ... other options
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+In the example above, the `force` option is set to `true`, which allows the second record to be inserted even though it fails the type check and validation for the `name` and `price` columns. This can be useful in certain scenarios, but it should be used with caution as it bypasses important validation checks.
+
+
+## Constraints 
+
+Let's dive into each constraint rules/behaviors and how it affects the insert operation.
+
+### PRIMARY_KEY
+
+1. Values in that column must be unique. When you attempt to insert a record with a duplicate value in a primary key column, the insert operation will fail for that record.
+
+    For example, if you try to insert a record with an `id` that already exists in the `items` model, the insert operation will skip that record and continue with the others:
+
+    <Tabs syncKey='lang'>
+        <TabItem label="GML" value="gml">
+        ```ts "id: 8"
+        items.insert([
+            { id: 8, name: "Honeydew", price: 9 },
+            { id: 8, name: "Iced Tea", price: 2 } // This will fail due to duplicate primary key
+        ]);
+        ```
+        </TabItem>
+    </Tabs>
+
+2. You can omit the primary key column in the insert data, and it will be automatically generated based on the existing records in the model. 
+
+    For example, if you insert a record without specifying the `id`, it will be assigned the next available integer value:
+
+    <Tabs syncKey='lang'>
+        <TabItem label="GML" value="gml">
+        ```ts 
+        items.insert({ name: "Jackfruit", price: 20 }); // This will be assigned `id: 9`, because the last inserted record has `id: 8`
+        ```
+        </TabItem>
+    </Tabs>
+
+    :::tip
+    The auto-generated primary key values will always be sequential and will not reuse values from deleted records. This ensures that each record has a unique identifier, even if some records are removed from the model.
+    :::
+
+3. You can also specify non-sequential primary key values, but they must still be unique. For example:
+
+    <Tabs syncKey='lang'>
+        <TabItem label="GML" value="gml">
+        ```ts "id: 20"
+        items.insert([
+            { id: 10, name: "Kiwi", price: 3 },
+            { id: 20, name: "Lemon", price: 4 },
+            { name: "Melon", price: 13 }        // This will be assigned `id: 21`
+        ]);
+        ```
+        </TabItem>
+    </Tabs>
+
+    :::caution
+    Even if you can specify non-sequential primary key values, it's generally recommended to use sequential values for easier management and to avoid potential issues with auto-generated keys. 
+    :::
+
+### UNIQUE
+
+Values in a column with the `UNIQUE` constraint must be unique across all records in the model. If you attempt to insert a record with a duplicate value in a unique column, the insert operation will fail for that record.
+
+For example, if you add a `UNIQUE` constraint to the `name` column and then try to insert a record with a name that already exists, the insert operation will skip that record:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "name: \"Lime\""
+    items.insert([
+        { id: 11, name: "Lime", price: 3 }      // This will be inserted successfully
+        { id: 12, name: "Lime", price: 3.5 }    // This will fail due to duplicate unique value in the `name` column
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+### OPTIONAL
+
+Values in a column with the `OPTIONAL` constraint can be omitted during the insert operation. If a value is not provided for an optional column, it will be set to `undefined`, or the specified `default_value` if defined.
+
+For example, if you insert a record without specifying the `is_locked` column, it will be set to `false` based on the default value defined in the schema:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "is_locked: true" "is_locked: \"yes\""
+    items.insert([
+        { id: 12, name: "Nectarine", price: 6 },                // `is_locked` will be set to `false` by default
+        { id: 13, name: "Orange", price: 4, is_locked: true },  // `is_locked` will be set to `true` as specified
+        { id: 14, name: "Papaya", price: 7, is_locked: "yes" }  // `is_locked` will be set to `undefined` due to type check failure, but the record will still be inserted because `is_locked` is optional
+    ]); 
+    ```
+    </TabItem>
+</Tabs>
+
+
+## References
+
+### Model.insert()
+
+<section>
+#### Signature
+
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static insert(
+        _data: Struct | Struct[], 
+        _options?: NimbusDBInsertOptions
+    ): NimbusDBInsertResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_data`
+- Type: `Struct` | `Struct[]`
+- The data to be inserted into the model. This can be a single record (object) or an array of records (objects). Each record should conform to the schema defined for the model.
+
+##### `_options`
+- Type: `NimbusDBInsertOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the insert operation. It can include properties such as `force`, `keep_temp`, `no_cache`, and sorting options.
+
+#### Returns
+- Type: `NimbusDBInsertResult`
+- An object containing the result of the insert operation, including the number of records inserted, an array of the inserted records, and the number of records skipped due to validation failure or other reasons.
+</section>
+
+### NimbusDBInsertOptions
+
+```ts title="insert_options.d.ts"
+type NimbusDBInsertOptions = Partial<{
+	force: boolean;             // bypass column rules, type check, and validator (default = false)
+	keep_temp: boolean;         // keep temp data after insert (default = false)
+	no_cache: boolean;          // don't cache the data (default = false)
+	sort: boolean | ((          // sort data after insert (default = -1), method = custom sort
+		current: Struct,    
+		next: Struct
+	) => -1 | 0 | 1);
+	sort_column: string;        // sort by column (default = primary_col), depend on `sort`
+	sort_descending: boolean;   // sort descending (default = false), depend on `sort`
+}>;
+```
+
+:::caution
+Using `sort` option will **mutate** the record order in the model, which may affect the behavior of other methods that rely on record order. Use with caution and ensure that it aligns with your intended data management strategy.
+:::
+
+### NimbusDBInsertResult
+
+```ts title="insert_result.d.ts"
+type NimbusDBInsertResult = {
+	count: number;              // number of records inserted
+	inserted: NimbusDBData[];   // isolated copy of the inserted data
+	skipped: number;            // number of records skipped due to validation failure or other reasons
+};
+```
