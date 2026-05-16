@@ -65,7 +65,8 @@ To insert data into the `items` model, you can use the `insert()` method, or pas
     </TabItem>
 </Tabs>
 
-:::tip
+### Dynamic Values
+
 All methods set as the value of a column will be called with the new data, new value, and temp data. This allows you to create dynamic values based on the data being inserted. 
 
 For example, you can set the price of an item based on its index in the insert array:
@@ -78,7 +79,21 @@ For example, you can set the price of an item based on its index in the insert a
     ```
     </TabItem>
 </Tabs>
-:::
+
+### Selective Force Insertion
+
+You can also force the insertion of individual records by adding `__force: true` to the record. This allows you to bypass column rules, type checks, and validators for that specific record. For example:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "__force: true"
+    items.insert([
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, price: "20", __force: true }   // This record will be inserted despite failing validation
+    ]);
+    ```
+    </TabItem>
+</Tabs>
 
 
 ## Options
