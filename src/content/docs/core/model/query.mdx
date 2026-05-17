@@ -64,18 +64,24 @@ If you want to get the index of a record, you can use the `.find_index()` method
 	var banana_and_cherry = items.get_by_index([1, 2]);		// get the second and third items
 	
 	var date = items.get_by_index_linked(3, {	// get a linked item instead of isolated copy, with options
-		pick: "name"					// get only the `name` column
+		pick: "name",					// get only the `name` column
+		print: true						// print the result
 	});
 
 	var elderberry_and_fig = items.get_by_index([4, 5], {
 		destruct: true,					// return destructured data (array of values)
-		pick: ["name", "price"]		// get only the `name` and `price` columns
+		pick: ["name", "price"],		// get only the `name` and `price` columns
+		print: true						// print the result
 	});
 	// or you can use this shorthand syntax for the same result:
 	// var elderberry_and_fig = items.get_by_index_destruct([4, 5], ["name", "price"]);
 	```
     </TabItem>
 </Tabs>
+
+:::tip
+Use `print: true` option to print the query result in the console/output for debugging purposes.
+:::
 
 ### By Primary Key
 
@@ -89,12 +95,24 @@ Queries can also be performed by primary key, which is the most common way to re
 	var banana_and_cherry = items.get_by_primary([2, 3]);		// get the items with primary keys 2 and 3 (`id` = 2 and `id` = 3)
 	
 	var date = items.get_by_primary_linked(4, {	// get a linked item instead of isolated copy, with options
-		pick: "name"							// get only the `name` column
+		pick: "name",							// get only the `name` column
+		print: true								// print the result
 	});
 
 	var date_and_elderberry = items.get_by_primary([4, 5], {
 		destruct: true,					// return destructured data (array of values)
-		pick: ["name", "price"]		// get only the `name` and `price` columns
+		pick: function(data, index, columns) {
+			if (data.name === "Date") {
+				return "name";				// get only the `name` column for Date
+			} 
+			else if (data.name === "Elderberry") {
+				return ["name", "price"];	// get the `name` and `price` columns for Elderberry
+			} 
+			else {
+				return columns;				// get all columns for other items (if any)
+			}
+		}
+		print: true						// print the result
 	});
 	// or you can use this shorthand syntax for the same result:
 	// var date_and_elderberry = items.get_by_primary_destruct([4, 5], ["name", "price"]);
@@ -121,8 +139,12 @@ Queries by column values allow you to retrieve records based on specific conditi
 	});
 
 	var price_5_or_10 = items.get_by_value_linked("price", "=", [5, 10], {
-		match_all: true,
 		pick: ["name", "price"]		// get only the `name` and `price` columns
+	});
+
+	var not_cherries_or_figs = items.get_by_value("name", "!in", ["Cherry", "Fig"], {
+		match_all: true,					// get all matching items (default = false)
+		print: true							// print the result
 	});
 	```
     </TabItem>
@@ -134,14 +156,333 @@ Use `match_all: true` option to get all matching records instead of just the fir
 
 #### Operators
 
+NimbusDB supports various operators for value-based queries, including:
+
+- Equality: `=`, `==`
+- Inequality: `!=`, `!==`, `<>`
+- Comparison: `>`, `<`, `>=`, `<=`
+- Range: `..` (between, inclusive), `!..` (not between), `..<` (between, exclusive)
+- Set membership: `in`, `!in`
+
+With these operators, you can create complex queries to retrieve data based on a wide range of conditions. It's usable for any `.get_by_value()` method and its variants, and you can also use the operator enums (`NIMBUSDB_OPERATOR`).
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "\"=\"" "\"!=\"" "\">\"" "\"<=\"" "\"..\"" "\"!..\"" "\"..<\"" "\"in\"" "\"!in\""
+	var apple = items.get_by_value("name", "=", "Apple");		// get the first item with `name` equal to "Apple"
+	
+	var expensive_item = items.get_by_value_linked("price", ">", 10);	// get the first item (linked copy) with `price` greater than 10
+	
+	var cheap_items = items.get_by_value("price", "<=", 8, {	// get all items with `price` less than or equal to 8, with options
+		match_all: true,
+		pick: ["name"]
+	});
+
+	var price_4_to_10s = items.get_by_value_linked("price", "..", [4, 10], {		// get all items (linked copy) with `price` between 4 and 10 (inclusive, include the 4 and 10)
+		match_all: true,
+		pick: ["name", "price"]	
+	});
+
+	var price_4_to_10s_exclusive = items.get_by_value_linked("price", "..<", [4, 10], {		// get all items (linked copy) with `price` between 4 and 10 (exclusive, exclude the 4 and 10)
+		match_all: true,
+		pick: ["name", "price"]	
+	});
+
+	var not_price_4_to_10s = items.get_by_value_linked("price", "!..", [4, 10], {		// get all items (linked copy) with `price` not between 4 and 10 (inclusive)
+		match_all: true,
+		pick: ["name", "price"]	
+	});
+
+	var price_multiple_of_5 = items.get_by_value_linked("price", "in", [5, 10, 15], {		// get all items (linked copy) with `price` equal to 5, 10, or 15
+		match_all: true,
+		pick: ["name", "price"]	
+	});
+
+	var not_cherries_or_figs = items.get_by_value("name", "!in", ["Cherry", "Fig"], {	// get all items with `name` not "Cherry" or "Fig"
+		match_all: true,					// get all matching items (default = false)
+		print: true							// print the result
+	});
+	```
+    </TabItem>
+</Tabs>
+
+:::note
+Using `"="` or `"=="` operator with array value will perform an `"in"` query, which checks if the column value is in the array. Similarly, using `"!="` or `"!=="` operator with array value will perform a `"!in"` query, which checks if the column value is not in the array.
+:::
+
+#### Value Preprocessor
+
+You can also specify a preprocessor for the value in value-based queries, which will preprocess the column value before comparing it with the query value. 
+
+This is useful for cases like case-insensitive string comparison or rounding numbers before comparison.
+
+Available preprocessors include:
+- `LOWER`: convert the column value to lowercase
+- `UPPER`: convert the column value to uppercase
+- `TRIM`: trim whitespace from both start and end of the column value
+- `FLOOR`: round the column value down to the nearest integer
+- `CEIL`: round the column value up to the nearest integer
+- `ROUND`: round the column value to the nearest integer
+- `ABS`: take the absolute value (always positive) of the column value
+- `SIGN`: get the sign of the column value (-1 for negative, 0 for zero, 1 for positive)
+- Your custom preprocessor: a method that takes the `data`, `prop`, and `value` as parameters and returns the preprocessed value.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {10, 18, 24-26}
+	// let's add some items with varying cases first
+	items.insert([
+		{ id: 7, name: "grape", price: 6 },
+		{ id: 8, name: "ApPLe", price: 9.78 },
+		{ id: 9, name: "  kiwi ", price: 4.4 }
+	]);
+
+	// get items with `name` equal to "apple" (case-insensitive)
+	var apples = items.get_by_value("name", "=", "apple", {
+		preprocess: NIMBUSDB_PREPROCESS.LOWER,
+		match_all: true
+	});
+	// this will convert the `name` column value to lowercase before comparing it with "Apple", 
+	// so it will match "Apple", "apple", "APPLE", etc.
+
+	// get items with `price` closer to 10 (rounding the price before comparison)
+	var close_to_10s = items.get_by_value("price", "=", 10, {
+		preprocess: NIMBUSDB_PREPROCESS.ROUND,
+		match_all: true,
+		pick: "name"
+	});
+
+	// get items with `price` lower than 7 after 15% discount (custom preprocessor)
+	var discounted_items = items.get_by_value("price", "<", 7, {
+		preprocess: function(data, prop, value) {
+			return data[$ prop] * 0.85;			// apply a 15% discount to the price before comparing
+		},
+		match_all: true,
+		pick: "name"
+	});
+	```
+    </TabItem>
+</Tabs>
+
 #### Wildcard Queries
+
+String queries also support wildcard characters for pattern matching:
+
+- `?` matches any single character
+- `*` matches any sequence of characters (including an empty sequence)
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+	// let's add some items with varying cases first
+	items.insert([
+		{ id: 7, name: "Apricot", price: 6 },
+		{ id: 8, name: "Papaya", price: 9.78 },
+		{ id: 9, name: "Blueberry", price: 4.4 },
+		{ id: 10, name: "Blackberry", price: 5.89 }
+	]);
+
+	// get items with `name` matching the pattern "?a?a?a" (e.g. "Banana", "Papaya", etc.)
+	var same_vowels = items.get_by_value("name", "=", "?a?a?a", {
+		match_all: true,
+		pick: "name"
+	});
+
+	// get items with `name` starting with "Ap" (e.g. "Apple", "Apricot", etc.)
+	var start_with_ap = items.get_by_value("name", "=", "Ap*", {
+		match_all: true
+	});
+
+	// get items with `name` ending with "berry" (e.g. "Strawberry", "Blueberry", "Blackberry", etc.)
+	var end_with_berry = items.get_by_value("name", "=", "*berry", {
+		match_all: true
+	});
+
+	// get items with `name` containing "err" (e.g. "Cherry", "Elderberry", "Berry", etc.)
+	var contain_err = items.get_by_value("name", "=", "*err*", {
+		match_all: true
+	});
+
+	// get items with `name` starting with "Bl" and ending with "y" (e.g. "Blueberry", "Blackberry", etc.)
+	var start_with_b_end_with_y = items.get_by_value("name", "=", "Bl*y", {
+		match_all: true
+	});
+
+	// preprocess the `name` (custom preprocessor) to treat "Fig" as "Strawberry"
+	// and then get items with `name` not ending with "berry" (e.g. "Fig" will be treated as "Strawberry" and won't match, while other items that don't end with "berry" will match)
+	var fig_as_strawberry = items.get_by_value("name", "!=", "*berry", {
+		preprocess: function(data, prop, value) {
+			if (data.name == "Fig") {
+				return "Strawberry";	// treat "Fig" as "Strawberry" for this query
+			}
+			return data.name;			// otherwise, use the original name
+		},
+		match_all: true
+	});
+	```
+    </TabItem>
+</Tabs>
+
+:::note
+The wildcard characters `?` and `*` are treated as literal characters if they are escaped with a backslash (`\?` and `\*`), so you can search for actual `?` or `*` in the data by escaping them in the query value.
+:::
+
+:::caution
+Though it's a powerful way to query data, using wildcard characters can be slower than exact match queries, especially on large datasets, so use them judiciously. Also, here are some important rules and limitations to keep in mind when using wildcard characters in queries:
+
+1. Wildcard characters can only be used with string values.
+2. The `?` wildcard matches exactly one character, so it won't match an empty string or a string with more than one character in that position.
+3. The `*` wildcard patterns can only works as: 
+	- `"prefix*"`, 
+	- `"*suffix"`, 
+	- `"*infix*"`, and 
+	- `"prefix*suffix"`. 
+	So, patterns like `"pre*fix*suf*fix"` or `"*multi*ple*wildcards*"` are not valid.
+4. You can't mix `?` and `*` in the same pattern. For example, `"A?ple*"` is not a valid pattern.
+5. For advanced patterns, you can use custom preprocessors to implement your own pattern matching logic, but it may require more complex code and can be less efficient than using the built-in wildcard support.
+:::
 
 ### By Custom Conditions
 
+You can also query data using custom conditions defined in a function. This allows you to create complex queries that can't be easily expressed with simple value-based queries.
+
+<Tabs syncKey='lang'>
+	<TabItem label="GML" value="gml">
+	```ts
+	// get the first item with price greater than 5 and name starting with "B"
+	var expensive_b_item = items.get_by_function_linked(function(data) {
+		return data.price > 5 && string_starts_with(data.name, "B");
+	});
+
+	// get all items with price between 5 and 10, or name containing "err"
+	var specific_items = items.get_by_function(function(data) {
+		return (data.price >= 5 && data.price <= 10) || string_pos("err", data.name) > 0;
+	}, {
+		match_all: true,
+		pick: ["name", "price"]
+	});
+	```
+	</TabItem>
+</Tabs>
+
 ## Column Aliases
+
+Resulting data from queries can also be transformed by using column aliases, which allow you to rename columns in the query result. This is useful for improving readability or when you want to return specific columns with different names.
+
+Available alias operators include: `:`, `->`, `=>`, ` as `, and ` AS `. You can use them in the `pick` option (or the desired columns in `.get_by_*_destruct()` methods) of the query methods to specify the new names for the columns in the result. 
+
+<Tabs syncKey='lang'>
+	<TabItem label="GML" value="gml">
+	```ts
+	// in the `pick` option
+	var items_with_aliases = items.get_by_value("price", ">", 5, {
+		match_all: true,
+		pick: ["id -> item_id", "name: item_name", "price as item_price"]	// alias `name` column as `item_name` and `price` column as `item_price`
+	});
+
+	// or with `.get_by_*_destruct()` methods, in the `column` / `destruct_column` parameter 
+	var expensive_items = items.get_by_primary_destruct([1, 3, 4], [
+		"name => item_name", 
+		"price AS item_price"
+	], {
+		match_all: true
+	});
+	```
+	</TabItem>
+</Tabs>
+
+:::note
+If you use `.get_by_*_destruct()` methods with column aliases, the resulting destructured array won't include the alias names, due to the nature of destructured results, but the alias will still work for picking the columns in the query. 
+
+For example, in the above code, the resulting array will still be in the order of `["name", "price"]` and not `["item_name", "item_price"]`, but it will correctly pick the `name` and `price` columns based on the aliases specified.
+:::
 
 ## Find vs Get
 
+A convience method `.find()` is also available for querying data, which works similarly to `.get_by_*_linked()` methods, but with a simpler syntax without the need to specify the query type (by index, by primary key, by value, or by function). It will automatically determine the query type based on the arguments provided.
+
+<Tabs syncKey='lang'>
+	<TabItem label="GML" value="gml">
+	```ts
+	// find by primary key (same as `get_by_primary_linked()`)
+	var apple = items.find(1);	
+	var banana_and_cherry = items.find([2, 3], {
+		pick: ["name", "price"],
+		print: true
+	});
+
+	// find by column value (same as `get_by_value_linked()`)
+	var expensive_item = items.find("price", ">", 10, {
+		pick: ["name", "price"]
+	});
+	// use `.find_all()` to get all matching items
+	var not_cherries_or_figs = items.find_all("name", "!in", ["Cherry", "Fig"], {
+		print: true
+	});
+
+	// find by custom function (same as `get_by_function_linked()`)
+	var expensive_b_item = items.find(function(data) {
+		return data.price > 5 && string_starts_with(data.name, "B");
+	}, {
+		pick: "name",
+		print: true
+	});
+
+	var specific_items = items.find_all(function(data) {
+		return (data.price >= 5 && data.price <= 10) || string_pos("err", data.name) > 0;
+	}, {
+		pick: ["name", "price"],
+		print: true
+	});
+	```
+	</TabItem>
+</Tabs>
+
+:::note
+`.find()` only returns the first matching record, while `.find_all()` returns all matching records as an array. `.find_all()` method only works with value-based and function-based queries, and doesn't support primary-key-based queries, since you can pass an array of primary keys to `.find()` for that purpose.
+:::
+
+## Transforming Query Results
+
+Query results can be transformed in various ways using the `transform` or `postprocess` option in any query methods. This allows you to modify the data before it's returned from the query, which can be useful for formatting, calculations, or any custom transformations you need.
+
+<Tabs syncKey='lang'>
+	<TabItem label="GML" value="gml">
+	```ts
+	// get all items with price greater than 5 and transform the result to include a discount price (10% off)
+	var discounted_items = items.get_by_value("price", ">", 5, {
+		match_all: true,
+		transform: function(data) {
+			return {
+				name: data.name,
+				original_price: data.price,
+				discounted_price: data.price * 0.9	// apply a 10% discount to the price
+			};
+		},
+		print: true
+	});
+
+	// get item with price less than 7 and name ending with "berry", preprocess the price by rounding it down before comparing, 
+	// and transform the result to include a new property `is_very_cheap` to indicate if the item is very cheap (price less than or equal to 4)
+	var cheap_berry = items.find(function(data) {
+		return data.price < 7 && string_ends_with(data.name, "berry");
+	}, {
+		pick: ["name", "price"],
+		preprocess: NIMBUSDB_PREPROCESS.FLOOR,	// round down the price before comparing
+		transform: function(data) {
+			return {
+				name: data.name,
+				price: data.price,
+				is_very_cheap: floor(data.price) <= 4	// determine if the item is very cheap based on the rounded down price
+			};
+		},
+		print: true
+	});
+	```
+	</TabItem>
+</Tabs>
+
+---
 
 ## Options
 
