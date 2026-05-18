@@ -43,6 +43,12 @@
     height: fit-content;
   }
 
+  .sticky-class {
+    position: sticky;
+    top: -0.5rem;
+    height: fit-content;
+  }
+
   .sticky-method {
     position: sticky;
     top: -2rem;

@@ -3,21 +3,17 @@ title: Query
 description: Learn how to create and execute queries in NimbusDB.
 ---
 
-{/*(get, find, filter, every, some, operators, GetOptions)*/}
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-
-In this section, we will explore how to create and execute queries in NimbusDB.
-
-In this section, we'll use this schema and the `items` model as an example to demonstrate how to insert data into a model:
+In this section, we will explore how to create and execute queries in NimbusDB. We'll use this schema and the `items` model as an example to demonstrate how to get data from a model:
 
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
-    ```ts 
+    ```ts
     var schema = {
         id: {
             type: NIMBUSDB_DATA_TYPE.INTEGER,
-            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY 
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
         },
         name: NIMBUSDB_DATA_TYPE.STRING,
         price: {
@@ -59,23 +55,23 @@ If you want to get the index of a record, you can use the `.find_index()` method
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
     ```ts
-	var apple = items.get_by_index(0);	// get the first item (index starts from 0) 
-    
-	var banana_and_cherry = items.get_by_index([1, 2]);		// get the second and third items
-	
-	var date = items.get_by_index_linked(3, {	// get a linked item instead of isolated copy, with options
-		pick: "name",					// get only the `name` column
-		print: true						// print the result
-	});
+    var apple = items.get_by_index(0);	// get the first item (index starts from 0)
 
-	var elderberry_and_fig = items.get_by_index([4, 5], {
-		destruct: true,					// return destructured data (array of values)
-		pick: ["name", "price"],		// get only the `name` and `price` columns
-		print: true						// print the result
-	});
-	// or you can use this shorthand syntax for the same result:
-	// var elderberry_and_fig = items.get_by_index_destruct([4, 5], ["name", "price"]);
-	```
+    var banana_and_cherry = items.get_by_index([1, 2]);		// get the second and third items
+
+    var date = items.get_by_index_linked(3, {	// get a linked item instead of isolated copy, with options
+        pick: "name",					// get only the `name` column
+        print: true						// print the result
+    });
+
+    var elderberry_and_fig = items.get_by_index([4, 5], {
+        destruct: true,					// return destructured data (array of values)
+        pick: ["name", "price"],		// get only the `name` and `price` columns
+        print: true						// print the result
+    });
+    // or you can use this shorthand syntax for the same result:
+    // var elderberry_and_fig = items.get_by_index_destruct([4, 5], ["name", "price"]);
+    ```
     </TabItem>
 </Tabs>
 
@@ -90,33 +86,33 @@ Queries can also be performed by primary key, which is the most common way to re
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
     ```ts
-	var apple = items.get_by_primary(1);	// get the item with primary key 1 (`id` = 1) 
-    
-	var banana_and_cherry = items.get_by_primary([2, 3]);		// get the items with primary keys 2 and 3 (`id` = 2 and `id` = 3)
-	
-	var date = items.get_by_primary_linked(4, {	// get a linked item instead of isolated copy, with options
-		pick: "name",							// get only the `name` column
-		print: true								// print the result
-	});
+    var apple = items.get_by_primary(1);	// get the item with primary key 1 (`id` = 1)
 
-	var date_and_elderberry = items.get_by_primary([4, 5], {
-		destruct: true,					// return destructured data (array of values)
-		pick: function(data, index, columns) {
-			if (data.name === "Date") {
-				return "name";				// get only the `name` column for Date
-			} 
-			else if (data.name === "Elderberry") {
-				return ["name", "price"];	// get the `name` and `price` columns for Elderberry
-			} 
-			else {
-				return columns;				// get all columns for other items (if any)
-			}
-		}
-		print: true						// print the result
-	});
-	// or you can use this shorthand syntax for the same result:
-	// var date_and_elderberry = items.get_by_primary_destruct([4, 5], ["name", "price"]);
-	```
+    var banana_and_cherry = items.get_by_primary([2, 3]);		// get the items with primary keys 2 and 3 (`id` = 2 and `id` = 3)
+
+    var date = items.get_by_primary_linked(4, {	// get a linked item instead of isolated copy, with options
+        pick: "name",							// get only the `name` column
+        print: true								// print the result
+    });
+
+    var date_and_elderberry = items.get_by_primary([4, 5], {
+        destruct: true,					// return destructured data (array of values)
+        pick: function(data, index, columns) {
+            if (data.name === "Date") {
+                return "name";				// get only the `name` column for Date
+            }
+            else if (data.name === "Elderberry") {
+                return ["name", "price"];	// get the `name` and `price` columns for Elderberry
+            }
+            else {
+                return columns;				// get all columns for other items (if any)
+            }
+        }
+        print: true						// print the result
+    });
+    // or you can use this shorthand syntax for the same result:
+    // var date_and_elderberry = items.get_by_primary_destruct([4, 5], ["name", "price"]);
+    ```
     </TabItem>
 </Tabs>
 
@@ -127,26 +123,26 @@ Queries by column values allow you to retrieve records based on specific conditi
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
     ```ts "match_all: true"
-	var apple = items.get_by_value("name", "=", "Apple");		// get the first item with `name` equal to "Apple"
-	
-	var expensive_item = items.get_by_value_linked("price", ">", 10);	// get the first item (linked copy) with `price` greater than 10
+    var apple = items.get_by_value("name", "=", "Apple");		// get the first item with `name` equal to "Apple"
 
-	var banana_price = items.get_by_value_destruct("name", "=", "Banana", "price");	// get the `price` of the first item with `name` equal to "Banana" (destructured result)
-	
-	var cheap_items = items.get_by_value("price", "<=", 8, {	// get all items with `price` less than or equal to 8, with options
-		match_all: true,					// get all matching items (default = false)
-		pick: ["name"]						// get only the `name` column
-	});
+    var expensive_item = items.get_by_value_linked("price", ">", 10);	// get the first item (linked copy) with `price` greater than 10
 
-	var price_5_or_10 = items.get_by_value_linked("price", "=", [5, 10], {
-		pick: ["name", "price"]		// get only the `name` and `price` columns
-	});
+    var banana_price = items.get_by_value_destruct("name", "=", "Banana", "price");	// get the `price` of the first item with `name` equal to "Banana" (destructured result)
 
-	var not_cherries_or_figs = items.get_by_value("name", "!in", ["Cherry", "Fig"], {
-		match_all: true,					// get all matching items (default = false)
-		print: true							// print the result
-	});
-	```
+    var cheap_items = items.get_by_value("price", "<=", 8, {	// get all items with `price` less than or equal to 8, with options
+        match_all: true,					// get all matching items (default = false)
+        pick: ["name"]						// get only the `name` column
+    });
+
+    var price_5_or_10 = items.get_by_value_linked("price", "=", [5, 10], {
+        pick: ["name", "price"]		// get only the `name` and `price` columns
+    });
+
+    var not_cherries_or_figs = items.get_by_value("name", "!in", ["Cherry", "Fig"], {
+        match_all: true,					// get all matching items (default = false)
+        print: true							// print the result
+    });
+    ```
     </TabItem>
 </Tabs>
 
@@ -169,40 +165,40 @@ With these operators, you can create complex queries to retrieve data based on a
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
     ```ts "\"=\"" "\"!=\"" "\">\"" "\"<=\"" "\"..\"" "\"!..\"" "\"..<\"" "\"in\"" "\"!in\""
-	var apple = items.get_by_value("name", "=", "Apple");		// get the first item with `name` equal to "Apple"
-	
-	var expensive_item = items.get_by_value_linked("price", ">", 10);	// get the first item (linked copy) with `price` greater than 10
-	
-	var cheap_items = items.get_by_value("price", "<=", 8, {	// get all items with `price` less than or equal to 8, with options
-		match_all: true,
-		pick: ["name"]
-	});
+    var apple = items.get_by_value("name", "=", "Apple");		// get the first item with `name` equal to "Apple"
 
-	var price_4_to_10s = items.get_by_value_linked("price", "..", [4, 10], {		// get all items (linked copy) with `price` between 4 and 10 (inclusive, include the 4 and 10)
-		match_all: true,
-		pick: ["name", "price"]	
-	});
+    var expensive_item = items.get_by_value_linked("price", ">", 10);	// get the first item (linked copy) with `price` greater than 10
 
-	var price_4_to_10s_exclusive = items.get_by_value_linked("price", "..<", [4, 10], {		// get all items (linked copy) with `price` between 4 and 10 (exclusive, exclude the 4 and 10)
-		match_all: true,
-		pick: ["name", "price"]	
-	});
+    var cheap_items = items.get_by_value("price", "<=", 8, {	// get all items with `price` less than or equal to 8, with options
+        match_all: true,
+        pick: ["name"]
+    });
 
-	var not_price_4_to_10s = items.get_by_value_linked("price", "!..", [4, 10], {		// get all items (linked copy) with `price` not between 4 and 10 (inclusive)
-		match_all: true,
-		pick: ["name", "price"]	
-	});
+    var price_4_to_10s = items.get_by_value_linked("price", "..", [4, 10], {		// get all items (linked copy) with `price` between 4 and 10 (inclusive, include the 4 and 10)
+        match_all: true,
+        pick: ["name", "price"]
+    });
 
-	var price_multiple_of_5 = items.get_by_value_linked("price", "in", [5, 10, 15], {		// get all items (linked copy) with `price` equal to 5, 10, or 15
-		match_all: true,
-		pick: ["name", "price"]	
-	});
+    var price_4_to_10s_exclusive = items.get_by_value_linked("price", "..<", [4, 10], {		// get all items (linked copy) with `price` between 4 and 10 (exclusive, exclude the 4 and 10)
+        match_all: true,
+        pick: ["name", "price"]
+    });
 
-	var not_cherries_or_figs = items.get_by_value("name", "!in", ["Cherry", "Fig"], {	// get all items with `name` not "Cherry" or "Fig"
-		match_all: true,					// get all matching items (default = false)
-		print: true							// print the result
-	});
-	```
+    var not_price_4_to_10s = items.get_by_value_linked("price", "!..", [4, 10], {		// get all items (linked copy) with `price` not between 4 and 10 (inclusive)
+        match_all: true,
+        pick: ["name", "price"]
+    });
+
+    var price_multiple_of_5 = items.get_by_value_linked("price", "in", [5, 10, 15], {		// get all items (linked copy) with `price` equal to 5, 10, or 15
+        match_all: true,
+        pick: ["name", "price"]
+    });
+
+    var not_cherries_or_figs = items.get_by_value("name", "!in", ["Cherry", "Fig"], {	// get all items with `name` not "Cherry" or "Fig"
+        match_all: true,					// get all matching items (default = false)
+        print: true							// print the result
+    });
+    ```
     </TabItem>
 </Tabs>
 
@@ -212,7 +208,7 @@ Using `"="` or `"=="` operator with array value will perform an `"in"` query, wh
 
 #### Value Preprocessor
 
-You can also specify a preprocessor for the value in value-based queries, which will preprocess the column value before comparing it with the query value. 
+You can also specify a preprocessor for the value in value-based queries, which will preprocess the column value before comparing it with the query value.
 
 This is useful for cases like case-insensitive string comparison or rounding numbers before comparison.
 
@@ -229,38 +225,38 @@ Available preprocessors include:
 
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
-    ```ts {10, 18, 24-26}
-	// let's add some items with varying cases first
-	items.insert([
-		{ id: 7, name: "grape", price: 6 },
-		{ id: 8, name: "ApPLe", price: 9.78 },
-		{ id: 9, name: "  kiwi ", price: 4.4 }
-	]);
+    ```ts {10, 18, 25-27}
+    // let's add some items with varying cases first
+    items.insert([
+        { id: 7, name: "grape", price: 6 },
+        { id: 8, name: "ApPLe", price: 9.78 },
+        { id: 9, name: "  kiwi ", price: 4.4 }
+    ]);
 
-	// get items with `name` equal to "apple" (case-insensitive)
-	var apples = items.get_by_value("name", "=", "apple", {
-		preprocess: NIMBUSDB_PREPROCESS.LOWER,
-		match_all: true
-	});
-	// this will convert the `name` column value to lowercase before comparing it with "Apple", 
-	// so it will match "Apple", "apple", "APPLE", etc.
+    // get items with `name` equal to "apple" (case-insensitive)
+    var apples = items.get_by_value("name", "=", "apple", {
+        preprocess: NIMBUSDB_PREPROCESS.LOWER,
+        match_all: true
+    });
+    // this will convert the `name` column value to lowercase before comparing it with "Apple",
+    // so it will match "Apple", "apple", "APPLE", etc.
 
-	// get items with `price` closer to 10 (rounding the price before comparison)
-	var close_to_10s = items.get_by_value("price", "=", 10, {
-		preprocess: NIMBUSDB_PREPROCESS.ROUND,
-		match_all: true,
-		pick: "name"
-	});
+    // get items with `price` closer to 10 (rounding the price before comparison)
+    var close_to_10s = items.get_by_value("price", "=", 10, {
+        preprocess: NIMBUSDB_PREPROCESS.ROUND,
+        match_all: true,
+        pick: "name"
+    });
 
-	// get items with `price` lower than 7 after 15% discount (custom preprocessor)
-	var discounted_items = items.get_by_value("price", "<", 7, {
-		preprocess: function(data, prop, value) {
-			return data[$ prop] * 0.85;			// apply a 15% discount to the price before comparing
-		},
-		match_all: true,
-		pick: "name"
-	});
-	```
+    // get items with `price` lower than 7 after 15% discount (custom preprocessor)
+    var discounted_items = items.get_by_value("price", "<", 7, {
+        preprocess: function(data, prop, value) {
+            return data[$ prop] * 0.85;			// apply a 15% discount to the price before comparing
+        },
+        match_all: true,
+        pick: "name"
+    });
+    ```
     </TabItem>
 </Tabs>
 
@@ -273,53 +269,53 @@ String queries also support wildcard characters for pattern matching:
 
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
-    ```ts 
-	// let's add some items with varying cases first
-	items.insert([
-		{ id: 7, name: "Apricot", price: 6 },
-		{ id: 8, name: "Papaya", price: 9.78 },
-		{ id: 9, name: "Blueberry", price: 4.4 },
-		{ id: 10, name: "Blackberry", price: 5.89 }
-	]);
+    ```ts "\"?a?a?a\"" "\"Ap*\"" "\"*berry\"" "\"*err*\"" "\"Bl*y\""
+    // let's add some items with varying cases first
+    items.insert([
+        { id: 7, name: "Apricot", price: 6 },
+        { id: 8, name: "Papaya", price: 9.78 },
+        { id: 9, name: "Blueberry", price: 4.4 },
+        { id: 10, name: "Blackberry", price: 5.89 }
+    ]);
 
-	// get items with `name` matching the pattern "?a?a?a" (e.g. "Banana", "Papaya", etc.)
-	var same_vowels = items.get_by_value("name", "=", "?a?a?a", {
-		match_all: true,
-		pick: "name"
-	});
+    // get items with `name` matching the pattern "?a?a?a" (e.g. "Banana", "Papaya", etc.)
+    var same_vowels = items.get_by_value("name", "=", "?a?a?a", {
+        match_all: true,
+        pick: "name"
+    });
 
-	// get items with `name` starting with "Ap" (e.g. "Apple", "Apricot", etc.)
-	var start_with_ap = items.get_by_value("name", "=", "Ap*", {
-		match_all: true
-	});
+    // get items with `name` starting with "Ap" (e.g. "Apple", "Apricot", etc.)
+    var start_with_ap = items.get_by_value("name", "=", "Ap*", {
+        match_all: true
+    });
 
-	// get items with `name` ending with "berry" (e.g. "Strawberry", "Blueberry", "Blackberry", etc.)
-	var end_with_berry = items.get_by_value("name", "=", "*berry", {
-		match_all: true
-	});
+    // get items with `name` ending with "berry" (e.g. "Strawberry", "Blueberry", "Blackberry", etc.)
+    var end_with_berry = items.get_by_value("name", "=", "*berry", {
+        match_all: true
+    });
 
-	// get items with `name` containing "err" (e.g. "Cherry", "Elderberry", "Berry", etc.)
-	var contain_err = items.get_by_value("name", "=", "*err*", {
-		match_all: true
-	});
+    // get items with `name` containing "err" (e.g. "Cherry", "Elderberry", "Berry", etc.)
+    var contain_err = items.get_by_value("name", "=", "*err*", {
+        match_all: true
+    });
 
-	// get items with `name` starting with "Bl" and ending with "y" (e.g. "Blueberry", "Blackberry", etc.)
-	var start_with_b_end_with_y = items.get_by_value("name", "=", "Bl*y", {
-		match_all: true
-	});
+    // get items with `name` starting with "Bl" and ending with "y" (e.g. "Blueberry", "Blackberry", etc.)
+    var start_with_b_end_with_y = items.get_by_value("name", "=", "Bl*y", {
+        match_all: true
+    });
 
-	// preprocess the `name` (custom preprocessor) to treat "Fig" as "Strawberry"
-	// and then get items with `name` not ending with "berry" (e.g. "Fig" will be treated as "Strawberry" and won't match, while other items that don't end with "berry" will match)
-	var fig_as_strawberry = items.get_by_value("name", "!=", "*berry", {
-		preprocess: function(data, prop, value) {
-			if (data.name == "Fig") {
-				return "Strawberry";	// treat "Fig" as "Strawberry" for this query
-			}
-			return data.name;			// otherwise, use the original name
-		},
-		match_all: true
-	});
-	```
+    // preprocess the `name` (custom preprocessor) to treat "Fig" as "Strawberry"
+    // and then get items with `name` not ending with "berry" (e.g. "Fig" will be treated as "Strawberry" and won't match, while other items that don't end with "berry" will match)
+    var fig_as_strawberry = items.get_by_value("name", "!=", "*berry", {
+        preprocess: function(data, prop, value) {
+            if (data.name == "Fig") {
+                return "Strawberry";	// treat "Fig" as "Strawberry" for this query
+            }
+            return data.name;			// otherwise, use the original name
+        },
+        match_all: true
+    });
+    ```
     </TabItem>
 </Tabs>
 
@@ -332,12 +328,12 @@ Though it's a powerful way to query data, using wildcard characters can be slowe
 
 1. Wildcard characters can only be used with string values.
 2. The `?` wildcard matches exactly one character, so it won't match an empty string or a string with more than one character in that position.
-3. The `*` wildcard patterns can only works as: 
-	- `"prefix*"`, 
-	- `"*suffix"`, 
-	- `"*infix*"`, and 
-	- `"prefix*suffix"`. 
-	So, patterns like `"pre*fix*suf*fix"` or `"*multi*ple*wildcards*"` are not valid.
+3. The `*` wildcard patterns can only works as:
+    - `"prefix*"`,
+    - `"*suffix"`,
+    - `"*infix*"`, and
+    - `"prefix*suffix"`.
+    - So, patterns like `"pre*fix*suf*fix"` or `"*multi*ple*wildcards*"` are not valid.
 4. You can't mix `?` and `*` in the same pattern. For example, `"A?ple*"` is not a valid pattern.
 5. For advanced patterns, you can use custom preprocessors to implement your own pattern matching logic, but it may require more complex code and can be less efficient than using the built-in wildcard support.
 :::
@@ -347,52 +343,52 @@ Though it's a powerful way to query data, using wildcard characters can be slowe
 You can also query data using custom conditions defined in a function. This allows you to create complex queries that can't be easily expressed with simple value-based queries.
 
 <Tabs syncKey='lang'>
-	<TabItem label="GML" value="gml">
-	```ts
-	// get the first item with price greater than 5 and name starting with "B"
-	var expensive_b_item = items.get_by_function_linked(function(data) {
-		return data.price > 5 && string_starts_with(data.name, "B");
-	});
+    <TabItem label="GML" value="gml">
+    ```ts
+    // get the first item with price greater than 5 and name starting with "B"
+    var expensive_b_item = items.get_by_function_linked(function(data) {
+        return data.price > 5 && string_starts_with(data.name, "B");
+    });
 
-	// get all items with price between 5 and 10, or name containing "err"
-	var specific_items = items.get_by_function(function(data) {
-		return (data.price >= 5 && data.price <= 10) || string_pos("err", data.name) > 0;
-	}, {
-		match_all: true,
-		pick: ["name", "price"]
-	});
-	```
-	</TabItem>
+    // get all items with price between 5 and 10, or name containing "err"
+    var specific_items = items.get_by_function(function(data) {
+        return (data.price >= 5 && data.price <= 10) || string_pos("err", data.name) > 0;
+    }, {
+        match_all: true,
+        pick: ["name", "price"]
+    });
+    ```
+    </TabItem>
 </Tabs>
 
 ## Column Aliases
 
 Resulting data from queries can also be transformed by using column aliases, which allow you to rename columns in the query result. This is useful for improving readability or when you want to return specific columns with different names.
 
-Available alias operators include: `:`, `->`, `=>`, ` as `, and ` AS `. You can use them in the `pick` option (or the desired columns in `.get_by_*_destruct()` methods) of the query methods to specify the new names for the columns in the result. 
+Available alias operators include: `:`, `->`, `=>`, ` as `, and ` AS `. You can use them in the `pick` option (or the desired columns in `.get_by_*_destruct()` methods) of the query methods to specify the new names for the columns in the result.
 
 <Tabs syncKey='lang'>
-	<TabItem label="GML" value="gml">
-	```ts
-	// in the `pick` option
-	var items_with_aliases = items.get_by_value("price", ">", 5, {
-		match_all: true,
-		pick: ["id -> item_id", "name: item_name", "price as item_price"]	// alias `name` column as `item_name` and `price` column as `item_price`
-	});
+    <TabItem label="GML" value="gml">
+    ```ts
+    // in the `pick` option
+    var items_with_aliases = items.get_by_value("price", ">", 5, {
+        match_all: true,
+        pick: ["id -> item_id", "name: item_name", "price as item_price"]	// alias `name` column as `item_name` and `price` column as `item_price`
+    });
 
-	// or with `.get_by_*_destruct()` methods, in the `column` / `destruct_column` parameter 
-	var expensive_items = items.get_by_primary_destruct([1, 3, 4], [
-		"name => item_name", 
-		"price AS item_price"
-	], {
-		match_all: true
-	});
-	```
-	</TabItem>
+    // or with `.get_by_*_destruct()` methods, in the `column` / `destruct_column` parameter
+    var expensive_items = items.get_by_primary_destruct([1, 3, 4], [
+        "name => item_name",
+        "price AS item_price"
+    ], {
+        match_all: true
+    });
+    ```
+    </TabItem>
 </Tabs>
 
 :::note
-If you use `.get_by_*_destruct()` methods with column aliases, the resulting destructured array won't include the alias names, due to the nature of destructured results, but the alias will still work for picking the columns in the query. 
+If you use `.get_by_*_destruct()` methods with column aliases, the resulting destructured array won't include the alias names, due to the nature of destructured results, but the alias will still work for picking the columns in the query.
 
 For example, in the above code, the resulting array will still be in the order of `["name", "price"]` and not `["item_name", "item_price"]`, but it will correctly pick the `name` and `price` columns based on the aliases specified.
 :::
@@ -402,40 +398,40 @@ For example, in the above code, the resulting array will still be in the order o
 A convience method `.find()` is also available for querying data, which works similarly to `.get_by_*_linked()` methods, but with a simpler syntax without the need to specify the query type (by index, by primary key, by value, or by function). It will automatically determine the query type based on the arguments provided.
 
 <Tabs syncKey='lang'>
-	<TabItem label="GML" value="gml">
-	```ts
-	// find by primary key (same as `get_by_primary_linked()`)
-	var apple = items.find(1);	
-	var banana_and_cherry = items.find([2, 3], {
-		pick: ["name", "price"],
-		print: true
-	});
+    <TabItem label="GML" value="gml">
+    ```ts
+    // find by primary key (same as `get_by_primary_linked()`)
+    var apple = items.find(1);
+    var banana_and_cherry = items.find([2, 3], {
+        pick: ["name", "price"],
+        print: true
+    });
 
-	// find by column value (same as `get_by_value_linked()`)
-	var expensive_item = items.find("price", ">", 10, {
-		pick: ["name", "price"]
-	});
-	// use `.find_all()` to get all matching items
-	var not_cherries_or_figs = items.find_all("name", "!in", ["Cherry", "Fig"], {
-		print: true
-	});
+    // find by column value (same as `get_by_value_linked()`)
+    var expensive_item = items.find("price", ">", 10, {
+        pick: ["name", "price"]
+    });
+    // use `.find_all()` to get all matching items
+    var not_cherries_or_figs = items.find_all("name", "!in", ["Cherry", "Fig"], {
+        print: true
+    });
 
-	// find by custom function (same as `get_by_function_linked()`)
-	var expensive_b_item = items.find(function(data) {
-		return data.price > 5 && string_starts_with(data.name, "B");
-	}, {
-		pick: "name",
-		print: true
-	});
+    // find by custom function (same as `get_by_function_linked()`)
+    var expensive_b_item = items.find(function(data) {
+        return data.price > 5 && string_starts_with(data.name, "B");
+    }, {
+        pick: "name",
+        print: true
+    });
 
-	var specific_items = items.find_all(function(data) {
-		return (data.price >= 5 && data.price <= 10) || string_pos("err", data.name) > 0;
-	}, {
-		pick: ["name", "price"],
-		print: true
-	});
-	```
-	</TabItem>
+    var specific_items = items.find_all(function(data) {
+        return (data.price >= 5 && data.price <= 10) || string_pos("err", data.name) > 0;
+    }, {
+        pick: ["name", "price"],
+        print: true
+    });
+    ```
+    </TabItem>
 </Tabs>
 
 :::note
@@ -447,490 +443,1024 @@ A convience method `.find()` is also available for querying data, which works si
 Query results can be transformed in various ways using the `transform` or `postprocess` option in any query methods. This allows you to modify the data before it's returned from the query, which can be useful for formatting, calculations, or any custom transformations you need.
 
 <Tabs syncKey='lang'>
-	<TabItem label="GML" value="gml">
-	```ts
-	// get all items with price greater than 5 and transform the result to include a discount price (10% off)
-	var discounted_items = items.get_by_value("price", ">", 5, {
-		match_all: true,
-		transform: function(data) {
-			return {
-				name: data.name,
-				original_price: data.price,
-				discounted_price: data.price * 0.9	// apply a 10% discount to the price
-			};
-		},
-		print: true
-	});
+    <TabItem label="GML" value="gml">
+    ```ts {4-10, 21-27}
+    // get all items with price greater than 5 and transform the result to include a discount price (10% off)
+    var discounted_items = items.get_by_value("price", ">", 5, {
+        match_all: true,
+        transform: function(data) {
+            return {
+                name: data.name,
+                original_price: data.price,
+                discounted_price: data.price * 0.9	// apply a 10% discount to the price
+            };
+        },
+        print: true
+    });
 
-	// get item with price less than 7 and name ending with "berry", preprocess the price by rounding it down before comparing, 
-	// and transform the result to include a new property `is_very_cheap` to indicate if the item is very cheap (price less than or equal to 4)
-	var cheap_berry = items.find(function(data) {
-		return data.price < 7 && string_ends_with(data.name, "berry");
-	}, {
-		pick: ["name", "price"],
-		preprocess: NIMBUSDB_PREPROCESS.FLOOR,	// round down the price before comparing
-		transform: function(data) {
-			return {
-				name: data.name,
-				price: data.price,
-				is_very_cheap: floor(data.price) <= 4	// determine if the item is very cheap based on the rounded down price
-			};
-		},
-		print: true
-	});
-	```
-	</TabItem>
+    // get item with price less than 7 and name ending with "berry", preprocess the price by rounding it down before comparing,
+    // and transform the result to include a new property `is_very_cheap` to indicate if the item is very cheap (price less than or equal to 4)
+    var cheap_berry = items.find(function(data) {
+        return data.price < 7 && string_ends_with(data.name, "berry");
+    }, {
+        pick: ["name", "price"],
+        preprocess: NIMBUSDB_PREPROCESS.FLOOR,	// round down the price before comparing
+        transform: function(data) {
+            return {
+                name: data.name,
+                price: data.price,
+                is_very_cheap: floor(data.price) <= 4	// determine if the item is very cheap based on the rounded down price
+            };
+        },
+        print: true
+    });
+    ```
+    </TabItem>
 </Tabs>
 
 ---
 
 ## Options
 
+`.get()`, `.find()`, and its derived methods has the same options for manipulating the result. The `option` parameter always takes an object. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
 
 ## References
 
-### NimbusDBData
+### NimbusDBData <Badge text="Internal" variant="caution" />
+
+Represents a single record (row) in a NimbusDB model, wrapping the raw data struct with reactivity, linked access, and mutation utilities.
+
+:::caution
+This is an internal class, and you shouldn't create an instance of this class manually in your code.
+:::
 
 ```ts title="data.d.ts"
 class NimbusDBData {
-	constructor(
-		_data: Struct,
-		_option?: Partial<{
-			listeners: NimbusDBListener[];
-			model: NimbusDBModel;
-			original: NimbusDBData;
-		}>
-	)
+    constructor(
+        _data: Struct,
+        _option?: Partial<{
+            listeners: NimbusDBListener[];
+            model: NimbusDBModel;
+            original: NimbusDBData;
+        }>
+    )
 
-	[prop: string]: any;				// the data
+    [prop: string]: any;				// the data
 
-	__listeners: NimbusDBListener[];
-	__model: NimbusDBModel | null;
-	__force?: boolean;					// force this data to be inserted (default = undefined)
-	__original?: NimbusDBData;			// original data (default = undefined). undefined -> this data is original
-	__sys_temp?: Struct;
+    __listeners: NimbusDBListener[];
+    __model: NimbusDBModel | null;
+    __force?: boolean;					// force this data to be inserted (default = undefined)
+    __original?: NimbusDBData;			// original data (default = undefined). undefined -> this data is original
+    __sys_temp?: Struct;
 
-	// ...public and internal methods
+    // ...public and internal methods
 }
 ```
 
 ### Model.find()
 
+Finds matching data in the model using a selector object.
+
 <Tabs>
-	<TabItem label='Overload 1' value='overload-1'>
-	```ts title="model.d.ts"
-	class NimbusDBModel {
-		// ... other methods and properties ...
-		static find(
-			_primary: int | int[],
-			_options?: NimbusDBGetOptions
-		): NimbusDBData | any[] | undefined;
-	}
-	```
-	</TabItem>
-	<TabItem label='Overload 2' value='overload-2'>
-	```ts title="model.d.ts"
-	class NimbusDBModel {
-		// ... other methods and properties ...
-		static find(
-			_column: string,
-			_operator: NimbusDBQueryOperator,
-			_value: any,
-			_options?: NimbusDBGetOptions
-		): NimbusDBData | any[] | undefined;
-	}
-	```
-	</TabItem>
-	<TabItem label='Overload 3' value='overload-3'>
-	```ts title="model.d.ts"
-	class NimbusDBModel {
-		// ... other methods and properties ...
-		static find(
-			_func: (
-				data: Struct,
-				index: int
-			) => boolean,
-			_options?: NimbusDBGetOptions
-		): NimbusDBData | any[] | undefined;
-	}
-	```
-	</TabItem>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static find(
+            _primary: int | int[],
+            _options?: NimbusDBGetOptions
+        ): NimbusDBData | any[] | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_primary`
+    - Type: `int` | `int[]`
+    - The primary key(s) of the record(s) to be retrieved.
+
+    ##### `_options`
+    - Type: `NimbusDBGetOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the find operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+    #### Returns
+    - Type: `NimbusDBData` | `any[]` | `undefined`
+    - The data of the record(s) found, or `undefined` if no record(s) were found.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static find(
+            _column: string,
+            _operator: NimbusDBQueryOperator,
+            _value: any,
+            _options?: NimbusDBGetOptions
+        ): NimbusDBData | any[] | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_column`
+    - Type: `string`
+    - The name of the column to be queried.
+
+    ##### `_operator`
+    - Type: `NimbusDBQueryOperator`
+    - The operator to be used for the query.
+
+    ##### `_value`
+    - Type: `any`
+    - The value to be used/searched for in the column.
+
+    ##### `_options`
+    - Type: `NimbusDBGetOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the find operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+    #### Returns
+    - Type: `NimbusDBData` | `any[]` | `undefined`
+    - The data of the record(s) found, or `undefined` if no record(s) were found.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 3' value='overload-3'>
+    <section>
+
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static find(
+            _func: (data: Struct, index: int) => boolean,
+            _options?: NimbusDBGetOptions
+        ): NimbusDBData | any[] | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_func`
+    - Type: `(data: Struct, index: int) => boolean`
+    - The function/method to be used for the query. The function should return `true` if the data should be included in the result, and `false` otherwise.
+
+    ##### `_options`
+    - Type: `NimbusDBGetOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the find operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+    #### Returns
+    - Type: `NimbusDBData` | `any[]` | `undefined`
+    - The data of the record(s) found, or `undefined` if no record(s) were found.
+    </section>
+    </TabItem>
 </Tabs>
 
 ### Model.find_all()
 
+Finds all matching data in the model using a selector object.
+
 <Tabs>
-	<TabItem label='Overload 1' value='overload-1'>
-	```ts title="model.d.ts"
-	class NimbusDBModel {
-		// ... other methods and properties ...
-		static find_all(
-			_primary: int | int[],
-			_options?: NimbusDBGetOptions
-		): NimbusDBData[] | any[] | undefined;
-	}
-	```
-	</TabItem>
-	<TabItem label='Overload 2' value='overload-2'>
-	```ts title="model.d.ts"
-	class NimbusDBModel {
-		// ... other methods and properties ...
-		static find_all(
-			_column: string,
-			_operator: NimbusDBQueryOperator,
-			_value: any,
-			_options?: NimbusDBGetOptions
-		): NimbusDBData[] | any[] | undefined;
-	}
-	```
-	</TabItem>
-	<TabItem label='Overload 3' value='overload-3'>
-	```ts title="model.d.ts"
-	class NimbusDBModel {
-		// ... other methods and properties ...
-		static find_all(
-			_func: (
-				data: Struct,
-				index: int
-			) => boolean,
-			_options?: NimbusDBGetOptions
-		): NimbusDBData[] | any[] | undefined;
-	}
-	```
-	</TabItem>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static find_all(
+            _primary: int | int[],
+            _options?: NimbusDBGetOptions
+        ): (NimbusDBData | any[] | undefined)[];
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_primary`
+    - Type: `int` | `int[]`
+    - The primary key(s) of the record(s) to be retrieved.
+
+    ##### `_options`
+    - Type: `NimbusDBGetOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the find operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+    #### Returns
+    - Type: `(NimbusDBData | any[] | undefined)[]`
+    - The data of the record(s) found, or `undefined` if no record(s) were found.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static find_all(
+            _column: string,
+            _operator: NimbusDBQueryOperator,
+            _value: any,
+            _options?: NimbusDBGetOptions
+        ): (NimbusDBData | any[] | undefined)[];
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_column`
+    - Type: `string`
+    - The name of the column to be queried.
+
+    ##### `_operator`
+    - Type: `NimbusDBQueryOperator`
+    - The operator to be used for the query.
+
+    ##### `_value`
+    - Type: `any`
+    - The value to be used/searched for in the column.
+
+    ##### `_options`
+    - Type: `NimbusDBGetOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the find operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+    #### Returns
+    - Type: `(NimbusDBData | any[] | undefined)[]`
+    - The data of the record(s) found, or `undefined` if no record(s) were found.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 3' value='overload-3'>
+    <section>
+
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static find_all(
+            _func: (data: Struct, index: int) => boolean,
+            _options?: NimbusDBGetOptions
+        ): (NimbusDBData | any[] | undefined)[];
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_func`
+    - Type: `(data: Struct, index: int) => boolean`
+    - The function/method to be used for the query. The function should return `true` if the data should be included in the result, and `false` otherwise.
+
+    ##### `_options`
+    - Type: `NimbusDBGetOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the find operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+    #### Returns
+    - Type: `(NimbusDBData | any[] | undefined)[]`
+    - The data of the record(s) found, or `undefined` if no record(s) were found.
+    </section>
+    </TabItem>
 </Tabs>
+
 
 ### Model.get()
 
+Retrieves data from the model using a selector object.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get(
-		_selector:
-			| NimbusDBGetByIndex
-			| NimbusDBGetByPrimary
-			| NimbusDBGetByValue
-			| NimbusDBGetByFunction
-	): Struct | any[] | undefined;
+    static get(
+        _selector:
+            | NimbusDBGetByIndex
+            | NimbusDBGetByPrimary
+            | NimbusDBGetByValue
+            | NimbusDBGetByFunction
+    ): Struct | any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_selector`
+- Type: `NimbusDBGetByIndex` | `NimbusDBGetByPrimary` | `NimbusDBGetByValue` | `NimbusDBGetByFunction`
+- The selector object to use for the query.
+
+#### Returns
+- Type: `Struct` | `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_index()
 
+Retrieves data from the model using an index.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_index(
-		_index: int | int[],
-		_options?: NimbusDBGetOptions
-	): Struct | any[] | undefined;
+    static get_by_index(
+        _index: int | int[],
+        _options?: NimbusDBGetOptions
+    ): Struct | any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_index`
+- Type: `int` | `int[]`
+- The index(es) of the record(s) to be retrieved.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `Struct` | `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_index_destruct()
 
+Retrieves data from the model using an index, and destructures the result into an array of values.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_index_destruct(
-		_index: int | int[],
-		_column?: string | string[],
-		_options?: NimbusDBGetOptions
-	): any[] | undefined;
+    static get_by_index_destruct(
+        _index: int | int[],
+        _column?: string | string[],
+        _options?: NimbusDBGetOptions
+    ): any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_index`
+- Type: `int` | `int[]`
+- The index(es) of the record(s) to be retrieved.
+
+##### `_column`
+- Type: `string` | `string[]`
+- The name(s) of the column(s) to be retrieved.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_index_linked()
 
+Retrieves data from the model using an index, and returns a linked copy of the result.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_index_linked(
-		_index: int | int[],
-		_options?: NimbusDBGetOptions
-	): NimbusDBData | any[] | undefined;
+    static get_by_index_linked(
+        _index: int | int[],
+        _options?: NimbusDBGetOptions
+    ): NimbusDBData | any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_index`
+- Type: `int` | `int[]`
+- The index(es) of the record(s) to be retrieved.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `Struct` | `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_primary()
 
+Retrieves data from the model using a primary key.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_primary(
-		_primary: int | int[],
-		_options?: NimbusDBGetOptions
-	): Struct | any[] | undefined;
+    static get_by_primary(
+        _primary: int | int[],
+        _options?: NimbusDBGetOptions
+    ): Struct | any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_primary`
+- Type: `int` | `int[]`
+- The primary key(s) of the record(s) to be retrieved.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `Struct` | `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_primary_destruct()
 
+Retrieves data from the model using a primary key, and destructures the result into an array of values.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_primary_destruct(
-		_primary: int | int[],
-		_column?: string | string[],
-		_options?: NimbusDBGetOptions
-	): any[] | undefined;
+    static get_by_primary_destruct(
+        _primary: int | int[],
+        _column?: string | string[],
+        _options?: NimbusDBGetOptions
+    ): any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_primary`
+- Type: `int` | `int[]`
+- The primary key(s) of the record(s) to be retrieved.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+##### `_column`
+- Type: `string` | `string[]`
+- The name(s) of the column(s) to be retrieved.
+
+#### Returns
+- Type: `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_primary_linked()
 
+Retrieves data from the model using a primary key, and returns a linked copy of the result.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_primary_linked(
-		_primary: int | int[],
-		_options?: NimbusDBGetOptions
-	): NimbusDBData | any[] | undefined;
+    static get_by_primary_linked(
+        _primary: int | int[],
+        _options?: NimbusDBGetOptions
+    ): NimbusDBData | any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_primary`
+- Type: `int` | `int[]`
+- The primary key(s) of the record(s) to be retrieved.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `Struct` | `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_value()
 
+Retrieves data from the model using a column value.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_value(
-		_column: string,
-		_operator: NimbusDBQueryOperator,
-		_value: any,
-		_options?: NimbusDBGetOptions
-	): Struct | any[] | undefined;
+    static get_by_value(
+        _column: string,
+        _operator: NimbusDBQueryOperator,
+        _value: any,
+        _options?: NimbusDBGetOptions
+    ): Struct | any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_column`
+- Type: `string`
+- The name of the column to be queried.
+
+##### `_operator`
+- Type: `NimbusDBQueryOperator`
+- The operator to be used for the query.
+
+##### `_value`
+- Type: `any`
+- The value to be used/searched for in the column.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `Struct` | `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_value_destruct()
 
+Retrieves data from the model using a column value, and destructures the result into an array of values.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_value_destruct(
-		_column_name: string,
-		_operator: NimbusDBQueryOperator | string,
-		_value: any,
-		_destruct_column?: string | string[],
-		_options?: NimbusDBGetOptions
-	): any[] | undefined;
+    static get_by_value_destruct(
+        _column_name: string,
+        _operator: NimbusDBQueryOperator | string,
+        _value: any,
+        _destruct_column?: string | string[],
+        _options?: NimbusDBGetOptions
+    ): any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_column_name`
+- Type: `string`
+- The name of the column to be queried.
+
+##### `_operator`
+- Type: `NimbusDBQueryOperator`
+- The operator to be used for the query.
+
+##### `_value`
+- Type: `any`
+- The value to be used/searched for in the column.
+
+##### `_destruct_column`
+- Type: `string` | `string[]`
+- The name(s) of the column(s) to be retrieved.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_value_linked()
 
+Retrieves data from the model using a column value, and returns a linked copy of the result.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_value_linked(
-		_column: string,
-		_operator: NimbusDBQueryOperator,
-		_value: any,
-		_options?: NimbusDBGetOptions
-	): NimbusDBData | any[] | undefined;
+    static get_by_value_linked(
+        _column: string,
+        _operator: NimbusDBQueryOperator,
+        _value: any,
+        _options?: NimbusDBGetOptions
+    ): NimbusDBData | any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_column`
+- Type: `string`
+- The name of the column to be queried.
+
+##### `_operator`
+- Type: `NimbusDBQueryOperator`
+- The operator to be used for the query.
+
+##### `_value`
+- Type: `any`
+- The value to be used/searched for in the column.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `Struct` | `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_function()
 
+Retrieves data from the model using a custom function.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_function(
-		_func: (
-			data: Struct,
-			index: int
-		) => boolean,
-		_options?: NimbusDBGetOptions
-	): Struct | any[] | undefined;
+    static get_by_function(
+        _func: (data: Struct, index: int) => boolean,
+        _options?: NimbusDBGetOptions
+    ): Struct | any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: Struct, index: int) => boolean`
+- The function/method to be used for the query. The function should return `true` if the data should be included in the result, and `false` otherwise.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `Struct` | `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_function_destruct()
 
+Retrieves data from the model using a custom function, and destructures the result into an array of values.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_function_destruct(
-		_func: (
-			data: Struct,
-			index: int
-		) => boolean,
-		_column?: string | string[],
-		_options?: NimbusDBGetOptions
-	): any[] | undefined;
+    static get_by_function_destruct(
+        _func: (data: Struct, index: int) => boolean,
+        _column?: string | string[],
+        _options?: NimbusDBGetOptions
+    ): any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: Struct, index: int) => boolean`
+- The function/method to be used for the query. The function should return `true` if the data should be included in the result, and `false` otherwise.
+
+##### `_column`
+- Type: `string` | `string[]`
+- The name(s) of the column(s) to be retrieved.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### Model.get_by_function_linked()
 
+Retrieves data from the model using a custom function, and returns a linked copy of the result.
+
+<section>
+#### Signature
+<div className="sticky-method">
 ```ts title="model.d.ts"
 class NimbusDBModel {
     // ... other methods and properties ...
-	static get_by_function_linked(
-		_func: (
-			data: Struct,
-			index: int
-		) => boolean,
-		_options?: NimbusDBGetOptions
-	): NimbusDBData | any[] | undefined;
+    static get_by_function_linked(
+        _func: (data: Struct, index: int) => boolean,
+        _options?: NimbusDBGetOptions
+    ): NimbusDBData | any[] | undefined;
 }
 ```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: Struct, index: int) => boolean`
+- The function/method to be used for the query. The function should return `true` if the data should be included in the result, and `false` otherwise.
+
+##### `_options`
+- Type: `NimbusDBGetOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the get operation. See the [NimbusDBGetOptions](#nimbusdbgetoptions) type for the available options.
+    
+#### Returns
+- Type: `Struct` | `any[]` | `undefined`
+- The data of the record(s) found, or `undefined` if no record(s) were found.
+</section>
 
 ### NimbusDBGetByIndex
 
+A selector object for `.get` method that allows you to retrieve data using an index.
+
 ```ts title="query-get.d.ts"
 type NimbusDBGetByIndex = {
-	index: int | int[];
+    index: int | int[];
 } & NimbusDBGetOptions;
 ```
 
 ### NimbusDBGetByPrimary
 
+A selector object for `.get` method that allows you to retrieve data using a primary key.
+
 ```ts title="query-get.d.ts"
 type NimbusDBGetByPrimary = {
-	primary: int | int[];
-	get_index?: boolean | string;	// add `data_index` (or custom name) property to the returned data (default = false)
-	id?: int | int[];				// alias for `primary`
+    primary: int | int[];
+    get_index?: boolean | string;	// add `data_index` (or custom name) property to the returned data (default = false)
+    id?: int | int[];				// alias for `primary`
 } & NimbusDBGetOptions;
 ```
 
 ### NimbusDBGetByValue
 
+A selector object for `.get` method that allows you to retrieve data using a column value.
+
 ```ts title="query-get.d.ts"
 type NimbusDBGetByValue = {
-	match_column: string;
-	value: any | any[];
-	match_all?: boolean;					// get all matching data (default = false)
-	preprocess?: NIMBUSDB_PREPROCESS | ((	// preprocess the data before comparing (default = NIMBUSDB_PREPROCESS.NONE)
-		data: Struct,
-		prop: string,
-		value: any
-	) => any);
-	operator?: NIMBUSDB_OPERATOR | string;	// operator to use (default = NIMBUSDB_OPERATOR.EQUAL)
+    match_column: string;
+    value: any | any[];
+    match_all?: boolean;					// get all matching data (default = false)
+    preprocess?: NIMBUSDB_PREPROCESS | ((	// preprocess the data before comparing (default = NIMBUSDB_PREPROCESS.NONE)
+        data: Struct,
+        prop: string,
+        value: any
+    ) => any);
+    operator?: 
+        | NIMBUSDB_OPERATOR 		// operator to use (default = NIMBUSDB_OPERATOR.EQUAL)
+        | NimbusDBQueryOperator;
 } & NimbusDBGetOptions;
 ```
 
 ### NimbusDBGetByFunction
 
+A selector object for `.get` method that allows you to retrieve data using a custom function.
+
 ```ts title="query-get.d.ts"
 type NimbusDBGetByFunction = {
-	func: (
-		data: Struct,
-		index: int
-	) => boolean;
-	match_all?: boolean;	// get all matching data (default = false)
-	where?: (				// alias for `func`
-		data: Struct,
-		index: int
-	) => boolean;
+    func: (data: Struct, index: int) => boolean;
+    match_all?: boolean;							// get all matching data (default = false)
+    where?: (data: Struct, index: int) => boolean;	// alias for `func`
 } & NimbusDBGetOptions;
 ```
 
 ### NimbusDBGetOptions
 
+A type for the options parameter of the `.get` method and its variants.
+
 ```ts title="query-get.d.ts"
 type NimbusDBGetOptions = Partial<{
-	access: NIMBUSDB_DATA_ACCESS;			// data access type (default = ISOLATED, DIRECT if schema is undefined)
-	destruct: boolean | NIMBUSDB_DESTRUCT;	// return destructured data (default = false)
-	keep_systemp: boolean;					// [INTERNAL] keep system data after the operation (default = false)
-	keep_temp: boolean;						// keep temporary data after the operation (default = false)
-	length: int;							// length for search (default = data.length)
-	no_cache: boolean;						// don't cache the result (default = false)
-	no_unwrap: boolean;						// return as array even if there's only 1 data (default = false)
-	pick: string | string[] | ((			// get specific column(s) only (default = undefined, get all columns), or use method to get custom data
-		data: Struct,
-		index: int,
-		columns: string[]
-	) => string | string[]);
-	print: boolean;							// print the untransformed data
-	start_index: int;						// start index for search (default = 0)
-	transform: (							// transform data before returning (default = undefined)
-		res_data: Struct | any[],
-		res_index: int
-	) => any;
-	column: string | string[] | ((			// alias for `pick`	
-		data: Struct,
-		index: int,
-		columns: string[]
-	) => string | string[]);
-	postprocess: (							// alias for `transform`
-		res_data: Struct | any[],
-		res_index: int
-	) => any;
-	select: string | string[] | ((			// alias for `pick`	
-		data: Struct,
-		index: int,
-		columns: string[]
-	) => string | string[]);
+    access: NIMBUSDB_DATA_ACCESS;           // data access type (default = ISOLATED, DIRECT if schema is undefined)
+    destruct: boolean | NIMBUSDB_DESTRUCT;  // return destructured data (default = false)
+    keep_systemp: boolean;                  // [INTERNAL] keep system data after the operation (default = false)
+    keep_temp: boolean;                     // keep temporary data after the operation (default = false)
+    length: int;                            // length for search (default = data.length)    
+    no_cache: boolean;                      // don't cache the result (default = false)
+    no_unwrap: boolean;                     // return as array even if there's only 1 data (default = false)
+    pick: string | string[] | ((            // get specific column(s) only (default = undefined, get all columns), or use method to get custom data
+        data: Struct,
+        index: int,
+        columns: string[]
+    ) => string | string[]);
+    print: boolean;                         // print the untransformed data
+    start_index: int;                       // start index for search (default = 0)    
+    transform: (                            // transform data before returning (default = undefined)
+        res_data: Struct | any[],
+        res_index: int
+    ) => any;
+    column: string | string[] | ((          // alias for `pick`
+        data: Struct,
+        index: int,
+        columns: string[]
+    ) => string | string[]);
+    postprocess: (                          // alias for `transform`
+        res_data: Struct | any[],
+        res_index: int
+    ) => any;
+    select: string | string[] | ((          // alias for `pick`
+        data: Struct,
+        index: int,
+        columns: string[]
+    ) => string | string[]);
 }>;
 ```
 
+#### `access`
+- Type: `NIMBUSDB_DATA_ACCESS`
+- Default: `ISOLATED`
+- The data access type. See the [NIMBUSDB_DATA_ACCESS](#nimbusdbdata_access) enum for the available options, and check out how NimbusDB handles data access in the [Data Access](/concepts/data-access) section.
+
+#### `destruct`
+- Type: `boolean` | `NIMBUSDB_DESTRUCT`
+- Default: `false`
+- Whether to return the result as an array of values. See the [NIMBUSDB_DESTRUCT](#nimbusdbdestruct) enum for the available options.
+
+#### `keep_systemp` <Badge text="Internal" variant="caution" size='medium' />
+- Type: `boolean`
+- Default: `false`
+- Whether to keep the system data after the operation. **Don't use this option on your own code.**
+
+#### `keep_temp`
+- Type: `boolean`
+- Default: `false`
+- Whether to keep user-defined temporary data after the operation.
+
+#### `length`
+- Type: `int`
+- Default: `data.length`
+- The maximum number of iterations to perform the operation. Only works for getting/finding data by values or functions.
+
+#### `no_cache`
+- Type: `boolean`
+- Default: `false`
+- Whether to disable the cache for the operation.
+
+#### `no_unwrap`
+- Type: `boolean`
+- Default: `false`
+- Whether to return the result as an array even if there's only 1 data.
+
+#### `pick` | `column` | `select`
+- Type: `string` | `string[]` | `(data: Struct, index: int, columns: string[]) => string | string[]`
+- Default: `undefined`
+- The column(s) to pick from the result. If the result is destructured, this option will be treated as the column(s) order of the destructured result. 
+
+#### `print`
+- Type: `boolean`
+- Default: `false`
+- Whether to print the result in the console/output.
+
+#### `start_index`
+- Type: `int`
+- Default: `0`
+- The starting index for the search. Only works for getting/finding data by values or functions.
+
+#### `transform` | `postprocess`
+- Type: `(res_data: Struct | any[], res_index: int) => any`
+- Default: `undefined`
+- The function to transform the result before returning. 
+
 ### NimbusDBQueryOperator
+
+A type for the operator parameter of the `.get_by_value` method and its variants.
 
 ```ts title="query-get.d.ts"
 type NimbusDBQueryOperator =
-	| "="	 | "==" 		      // equal
-	| "!="	| "!=="  | "<>"  // not equal
-	| ">"	 | ">=" 		      // greater than
-	| "<"	 | "<="			     // less than
-	| ".."	| "!.." | "..<"	// between (inclusive) / not between / between (exclusive)
-	| "in"	| "!in"			    // in / not in
+    | "="   | "=="              // equal (default)
+    | "!="	| "!=="  | "<>"     // not equal
+    | ">"   | ">="              // greater than
+    | "<"   | "<="              // less than
+    | ".."	| "!.." | "..<"     // between (inclusive) / not between / between (exclusive)
+    | "in"	| "!in"             // in / not in
 ;
 ```
 
 ### NIMBUSDB_DATA_ACCESS
 
+An enum for the data access type parameter of the `.get` method and its variants.
+
 ```ts title="query-get.d.ts"
 enum NIMBUSDB_DATA_ACCESS {
-	DIRECT,
-	LINKED,
-	ISOLATED
+    DIRECT,
+    LINKED,
+    ISOLATED
 }
 ```
 
 ### NIMBUSDB_DESTRUCT
 
+An enum for the destructure type parameter of the `.get` method and its variants.
+
 ```ts title="query-get.d.ts"
 enum NIMBUSDB_DESTRUCT {
-	NONE,
-	INCLUDE_ARRAY,
-	KEEP_ARRAY
+    NONE,               // keep each resulting data as a struct/object
+    INCLUDE_ARRAY,      // unwrap the value if the resulting array data only contains 1 value
+    KEEP_ARRAY          // keep the value as an array
 }
 ```
 
 ### NIMBUSDB_PREPROCESS
 
+An enum for the built-in preprocessor type parameter of the `.get` method and its variants.
+
 ```ts title="query-get.d.ts"
 enum NIMBUSDB_PREPROCESS {
-	NONE,
-	LOWER,
-	UPPER,
-	TRIM,
-	FLOOR,
-	CEIL,
-	ROUND,
-	ABS,
-	SIGN
+    NONE,
+    LOWER,
+    UPPER,
+    TRIM,
+    FLOOR,
+    CEIL,
+    ROUND,
+    ABS,
+    SIGN
 }
 ```
 
 ### NIMBUSDB_OPERATOR
 
+An enum for the operator type parameter of the `.get_by_value` method and its variants.
+
 ```ts title="query-get.d.ts"
 enum NIMBUSDB_OPERATOR {
-	EQUAL = 1,
-	NOT_EQUAL,
-	GREATER,
-	LESS,
-	GREATER_EQUAL,
-	LESS_EQUAL,
-	BETWEEN,			// value = [min, max]
-	NOT_BETWEEN,		// value = [min, max]
-	EXCLUSIVE_BETWEEN,	// value = [min, max]
-	IN,					// value = [val1, val2, val3, ...]
-	NOT_IN				// value = [val1, val2, val3, ...]
+    EQUAL = 1,
+    NOT_EQUAL,
+    GREATER,
+    LESS,
+    GREATER_EQUAL,
+    LESS_EQUAL,
+    BETWEEN,            // `value` = [min, max]
+    NOT_BETWEEN,        // `value` = [min, max]
+    EXCLUSIVE_BETWEEN,  // `value` = [min, max]
+    IN,                 // `value` = [val1, val2, val3, ...]
+    NOT_IN              // `value` = [val1, val2, val3, ...]
 }
 ```
-

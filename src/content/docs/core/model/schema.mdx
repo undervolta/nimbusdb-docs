@@ -4,6 +4,7 @@ description: Learn about schema in NimbusDB, including how to define and manage 
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
 
 In NimbusDB, a schema defines the structure of your data, including the types of data you can store and the rules for how that data is organized. A well-designed schema helps ensure data integrity and makes it easier to query and manage your data.
 
@@ -200,6 +201,8 @@ For example, in the `is_locked` column in the above schema, it's defined as an o
 
 ### NimbusDBModel
 
+Model for NimbusDB that manages schema-backed data, relations, queries, and lifecycle operations.
+
 ```ts title="model.d.ts"
 class NimbusDBModel {
 	constructor(
@@ -238,7 +241,51 @@ class NimbusDBModel {
 }
 ```
 
+<section>
+#### Constructor
+
+<div className="sticky-class">
+```ts title="model.d.ts"
+class NimbusDBModel { 
+    constructor(
+        _root: Instance | "global",
+        _name: string,
+        _schema?: NimbusDBSchema,
+        _data?: Struct | Struct[],
+        _option?: NimbusDBModelOptions
+    )
+}
+```
+</div>
+
+##### `_root`
+- Type: `Instance` | `"global"`
+- The root/place where the model is located. If the model is located in the global scope (e.g. global variable), you can use `"global"` as the value. Otherwise, you can provide an instance/object id of the root object where the model is located.
+
+##### `_name`
+- Type: `string`
+- The name of the model.
+
+##### `_schema`
+- Type: `NimbusDBSchema`
+- Default: `undefined`
+- The schema (column rules) of the model. If not provided, the model will be created with an empty schema.
+
+##### `_data`
+- Type: `Struct` | `Struct[]`
+- Default: `undefined`
+- The initial data to be inserted into the model. If not provided, the model doesn't have any data initially.
+
+##### `_option`
+- Type: `NimbusDBModelOptions`
+- Default: `undefined`
+- The options for the model. See the [NimbusDBModelOptions](#nimbusdbmodeloptions) type for the available options.
+</section>
+
+
 ### NimbusDBSchema
+
+The schema is a type that defines the columns and their rules for a model. It is an object where the keys are the column names and the values are the column rules.
 
 ```ts title="schema.d.ts"
 type NimbusDBSchema = {
@@ -247,6 +294,8 @@ type NimbusDBSchema = {
 ```
 
 ### NimbusDBColumnRules
+
+The column rules are used to define the type, constraints, and validation rules for a column in a model. It can be a single data type, an array of data types, or an object with additional options.
 
 ```ts title="column_rules.d.ts"
 type NimbusDBColumnRules = 
@@ -273,20 +322,24 @@ type NimbusDBColumnRules =
 
 ### NimbusDBModelOptions
 
+The model options are used to configure the behavior of a model, such as column order, custom ID, debugging, and more.
+
 ```ts title="model_options.d.ts"
 type NimbusDBModelOptions = Partial<{
-	column_order: string[];			// order of columns, default = undefined, use column_names
-	custom_id: int;					// set custom ID, default = 0
-	debug: boolean | 2 | 3;			// enable debugging, default = false, true/1 = ~warning, 2 = ~success, 3 = ~info
-	init_cache: boolean;	        // initialize cache for initial data, default = false, true/1 = cache all, array = cache specific data by index
-	in_tx: boolean;					// [INTERNAL] whether the model is in a transaction, default = false
-	force_insert: boolean;			// force insertion of initial data, default = false
-	start_id: int;					// start ID for auto-increment, default = 1
-	temp: Struct;					// set temporary data, default = undefined
+	column_order: string[];         // order of columns (default = undefined, use columns in the `column_names` property)
+	custom_id: int;                 // set custom ID (default = 0)
+	debug: boolean | 2 | 3;         // enable debugging, true/1 = ~warning, 2 = ~success, 3 = ~info (default = false)
+	init_cache: boolean;            // initialize cache for initial data (default = false)
+	in_tx: boolean;                 // [INTERNAL] whether the model is in a transaction (default = false)
+	force_insert: boolean;          // force insertion of initial data (default = false)
+	start_id: int;                  // start ID for auto-increment (default = 1)
+	temp: Struct;                   // set temporary data (default = undefined)
 }>;
 ```
 
 ### NIMBUSDB_DATA_TYPE
+
+The data types are used to define the type of data that can be stored in a column in a model. They can be used directly as the value of the `type` property in the column rules, or as an array of data types to allow a column to accept multiple types of data.
 
 ```ts title="data_types.d.ts"
 enum NIMBUSDB_DATA_TYPE {
@@ -326,6 +379,8 @@ enum NIMBUSDB_DATA_TYPE {
 ```
 
 ### NIMBUSDB_CONSTRAINT
+
+The constraints are used to define the rules for a column in a model, such as whether it is optional, unique, or primary key.
 
 ```ts title="constraints.d.ts"
 enum NIMBUSDB_CONSTRAINT {

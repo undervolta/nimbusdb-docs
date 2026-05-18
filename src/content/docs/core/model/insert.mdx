@@ -95,29 +95,6 @@ You can also force the insertion of individual records by adding `__force: true`
     </TabItem>
 </Tabs>
 
----
-
-## Options
-
-The `insert()` method accepts an optional second parameter, which is an object of type `NimbusDBInsertOptions`. This allows you to customize the behavior of the insert operation.
-
-<Tabs syncKey='lang'>
-    <TabItem label="GML" value="gml">
-    ```ts "price: \"20\"" "force: true"
-    items.insert([
-        { id: 8, name: "Honeydew", price: 9 },
-        { id: 9, price: "20" }
-    ], {
-        force: true,
-        // ... other options
-    });
-    ```
-    </TabItem>
-</Tabs>
-
-In the example above, the `force` option is set to `true`, which allows the second record to be inserted even though it fails the type check and validation for the `name` and `price` columns. This can be useful in certain scenarios, but it should be used with caution as it bypasses important validation checks.
-
-
 ## Constraints 
 
 Let's dive into each constraint rules/behaviors and how it affects the insert operation.
@@ -208,10 +185,33 @@ For example, if you insert a record without specifying the `is_locked` column, i
     </TabItem>
 </Tabs>
 
+---
+
+## Options
+
+The `insert()` method accepts an optional second parameter, which is an object of type `NimbusDBInsertOptions`. This allows you to customize the behavior of the insert operation.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "price: \"20\"" "force: true"
+    items.insert([
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, price: "20" }
+    ], {
+        force: true,
+        // ... other options
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+In the example above, the `force` option is set to `true`, which allows the second record to be inserted even though it fails the type check and validation for the `name` and `price` columns. This can be useful in certain scenarios, but it should be used with caution as it bypasses important validation checks.
 
 ## References
 
 ### Model.insert()
+
+Inserts data into the model.
 
 <section>
 #### Signature
@@ -246,6 +246,8 @@ class NimbusDBModel {
 
 ### NimbusDBInsertOptions
 
+The insert options are used to configure the behavior of the insert operation, such as forcing insertion, keeping temporary data, and more.
+
 ```ts title="insert_options.d.ts"
 type NimbusDBInsertOptions = Partial<{
 	force: boolean;             // bypass column rules, type check, and validator (default = false)
@@ -265,6 +267,8 @@ Using `sort` option will **mutate** the record order in the model, which may aff
 :::
 
 ### NimbusDBInsertResult
+
+The insert result is an object that contains information about the inserted records, such as the number of records inserted, the isolated copy of the inserted data, and the number of records skipped due to validation failure or other reasons.
 
 ```ts title="insert_result.d.ts"
 type NimbusDBInsertResult = {
