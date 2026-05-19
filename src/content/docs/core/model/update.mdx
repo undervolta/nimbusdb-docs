@@ -1,0 +1,725 @@
+---
+title: Update
+description: Learn how to update data properly in your models in NimbusDB, including best practices and implementation strategies.
+---
+
+{/*(update_by_*, upsert, UpdateResult, force/validator flags)*/}
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+In this section, we will explore how to update data in NimbusDB. We'll use this schema and the `items` model as an example to demonstrate how to update data in a model:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Updating Data
+
+To update data in the `items` model, you can use the `.update()` master method, or its derived methods `.update_by_index()`, `.update_by_primary()`, `.update_by_value()`, and `.update_by_function()`. These methods allow you to update data based on specific criteria defined in your queries.
+
+### By Index
+
+If you already have the index of the record(s) you want to update (e.g. from a `.find_index()` method), you can use the `.update_by_index()` method to update the data. This method will update all records with the same index.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    ```
+    </TabItem>
+</Tabs>
+
+### Using Object vs Columns
+
+### Dynamic Values
+
+## Constraints
+
+Let's dive into each constraint rules/behaviors and how it affects the update operation.
+
+---
+
+## References
+
+### Model.update() <Badge text="Master" variant="success" size='medium' />
+
+Updates data in the model.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static update(
+        _selector:
+            | NimbusDBUpdateByIndex
+            | NimbusDBUpdateByPrimary
+            | NimbusDBUpdateByValue
+            | NimbusDBUpdateByFunction,
+        _update_data: any
+    ): NimbusDBUpdateResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_selector`
+- Type: `NimbusDBUpdateByIndex` | `NimbusDBUpdateByPrimary` | `NimbusDBUpdateByColumn` | `NimbusDBUpdateByFunction`
+- The selector object to use for the operation.
+
+##### `_update_data`
+- Type: `any`
+- The data to apply during the update.
+
+#### Returns
+- Type: `NimbusDBUpdateResult`
+- The update result metadata.
+</section>
+
+### Model.update_by_index() 
+
+Updates data in the model by index.
+
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static update_by_index(
+            _index: int | int[],
+            _update_data: Struct,
+            _options?: NimbusDBUpdateOptions
+        ): NimbusDBUpdateResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_index`
+    - Type: `int` | `int[]`
+    - The index(es) of the record(s) to be updated.
+
+    ##### `_update_data`
+    - Type: `Struct`
+    - The data to apply during the update.
+
+    ##### `_options`
+    - Type: `NimbusDBUpdateOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the update operation. See the [NimbusDBUpdateOptions](#nimbusdbupdateoptions) type for the available options.
+
+    #### Returns
+    - Type: `NimbusDBUpdateResult`
+    - The update result metadata.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static update_by_index(
+            _index: int | int[],
+            _column: string | string[],
+            _value: any | any[],
+            _options?: NimbusDBUpdateOptions
+        ): NimbusDBUpdateResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_index`
+    - Type: `int` | `int[]`
+    - The index(es) of the record(s) to be updated.
+
+    ##### `_column`
+    - Type: `string` | `string[]`
+    - The name(s) of the column(s) to be updated.
+
+    ##### `_value`
+    - Type: `any` | `any[]`
+    - The value(s) to apply during the update.
+
+    ##### `_options`
+    - Type: `NimbusDBUpdateOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the update operation. See the [NimbusDBUpdateOptions](#nimbusdbupdateoptions) type for the available options.
+
+    #### Returns
+    - Type: `NimbusDBUpdateResult`
+    - The update result metadata.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.update_by_primary()
+
+Updates data in the model by primary key.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static update_by_primary(
+            _primary: int | int[],
+            _update_data: Struct,
+            _options?: NimbusDBUpdateOptions
+        ): NimbusDBUpdateResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_primary`
+    - Type: `int` | `int[]`
+    - The primary key(s) of the record(s) to be updated.
+
+    ##### `_update_data`
+    - Type: `Struct`
+    - The data to apply during the update.
+
+    ##### `_options`
+    - Type: `NimbusDBUpdateOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the update operation. See the [NimbusDBUpdateOptions](#nimbusdbupdateoptions) type for the available options.
+
+    #### Returns
+    - Type: `NimbusDBUpdateResult`
+    - The update result metadata.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static update_by_primary(
+            _primary: int | int[],
+            _column: string | string[],
+            _value: any | any[],
+            _options?: NimbusDBUpdateOptions
+        ): NimbusDBUpdateResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_primary`
+    - Type: `int` | `int[]`
+    - The primary key(s) of the record(s) to be updated.
+
+    ##### `_column`
+    - Type: `string` | `string[]`
+    - The name(s) of the column(s) to be updated.
+
+    ##### `_value`
+    - Type: `any` | `any[]`
+    - The value(s) to apply during the update.
+
+    ##### `_options`
+    - Type: `NimbusDBUpdateOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the update operation. See the [NimbusDBUpdateOptions](#nimbusdbupdateoptions) type for the available options.
+
+    #### Returns
+    - Type: `NimbusDBUpdateResult`
+    - The update result metadata.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.update_by_value()
+
+Updates data in the model by matching a column value.
+
+:::note
+This method is only accept `=` operator for the data-finding process. For other operators or other complex data-finding processes, please use the `.update_by_function()` method instead.
+:::
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static update_by_value(
+            _column: string,
+            _value: any,
+            _update_data: Struct,
+            _options?: NimbusDBUpdateOptions
+        ): NimbusDBUpdateResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_column`
+    - Type: `string`
+    - The name of the column to be found.
+
+    ##### `_value`
+    - Type: `any`
+    - The value to match for the update.
+
+    ##### `_update_data`
+    - Type: `Struct`
+    - The data to apply during the update.
+
+    ##### `_options`
+    - Type: `NimbusDBUpdateOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the update operation. See the [NimbusDBUpdateOptions](#nimbusdbupdateoptions) type for the available options.
+
+    #### Returns
+    - Type: `NimbusDBUpdateResult`
+    - The update result metadata.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static update_by_value(
+            _column: string,
+            _value: any,
+            _update_column: string | string[],
+            _new_value: any | any[],
+            _options?: NimbusDBUpdateOptions
+        ): NimbusDBUpdateResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_column`
+    - Type: `string`
+    - The name of the column to be found.
+
+    ##### `_value`
+    - Type: `any`
+    - The value to match for the update.
+
+    ##### `_update_column`
+    - Type: `string` | `string[]`
+    - The name(s) of the column(s) to update.
+
+    ##### `_new_value`
+    - Type: `any` | `any[]`
+    - The updated value(s) to apply during the update.
+
+    ##### `_options`
+    - Type: `NimbusDBUpdateOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the update operation. See the [NimbusDBUpdateOptions](#nimbusdbupdateoptions) type for the available options.
+
+    #### Returns
+    - Type: `NimbusDBUpdateResult`
+    - The update result metadata.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.update_by_function()
+
+Updates data in the model by matching a custom function.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static update_by_function(
+            _func: (data: Struct, index: int) => boolean,
+            _update_data: Struct,
+            _options?: NimbusDBUpdateOptions
+        ): NimbusDBUpdateResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_func`
+    - Type: `(data: Struct, index: int) => boolean`
+    - The function/method to be used for the update.
+
+    ##### `_update_data`
+    - Type: `Struct`
+    - The data to apply during the update.
+
+    ##### `_options`
+    - Type: `NimbusDBUpdateOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the update operation. See the [NimbusDBUpdateOptions](#nimbusdbupdateoptions) type for the available options.
+
+    #### Returns
+    - Type: `NimbusDBUpdateResult`
+    - The update result metadata.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static update_by_function(
+            _func: (data: Struct, index: int) => boolean,
+            _update_column: string | string[],
+            _new_value: any | any[],
+            _options?: NimbusDBUpdateOptions
+        ): NimbusDBUpdateResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_func`
+    - Type: `(data: Struct, index: int) => boolean`
+    - The function/method to be used for the update.
+
+    ##### `_update_column`
+    - Type: `string` | `string[]`
+    - The name(s) of the column(s) to update.
+
+    ##### `_new_value`
+    - Type: `any` | `any[]`
+    - The updated value(s) to apply during the update.
+
+    ##### `_options`
+    - Type: `NimbusDBUpdateOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the update operation. See the [NimbusDBUpdateOptions](#nimbusdbupdateoptions) type for the available options.
+
+    #### Returns
+    - Type: `NimbusDBUpdateResult`
+    - The update result metadata.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.upsert()
+
+Inserts or updates data in the model based on the matching criteria.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static upsert(
+        _data: Struct | Struct[],
+        _options?: NimbusDBUpsertOptions
+    ): NimbusDBUpsertResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_data`
+- Type: `Struct` | `Struct[]`
+- The data to be inserted or updated.
+
+##### `_options`
+- Type: `NimbusDBUpsertOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the upsert operation. See the [NimbusDBUpsertOptions](#nimbusdbupsertoptions) type for the available options.
+
+#### Returns
+- Type: `NimbusDBUpsertResult`
+- The upsert result metadata.
+</section>
+
+### NimbusDBUpdateByIndex
+
+A selector object for `.update()` method that allows you to update data by index.
+
+```ts title="query-update.d.ts"
+type NimbusDBUpdateByIndex = {
+    index: int | int[];
+} & NimbusDBUpdateOptions;
+```
+
+### NimbusDBUpdateByPrimary
+
+A selector object for `.update()` method that allows you to update data by primary key.
+
+```ts title="query-update.d.ts"
+type NimbusDBUpdateByPrimary = {
+    primary: int | int[];
+    id?: int | int[];				// alias for `primary`
+} & NimbusDBUpdateOptions;
+```
+
+### NimbusDBUpdateByValue
+
+A selector object for `.update()` method that allows you to update data by matching a column value.
+
+```ts title="query-update.d.ts"
+type NimbusDBUpdateByColumn = {
+	match_column: string;
+	value: any | any[];
+} & NimbusDBUpdateOptions;
+```
+
+### NimbusDBUpdateByFunction
+
+A selector object for `.update()` method that allows you to update data by matching a custom function.
+
+```ts title="query-update.d.ts"
+type NimbusDBUpdateByFunction = {
+    func: (data: Struct, index: int) => boolean;
+    where?: (data: Struct, index: int) => boolean;    // alias for `func`
+} & NimbusDBUpdateOptions;
+```
+
+### NimbusDBUpdateOptions
+
+A type for the options parameter of the `.update()` method.
+
+```ts title="query-update.d.ts"
+type NimbusDBUpdateOptions = Partial<{
+	force: boolean;             // bypass column rules, type check, and validator (default = false)
+	keep_temp: boolean;         // keep temp data after the operation (default = false)
+	length: int;                // length for search (default = data.length)
+	match_all: boolean;         // get all matching data (default = false)
+	start_index: int;           // start index for search (default = 0)
+	use_validator: boolean;     // use `validator` in the schema (default = true)
+	use_default: boolean;       // use `default` in the schema if `validator` failed (default = false)
+}>;
+```
+
+#### `force`
+- Type: `boolean`
+- Default: `false`
+- Whether to bypass column rules, type check, and validator for the update operation. This can be useful for cases where you want to update data without enforcing any rules or validation.
+
+#### `keep_temp`
+- Type: `boolean`
+- Default: `false`
+- Whether to keep the user-defined temporary data after the update operation.
+
+#### `length`
+- Type: `int`
+- Default: `data.length`
+- The maximum number of entries to process for the update operation. Only works for updating data by values or functions.
+
+#### `match_all`
+- Type: `boolean`
+- Default: `false`
+- Whether to use all matching data for the update operation. If `false`, only the first matching data will be updated.
+
+#### `start_index`
+- Type: `int`
+- Default: `0`
+- The starting index for the search for the update operation. Only works for updating data by values or functions.
+
+#### `use_validator`
+- Type: `boolean`
+- Default: `true`
+- Whether to use the validator in the schema for the update operation. If `false`, the validator will be skipped.
+
+#### `use_default`
+- Type: `boolean`
+- Default: `false`
+- Whether to use the default value in the schema if the validator fails for the update operation. If `false`, the default value will be skipped.
+
+### NimbusDBUpdateResult
+
+A type for the result of the `.update()` method and its variants.
+
+```ts title="query-update.d.ts"
+type NimbusDBUpdateResult = {
+	changes: {
+		[primary: int]: {
+			[prop: string]: [before: any, after: any];
+		}
+	}[];
+	modified_count: int;
+	invalid: (number | string)[];
+	invalid_count: int;
+	invalid_modified_count: int;
+	updated: NimbusDBData[];	// isolated copy of the updated data
+	updated_count: int;
+}
+```
+
+### NimbusDBUpsertOptions
+
+A type for the options parameter of the `.upsert()` method.
+
+```ts title="query-upsert.d.ts"
+type NimbusDBUpsertOptions = Partial<{
+	match_column: string;       // column to match (default = primary_col)
+	force_insert: boolean;      // bypass column rules, type check, and validator for insert (default = false)
+	force_update: boolean;      // bypass column rules, type check, and validator for update (default = false)
+	start_index: int;           // start index for match (default = 0)
+	length: int;                // length for match (default = data.length)
+	keep_temp: boolean;         // keep temp data after insert (default = false)
+	no_cache: boolean;          // don't cache the found data (default = false)
+
+	// insert options
+	sort: -1 | boolean | ((     // sort data after insert (default = -1). method = custom sort
+		current: Struct,
+		next: Struct
+	) => -1 | 0 | 1);
+	sort_descending: boolean;   // sort descending (default = false). depend on `sort`
+	sort_column: string;        // sort by column (default = primary_col). depend on `sort`
+
+	// update options
+	use_validator: boolean;     // use `validator` in the schema (default = true)
+	use_default: boolean;       // use `default` in the schema if `validator` failed (default = false)
+	insert_if_missing: boolean; // insert data if the `match_column` is missing (default = false, skip 'this' data)
+}>;
+```
+
+#### `match_column`
+- Type: `string`
+- Default: `primary_col`
+- The column used for determining the uniqueness of the data. 
+
+#### `force_insert`
+- Type: `boolean`
+- Default: `false`
+- Whether to bypass column rules, type check, and validator for the insert operation. 
+
+#### `force_update`
+- Type: `boolean`
+- Default: `false`
+- Whether to bypass column rules, type check, and validator for the update operation. 
+
+#### `start_index`
+- Type: `int`
+- Default: `0`
+- The starting index for the data search during the data-matching process. 
+
+#### `length`
+- Type: `int`
+- Default: `data.length`
+- The maximum number of entries to process during the data-matching process. 
+
+#### `keep_temp`
+- Type: `boolean`
+- Default: `false`
+- Whether to keep the user-defined temporary data after the operation. 
+
+#### `no_cache`
+- Type: `boolean`
+- Default: `false`
+- Whether to disable the cache for the data-matching process. 
+
+#### `sort`
+- Type: `-1` | `boolean` | `(current: Struct, next: Struct) => -1 | 0 | 1`
+- Default: `-1`
+- Whether to sort the data after the insert operation. 
+
+#### `sort_descending`
+- Type: `boolean`
+- Default: `false`
+- Whether to sort the data in descending order. Only works if the `sort` option is set to `true`.
+
+#### `sort_column`
+- Type: `string`
+- Default: `primary_col`
+- The column to sort the data by. Only works if the `sort` option is set to `true`.
+
+#### `use_validator`
+- Type: `boolean`
+- Default: `true`
+- Whether to use the validator in the schema for the update operation.
+
+#### `use_default`
+- Type: `boolean`
+- Default: `false`
+- Whether to use the default value in the schema if the validator fails for the update operation.
+
+#### `insert_if_missing`
+- Type: `boolean`
+- Default: `false`
+- Whether to insert data if the `match_column` is missing for the update operation. If `false`, the data will be skipped.
+
+### NimbusDBUpsertResult
+
+A type for the result of the `.upsert()` method.
+
+```ts title="query-upsert.d.ts"
+type NimbusDBUpsertResult = {
+	inserted: NimbusDBInsertResult;
+	updated: NimbusDBUpdateResult;
+	inserted_count: int;
+	updated_count: int;
+	invalid_count: int;			// missing match column
+}
+```
