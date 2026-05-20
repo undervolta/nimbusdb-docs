@@ -3,8 +3,6 @@ title: Update
 description: Learn how to update data properly in your models in NimbusDB, including best practices and implementation strategies.
 ---
 
-{/*(update_by_*, upsert, UpdateResult, force/validator flags)*/}
-
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../../styles/custom.css";
 
@@ -60,17 +58,271 @@ If you already have the index of the record(s) you want to update (e.g. from a `
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
     ```ts
+    // using object
+    items.update_by_index(0, {      // update the first record
+        name: "Green Apple",        // update the name column
+        price: 6.5                  // update the price column
+    });
+
+    items.update_by_index([2, 5], [
+        { name: "Blueberry" },              // only update the name column for the third record
+        { name: "Raspberry", price: 10 }    // update the name and price column for the sixth record
+    ]);
+
+    // using columns
+    items.update_by_index(1, "name", "Yellow Banana");  // update the name column for the second record
+
+    items.update_by_index([3, 4], "name", ["Golden Date", "Black Elderberry"]);  // update the name column for the fourth and fifth record
+
+    items.update_by_index(6, ["name", "price"], ["Purple Grape", 7.5]);  // update the name and price column for the seventh record
+
+    items.update_by_index([7, 8], ["name", "price"], [    // update the name and price column for the eighth and ninth record
+        ["Sweet Honeydew", 9.5], 
+        ["Sour Kiwi", 4.5]
+    ]);
     ```
     </TabItem>
 </Tabs>
 
-### Using Object vs Columns
+### By Primary Key
+
+If you want to update data based on the primary key, you can use the `.update_by_primary()` method. This method will update all records with the same primary key.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // using object
+    items.update_by_primary(1, {      // update the record with primary key 1
+        name: "Green Apple",          // update the name column
+        price: 6.5                    // update the price column
+    });
+
+    items.update_by_primary([3, 6], [
+        { name: "Blueberry" },              // only update the name column for the third record
+        { name: "Raspberry", price: 10 }    // update the name and price column for the sixth record
+    ]);
+
+    // using columns
+    items.update_by_primary(2, "name", "Yellow Banana");  // update the name column for the second record
+
+    items.update_by_primary([4, 5], "name", ["Golden Date", "Black Elderberry"]);  // update the name column for the fourth and fifth record
+
+    items.update_by_primary(7, ["name", "price"], ["Purple Grape", 7.5]);  // update the name and price column for the seventh record
+
+    items.update_by_primary([8, 9], ["name", "price"], [    // update the name and price column for the eighth and ninth record
+        ["Sweet Honeydew", 9.5], 
+        ["Sour Kiwi", 4.5]
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+### By Column Value
+
+If you aren't sure which record(s) you want to update, but you know the value of a specific column, you can use the `.update_by_value()` method to update the data. This method will update record(s) that match the specified column value.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "match_all: true"
+    // using object
+    items.update_by_value("name", "Apple", {    // update the first record with `name` = "Apple" 
+        name: "Green Apple",
+        price: 6.5 
+    }); 
+
+    items.update_by_value("price", [6, 9], {    // update the first record with `price` = 6 or 9
+        price: some_value
+    });
+
+    items.update_by_value("name", "Banana", {   // update all records with `name` = "Banana"
+        name: "Golden Banana",
+        price: 12.6,
+        is_locked: true
+    }, {
+        match_all: true     
+    });
+
+    // using columns
+    items.update_by_value("name", "Cherry", "price", 14);   // update the `price` column for the first record with `name` = "Cherry"
+
+    items.update_by_value("price", 4, ["name", "price"], ["Sour Kiwi", 4.5]);   // update the `name` and `price` column for the first record with `price` = 4
+    // the new values (parameter 4) based on the column order (parameter 3), 
+    // so in this case, `name` will be updated to "Sour Kiwi" and `price` will be updated to 4.5 for the first record with `price` = 4
+
+    items.update_by_value("price", [5, 10, 15], ["name", "price"], ["Fruit of 5", 4.99]);   // update the `name` and `price` column for the first record with `price` = 5, 10, or 15
+
+    items.update_by_value("name", ["Date", "Fig", "Lemon"],
+        ["name", "price", "is_locked"],     // the columns to be updated
+        [
+            ["Golden Date", 12.5, true],    // the first matching record will be updated to this values
+            ["Fresh Fig", 9.99],            // the second matching record will be updated to this values
+            ["Sour Lemon", 2.5, true]       // and the rest of the matching records will be updated to this values
+        ], 
+        {
+            match_all: true                 // update all records with `name` = "Date", "Fig", or "Lemon"
+        }
+    );
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+The operation of this method is based on the:
+- `=` operator if the `value` is a single value, or 
+- `in` operator if the `value` is an array. 
+
+So, if you want to use other operators (e.g. `>`, `<`, `!=`, etc.) or more complex data-finding processes, please use the `.update_by_function()` method instead.
+:::
+
+:::caution
+Wildcards aren't supported in this method. 
+:::
+
+### By Custom Function
+
+If you want to update data based on more complex criteria, you can use the `.update_by_function()` method. This method allows you to define a custom function that will be used to find the record(s) to be updated.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "match_all: true"
+    // using object
+    items.update_by_function(function(data) {    // update the first record with `price` <= 4
+        return data.price <= 4;
+    }, {
+        price: 3.99
+    });
+
+    items.update_by_function(function(data) {    // update all records with `price` > 8 and `is_locked` = false
+        return data.price > 8 && !data.is_locked;
+    }, {
+        name: "Expensive Fruit",
+        is_locked: true
+    }, {
+        match_all: true
+    });
+
+    // using columns
+    items.update_by_function(function(data) {    // update the `name` column for the first record with `price` >= 10
+        return data.price >= 10;
+    }, "name", "Premium Fruit");
+
+    items.update_by_function(function(data) {    // update the `name` and `is_locked` column for all records with `price` < 5 or `name` = "Lemon"
+        return data.price < 5 || data.name == "Lemon";
+    }, ["name", "is_locked"], ["Cheap Fruit", true], {
+        match_all: true
+    });
+    ```
+    </TabItem>
+</Tabs>
 
 ### Dynamic Values
 
-## Constraints
+In the update methods above, the new value(s) to be applied during the update operation can also be dynamic values that are determined based on the current data. To use dynamic values, you can pass a function as the new value instead of a static value. 
 
-Let's dive into each constraint rules/behaviors and how it affects the update operation.
+The function will receive the current data and index as parameters, and should return the new value to be applied.
+
+:::note
+If the column in the schema has `METHOD` data type, the method won't be called during the update operation. Instead, it will replace the old method with the new one.
+:::
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    items.update_by_index(0, {
+        name: "Green Apple",
+        price: function(data) { return data.price + 2.3; }  // add 2.3 to the current price
+    });
+
+    items.update_by_primary(3, "price", function(data) {
+        return data.price * 0.9;        // decrease the price by 10%
+    });
+
+    items.update_by_value("price", [5, 10, 15], 
+        ["price", "is_locked"],
+        [
+            function(data) { return data.price - 0.3; },  // decrease the price by 30%
+            function(data) { return data.price > 10; }    // set the `is_locked` column to true if the price is greater than 10
+        ],
+        { match_all: true }
+    );
+
+    items.update_by_function(function(data) { return data.price > 10; }, {
+        name: function(data) { return data.name + " (discounted)"; }   // append " (discounted)" to the name
+        discount_price: function(data) { return data.price * 0.7; }    // discount the price by 30%
+    }, {
+        match_all: true
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+All `.update` method variants support dynamic values for the update data. It also support both object and column formats for the update data.
+:::
+
+:::danger
+**You must treat the `data` parameter as read-only**. Do not modify the data object directly, because the passed data has [`DIRECT` access type](/concepts/data-access#direct-access). So, it will affect the original data.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```diff lang='ts'
+    items.update_by_primary(3, "price", function(data) {
+        // DO NOT DO THIS
+    -   data.price = data.price * 0.9; 
+    -   data.is_locked = true;
+    -   data.price++;
+        return data.price * 0.9;        // return the updated value immediately
+    });
+    ```
+    </TabItem>
+</Tabs>
+:::
+
+### Which Method to Use?
+
+The choice between the `.update()` variants depends on the use case:
+
+1. For the precise update of one or more records, and you already know which record(s) to be updated:
+    - For future-proof code, use `.update_by_primary()` method. It always works, even if the data order changes in the future.
+    - For performance, as long as you know the index of the record(s) you want to update, use `.update_by_index()` method. But be aware that the index may change in the runtime/future (e.g. when you add, remove, or sort the records).
+2. If you don't know which record(s) to be updated, or you want to bulk-update the data:
+    - For simplicity, use `.update_by_value()` method. It's easier to use and understand.
+    - For complex data-finding processes, use `.update_by_function()` method. 
+
+## Upsert
+
+Upsert is a special type of update operation that allows you to insert or update data in the model based on the matching criteria. It is useful when you want to ensure that the data exists in the model, and if not, insert it.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {16, 23}
+    items.upsert({      // will be inserted due no data has `id` = 11
+        id: 11,
+        name: "Melon",
+        price: 8.5,
+    });
+
+    items.upsert([
+        { id: 12, name: "Nectarine", price: 10 },    // will be inserted due no data has `id` = 12
+        { id: 3, price: 11.7 },                      // will be updated due `id` = 3 already exists, `price` will be updated to 11.7
+        { name: "Orange", price: 7.5 }               // will be skipped due the matching column (`id`) is missing, and `insert_if_missing` option is set to `false`
+    ]);
+
+    items.upsert([
+        { name: "Orange", price: 7.5 }               // will be inserted due `insert_if_missing` option is set to `true`
+    ], {
+        insert_if_missing: true
+    });
+
+    items.upsert([
+        { id: 14, name: "Peach", price: 12.5 },         // will be inserted due no data has "Peach" in the `name` column
+        { name: "Apple", price: 6.5, is_locked: true }  // will be updated due `Apple` already exists, `price` will be updated to 6.5, and `is_locked` will be set to `true`
+    ], {
+        match_column: "name"
+    });
+    ```
+    </TabItem>
+</Tabs>
 
 ---
 
@@ -213,7 +465,7 @@ Updates data in the model by primary key.
         // ... other methods and properties ...
         static update_by_primary(
             _primary: int | int[],
-            _update_data: Struct,
+            _update_data: Struct | Struct[],
             _options?: NimbusDBUpdateOptions
         ): NimbusDBUpdateResult;
     }
@@ -227,7 +479,7 @@ Updates data in the model by primary key.
     - The primary key(s) of the record(s) to be updated.
 
     ##### `_update_data`
-    - Type: `Struct`
+    - Type: `Struct` | `Struct[]`
     - The data to apply during the update.
 
     ##### `_options`
@@ -289,7 +541,7 @@ Updates data in the model by primary key.
 Updates data in the model by matching a column value.
 
 :::note
-This method is only accept `=` operator for the data-finding process. For other operators or other complex data-finding processes, please use the `.update_by_function()` method instead.
+This method is only accept `=` and `in` operators for the data-finding process. For other operators or other complex data-finding processes, please use the `.update_by_function()` method instead.
 :::
 
 <Tabs>
@@ -303,7 +555,7 @@ This method is only accept `=` operator for the data-finding process. For other 
         static update_by_value(
             _column: string,
             _value: any,
-            _update_data: Struct,
+            _update_data: Struct | Struct[],
             _options?: NimbusDBUpdateOptions
         ): NimbusDBUpdateResult;
     }
@@ -321,7 +573,7 @@ This method is only accept `=` operator for the data-finding process. For other 
     - The value to match for the update.
 
     ##### `_update_data`
-    - Type: `Struct`
+    - Type: `Struct` | `Struct[]`
     - The data to apply during the update.
 
     ##### `_options`
@@ -397,7 +649,7 @@ Updates data in the model by matching a custom function.
         // ... other methods and properties ...
         static update_by_function(
             _func: (data: Struct, index: int) => boolean,
-            _update_data: Struct,
+            _update_data: Struct | Struct[],
             _options?: NimbusDBUpdateOptions
         ): NimbusDBUpdateResult;
     }
@@ -411,7 +663,7 @@ Updates data in the model by matching a custom function.
     - The function/method to be used for the update.
 
     ##### `_update_data`
-    - Type: `Struct`
+    - Type: `Struct` | `Struct[]`
     - The data to apply during the update.
 
     ##### `_options`
