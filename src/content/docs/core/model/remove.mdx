@@ -1,0 +1,422 @@
+---
+title: Remove
+description: Learn how to remove data from your models in NimbusDB, including best practices and implementation strategies.
+---
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+In this section, we will explore how to remove data from NimbusDB. We'll use this schema and the `items` model as an example to demonstrate how to remove data from a model:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Removing Data
+
+To remove data from a model, you can use `.remove()` method, or its derived methods based on the condition you want to use for removing data.
+
+### By Index
+
+If you already have the index of the record(s) you want to remove (e.g. from a `.find_index()` method), you can use the `.remove_by_index()` method to remove the data. This method will remove all records with the same index.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "not_sorted: true"
+    items.remove_by_index(1);       // remove the record with index 1
+
+    items.remove_by_index([2, 5]);  // remove the records with index 2 and 5
+
+    items.remove_by_index([4, 3, 0, 6], {
+        not_sorted: true    // if the indices array are not sorted in ascending order, use this option
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### By Primary Key
+
+Using primary key is the most efficient way to remove data from a model because it's future-proof and easy to use.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "not_sorted: true"
+    items.remove_by_primary(1);       // remove the record with primary key 1
+
+    items.remove_by_primary([2, 5]);  // remove the records with primary key 2 and 5
+
+    items.remove_by_primary([4, 3, 0, 6], {
+        not_sorted: true    // if the primary keys array are not sorted in ascending order, use this option
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### By Column Value
+
+If you aren't sure which record(s) you want to remove, but you know the value of a specific column, you can use the `.remove_by_value()` method to remove the data. This method will remove record(s) that match the specified column value.
+
+:::note
+This method only accepts `=` and `in` operators for the data-finding process. For other operators or other complex data-finding processes, please use the `.remove_by_function()` method instead.
+:::
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "match_all: true"
+    // match single value
+    items.remove_by_value("name", "Apple");     // remove the first record with `name` = "Apple" (if exists)
+
+    // match multiple values
+    items.remove_by_value("price", [6, 9]);    // remove the first record with `price` = 6 or 9 (if exists)
+    
+    // match all values
+    items.remove_by_value("name", "Banana", {
+        match_all: true     // remove all records with `name` = "Banana"
+    });
+
+    items.remove_by_value("price", [5, 10, 15], {
+        match_all: true     // remove all records with `price` = 5 or 10 or 15
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### By Custom Function
+
+For the things you can't do with `.remove_by_value()`, you can use the `.remove_by_function()` method to remove the data. This method will remove record(s) that match the specified function.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "match_all: true"
+    // match single value
+    items.remove_by_function(function (data) {  
+        return data.name == "Apple";    // remove the first record with `name` = "Apple" (if exists)
+    });
+
+    items.remove_by_function(function (data) {
+        // remove the first record with `name` = "Date" OR `price` = 3 or 6 or 9 (if exists)
+        return data.name == "Date" || array_contains([3, 6, 9], data.price);
+    });
+    
+    // match all values
+    items.remove_by_function(function (data) {
+        // remove all records that contains "a" in the `name`
+        return string_pos("a", data.name) > 0;
+    }, {
+        match_all: true
+    });
+
+    items.remove_by_function(function (data) {
+        // remove all records that has `price` > 7 AND the 15% discounted price is between 4 to 7
+        var discount_price = data.price - (data.price * 0.15);
+        return data.price > 7 && discount_price >= 4 && discount_price <= 7;
+    }, {
+        match_all: true
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+## Considerations
+
+There are several things to consider when removing data from a model:
+
+1. If you remove a record in the middle of the data sequence (e.g. removing record 3 of 7), the subsequent records will be shifted up to fill the gap. So, there's no `undefined` hole in your data.
+2. When using `.remove_by_index()` or `.remove_by_primary()`, you must order the indices or primary keys in ascending order when passing them as an array. Otherwise, the lower index/primary key will be skipped.
+3. If you have column with `PRIMARY_KEY` constraint, and you remove record(s) using any `.remove()` method, the number sequence in that column will **not** be re-used. For example, if you have 10 records in your model, and you remove the record with primary key 5, the next record you add to the model will have primary key 11, not 5.
+4. If you define relation(s) with other model, and you remove record(s) that have relation(s) with other model(s), it just remove the record(s) from the current model. The related record(s) in the other model(s) will **not** be affected. The relation also stays as it is.
+
+---
+
+## References
+
+### Model.remove() <Badge text="Master" variant="success" size='medium' />
+
+Remove data from a model.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static remove(
+        _selector:
+            | NimbusDBRemoveByIndex
+            | NimbusDBRemoveByPrimary
+            | NimbusDBRemoveByValue
+            | NimbusDBRemoveByFunction
+    ): NimbusDBRemoveResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_selector`
+
+- Type: `NimbusDBRemoveByIndex` | `NimbusDBRemoveByPrimary` | `NimbusDBRemoveByValue` | `NimbusDBRemoveByFunction`
+- The selector argument defines the criteria used to identify the records that should be removed from the model.
+
+#### Returns
+
+- Type: `NimbusDBRemoveResult`
+- The result object contains information about the removal operation.
+</section>
+
+### Model.remove_by_index()
+
+Remove data from a model by index.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static remove_by_index(
+        _index: int | int[],
+        _options?: Partial<NimbusDBRemoveByIndex>
+    ): NimbusDBRemoveResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_index`
+
+- Type: `int` | `int[]`
+- The index or indices of the record(s) to remove from the model.
+
+##### `_options`
+
+- Type: `Partial<NimbusDBRemoveByIndex>`
+- Optional configuration for the operation.
+
+#### Returns
+
+- Type: `NimbusDBRemoveResult`
+- The result object contains information about the removal operation.
+</section>
+
+### Model.remove_by_primary()
+
+Remove data from a model by primary key.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static remove_by_primary(
+        _primary_key: int | int[],
+        _options?: Partial<NimbusDBRemoveByPrimary>
+    ): NimbusDBRemoveResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_primary_key`
+
+- Type: `int` | `int[]`
+- The primary key or primary keys of the record(s) to remove from the model.
+
+##### `_options`
+
+- Type: `Partial<NimbusDBRemoveByPrimary>`
+- Optional configuration for the operation.
+
+#### Returns
+
+- Type: `NimbusDBRemoveResult`
+- The result object contains information about the removal operation.
+</section>
+
+### Model.remove_by_value()
+
+Remove data from a model by value.
+
+:::note
+This method only accepts `=` and `in` operators for the data-finding process. For other operators or other complex data-finding processes, please use the `.remove_by_function()` method instead.
+:::
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static remove_by_value(
+        _column: string,
+        _value: any,
+        _options?: Partial<NimbusDBRemoveByValue>
+    ): NimbusDBRemoveResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_column`
+
+- Type: `string`
+- The column to remove data from.
+
+##### `_value`
+
+- Type: `NimbusDBValue`
+- The value or values to remove from the model.
+
+##### `_options`
+
+- Type: `Partial<NimbusDBRemoveByValue>`
+- Optional configuration for the operation.
+
+#### Returns
+
+- Type: `NimbusDBRemoveResult`
+- The result object contains information about the removal operation.
+</section>
+
+### Model.remove_by_function()
+
+Remove data from a model by function.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static remove_by_function(
+        _func: (data: Struct, index: int) => boolean,
+        _options?: Partial<NimbusDBRemoveByFunction>
+    ): NimbusDBRemoveResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_func`
+
+- Type: `(data: Struct, index: int) => boolean`
+- The function to remove data from. This function takes the data and index of the record as arguments and returns `true` if the record should be removed, `false` otherwise.
+
+##### `_options`
+
+- Type: `Partial<NimbusDBRemoveByFunction>`
+- Optional configuration for the operation.
+
+#### Returns
+
+- Type: `NimbusDBRemoveResult`
+- The result object contains information about the removal operation.
+</section>
+
+### NimbusDBRemoveByIndex
+
+A selector object for removing data from a model by index.
+
+```ts title="query-remove.d.ts"
+type NimbusDBRemoveByIndex = {
+	index: int | int[];
+	keep_temp?: boolean;
+	not_sorted?: boolean;   // data is not sorted (default = false, assume the data is sorted)
+}
+```
+
+### NimbusDBRemoveByPrimary
+
+A selector object for removing data from a model by primary key.
+
+```ts title="query-remove.d.ts"
+type NimbusDBRemoveByPrimary = {
+	primary: int | int[];
+	keep_temp?: boolean;
+	not_sorted?: boolean;   // data is not sorted (default = false, assume the data is sorted)
+	id?: int | int[];       // alias for `primary`
+}
+```
+
+### NimbusDBRemoveByValue
+
+A selector object for removing data from a model by value.
+
+```ts title="query-remove.d.ts"
+type NimbusDBRemoveByValue = {
+	match_column: string;
+	value: any | any[];
+	keep_temp?: boolean;
+	length?: int;           // length for search (default = data.length)
+	match_all?: boolean;    // get all matching data (default = false)
+	start_index?: int;      // start index for search (default = 0)
+}
+```
+
+### NimbusDBRemoveByFunction
+
+A selector object for removing data from a model by function.
+
+```ts title="query-remove.d.ts"
+type NimbusDBRemoveByFunction = {
+	func: (data: Struct, index: int) => boolean;
+	keep_temp?: boolean;
+	length?: int;           // length for search (default = data.length)
+	match_all?: boolean;    // get all matching data (default = false)
+	start_index?: int;      // start index for search (default = 0)
+	where?: (data: Struct, index: int) => boolean;      // alias for `func`
+}
+```
+
+### NimbusDBRemoveResult
+
+A result object for remove operations.
+
+```ts title="query-remove.d.ts"
+type NimbusDBRemoveResult = {
+	count: int;
+	indexes: int[];
+	invalids: (int | string)[];
+	removed: NimbusDBData[];	// direct reference of the removed data
+}
+```
