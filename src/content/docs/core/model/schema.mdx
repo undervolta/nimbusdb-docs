@@ -6,7 +6,7 @@ description: Learn about schema in NimbusDB, including how to define and manage 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import "../../../../styles/custom.css";
 
-In NimbusDB, a schema defines the structure of your data, including the types of data you can store and the rules for how that data is organized. A well-designed schema helps ensure data integrity and makes it easier to query and manage your data.
+In **NimbusDB**, a schema defines the structure of your data, including the types of data you can store and the rules for how that data is organized. A well-designed schema helps ensure data integrity and makes it easier to query and manage your data.
 
 
 ## Schemaless Models
@@ -92,12 +92,12 @@ If you don't provide certain column in the schema, you can still store data in t
 
 ### Data Types
 
-NimbusDB supports a variety of data types that you can use in your schema definitions, including primitive types like `NUMBER`, `STRING`, and `BOOLEAN`, as well as complex types like `STRUCT`, `METHOD`, and various asset types. 
+**NimbusDB** supports a variety of data types that you can use in your schema definitions, including primitive types like `NUMBER`, `STRING`, and `BOOLEAN`, as well as complex types like `STRUCT`, `METHOD`, and various asset types. 
 
 You can also define union data types using arrays, allowing a column to accept multiple types of data.
 
 :::tip
-`NUMBER` and `INTEGER` are different data types in NimbusDB. `NUMBER` can store both integers and floating-point numbers, while `INTEGER` can only store whole numbers. Choosing the appropriate data type for your columns can help ensure data integrity and optimize performance.
+`NUMBER` and `INTEGER` are different data types in **NimbusDB**. `NUMBER` can store both integers and floating-point numbers, while `INTEGER` can only store whole numbers. Choosing the appropriate data type for your columns can help ensure data integrity and optimize performance.
 :::
 
 ### Constraints
@@ -201,7 +201,7 @@ For example, in the `is_locked` column in the above schema, it's defined as an o
 
 ### NimbusDBModel
 
-Model for NimbusDB that manages schema-backed data, relations, queries, and lifecycle operations.
+Model for **NimbusDB** that manages schema-backed data, relations, queries, and lifecycle operations.
 
 ```ts title="model.d.ts"
 class NimbusDBModel {

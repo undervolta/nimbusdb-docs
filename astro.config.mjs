@@ -39,40 +39,50 @@ export default defineConfig({
 				{
 					label: 'Core',
 					items: [
-						{ label: 'Model', items: [
-							{ label: 'Schema', slug: 'core/model/schema'},
-							{ label: 'Insert', slug: 'core/model/insert'},
-							{ label: 'Query', slug: 'core/model/query'},
-							{ label: 'Update', slug: 'core/model/update'},
-							{ label: 'Remove', slug: 'core/model/remove'},
-							{ label: 'Expose/Alias', slug: 'core/model/expose-alias'},
-							{ label: 'Cache/Temp', slug: 'core/model/cache-temp'},
-						] },
-						{ label: 'Catalog', items: [
-							{ label: 'Setup', slug: 'core/catalog/setup'},
-							{ label: 'Relations', slug: 'core/catalog/relations'},
-							{ label: 'Backup/Restore', slug: 'core/catalog/backup-restore'},
-						] },
-						{ label: 'Data', items: [
-							{ label: 'Mutations', slug: 'core/data/mutations'},
-							{ label: 'Resolve', slug: 'core/data/resolve'},
-						] },
-						{ label: 'Transaction', items: [
-							{ label: 'Basics', slug: 'core/transaction/basics'},
-							{ label: 'Operations', slug: 'core/transaction/operations'},
-						] },
+						{
+							label: 'Model', items: [
+								{ label: 'Schema', slug: 'core/model/schema' },
+								{ label: 'Insert', slug: 'core/model/insert' },
+								{ label: 'Query', slug: 'core/model/query' },
+								{ label: 'Update', slug: 'core/model/update' },
+								{ label: 'Remove', slug: 'core/model/remove' },
+								{ label: 'Expose/Alias', slug: 'core/model/expose-alias' },
+								{ label: 'Cache & Temporary Data', slug: 'core/model/cache-temp' },
+							]
+						},
+						{
+							label: 'Catalog', items: [
+								{ label: 'Setup', slug: 'core/catalog/setup' },
+								{ label: 'Relations', slug: 'core/catalog/relations' },
+								{ label: 'Backup/Restore', slug: 'core/catalog/backup-restore' },
+							]
+						},
+						{
+							label: 'Data', items: [
+								{ label: 'Mutations', slug: 'core/data/mutations' },
+								{ label: 'Resolve', slug: 'core/data/resolve' },
+							]
+						},
+						{
+							label: 'Transaction', items: [
+								{ label: 'Basics', slug: 'core/transaction/basics' },
+								{ label: 'Operations', slug: 'core/transaction/operations' },
+							]
+						},
 					],
 				},
 				{
 					label: 'Pipeline',
 					items: [
 						{ label: 'Overview', slug: 'pipeline/overview' },
-						{ label: 'Operations', items: [
-							{ label: 'Transform', slug: 'pipeline/ops/transform'},
-							{ label: 'Aggregation', slug: 'pipeline/ops/aggregation'},
-							{ label: 'Ordering', slug: 'pipeline/ops/ordering'},
-							{ label: 'Control', slug: 'pipeline/ops/control'},
-						] },
+						{
+							label: 'Operations', items: [
+								{ label: 'Transform', slug: 'pipeline/ops/transform' },
+								{ label: 'Aggregation', slug: 'pipeline/ops/aggregation' },
+								{ label: 'Ordering', slug: 'pipeline/ops/ordering' },
+								{ label: 'Control', slug: 'pipeline/ops/control' },
+							]
+						},
 						{ label: 'Terminal', slug: 'pipeline/terminal' },
 					],
 				},
@@ -110,7 +120,6 @@ export default defineConfig({
 				{
 					label: 'Guides',
 					items: [
-						{ label: 'Your First Model', slug: 'guides/your-first-model' },
 						{ label: 'Modeling Relations', slug: 'guides/modeling-relations' },
 						{ label: 'Pipeline Patterns', slug: 'guides/pipeline-patterns' },
 						{ label: 'Performance Tips', slug: 'guides/performance-tips' },

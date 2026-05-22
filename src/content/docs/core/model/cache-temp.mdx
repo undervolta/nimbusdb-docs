@@ -1,0 +1,228 @@
+---
+title: Cache and Temporary Data
+description: Learn about caching and temporary data management in NimbusDB, including best practices and implementation strategies.
+---
+
+{/* (set_cache, set_temp, clear_cache, clear_temp) */}
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+## Cache
+
+Cache in NimbusDB is built automatically based on the primary key(s) when you're using `.insert()`, `.get()`, and `.update()` with their variants.  
+
+<Tabs syncKey='lang'>
+    <TabItem label='GML' value='gml'>
+    ```ts "no_cache: true"
+    // assume `items` model's schema has `id` as primary key
+    items.insert({
+        name: "Apple",
+        price: 5
+    });
+    // this data will be cached automatically based on its primary key
+    // so, later we can using `.get()` and `.update()` with better performance
+    var apple_name = items.get_by_primary(1).name;
+
+    items.update_by_primary(1, {
+        name: "Banana",
+        price: 7
+    });
+
+    // after this update, the previous cache will be updated too
+    // so, when calling `apple_name` again, it will return the updated data
+    apple_name = items.get_by_primary(1).name;
+
+    // this one will NOT be cached if you enable `no_cache` option
+    items.insert({
+        id: 2,
+        name: "Blueberry",
+        price: 12
+    }, {
+        no_cache: true
+    });
+
+    // so, the `.get_by_primary()` method below will not use cache
+    var blueberry = items.get_by_primary(2);
+    // but, after this point, it will be cached (unless you enable `no_cache` option)
+    blueberry_price = blueberry.price;  	// this will use the cache
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+You don't even need to do anything to enable caching (e.g. using `.set_cache()` method manually). It's automatic!
+:::
+
+## Temporary Data
+
+An user-defined object to store temporary data that will be cleared automatically after calling model operations. It's usually used in:
+- schema's column validators (third parameter),
+- schema's column default values (if set as a function/method),
+- `.export()` method, and
+- `.import()` method.
+
+You won't likely use this method directly unless you're need to pass data/value that aren't related to the current data or model (e.g. getting value from other instance).
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {9-13, 19-25, 32-34, 45-47} "keep_temp: true"
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            // this validator will allow any data if `temp.insert_this` is true (only when using `.insert()` method)
+            // otherwise, it will only allow data with `price` >= 0
+            validator: function(data, value, temp) {
+                return (is_struct(temp) && struct_exists(temp, "insert_this") && temp.insert_this) || (value >= 0);
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            // if `temp.is_locked` is set, it will use that value
+            // otherwise, it will use `data.price > 9` as the default value
+            default_value: function(data, value, temp) {
+                return is_struct(temp) && struct_exists(temp, "is_locked")
+                    ? temp.is_locked
+                    : (data.price > 9);
+            }
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema);
+
+    // set temp for the next model operation
+    items.set_temp({
+        insert_this: true
+    });
+
+    items.insert([
+        { id: 1, name: "Apple", price: 5 },     // will be inserted
+        { id: 2, name: "Banana", price: -1 }    // will be inserted even if `price < 0` (because `temp.insert_this` is true)
+    ]);
+    // after one operation, `temp` will be cleared automatically
+
+    items.insert({ id: 3, name: "Cherry", price: -2 });     // will be inserted and `price` will be `0` (because `temp.insert_this` is not set and `price` < 0)
+
+    // set other temp for the next model operation
+    items.set_temp({
+        is_locked: true
+    });
+
+    items.insert({ id: 4, name: "Durian", price: 10 }, {    // `is_locked` will be `true` for this data (because `temp.is_locked` is true)
+        keep_temp: true     // don't clear temp after this operation
+    });
+
+    // the `temp` is still available
+    items.insert([                                  // this operation will use the existing `temp.is_locked`, so all of these data will have `is_locked` = true
+        { id: 5, name: "Elderberry", price: 12 },   // will be inserted
+        { id: 6, name: "Fig", price: -1 }           // will be inserted and `price` will be `0`
+    ]);
+    // and set `temp` to undefined after this operation
+    ```
+
+    :::note
+    Always use `is_struct(temp)` and `struct_exists(temp, "key")` before accessing its properties to avoid errors.
+    :::
+    </TabItem>
+</Tabs>
+
+:::tip
+Use `keep_temp` option to keep the temporary data after the model operation.
+:::
+
+---
+
+## References
+
+### Model.clear_cache()
+
+Clear all cached data.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static clear_cache(): void;
+}
+```
+</div>
+</section>
+
+### Model.clear_temp()
+
+Clear all temporary data.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static clear_temp(): void;
+}
+```
+</div>
+</section>
+
+### Model.set_cache() <Badge text="Internal" variant="caution" size='medium' />
+
+Cache the provided data based on its primary key.
+
+:::caution
+An internal method, don't use it directly unless you know what you're doing.
+:::
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static set_cache(
+        _data: NimbusDBData
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_data`
+
+- Type: `NimbusDBData`
+- The data to be cached, which is based on model's schema.
+</section>
+
+### Model.set_temp()
+
+Set a user-defined data.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static set_temp(
+        _data: Struct
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_data`
+
+- Type: `Struct`
+- An object containing data that will be accessible as `temp`.
+</section>

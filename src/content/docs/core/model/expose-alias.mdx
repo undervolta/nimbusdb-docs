@@ -1,0 +1,326 @@
+---
+title: Expose/Alias
+description: Learn how to expose or create aliases for data in models to use them more conveniently.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+In this section, we will discuss how to expose or create aliases for model data. We'll use this schema and the `items` model as an example:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Exposing Model Data
+
+You might wonder: "How can I retrieve/use data in the model quickly without using `.get()` method or its variants?" **NimbusDB**'s `.expose()` method allows you to expose model data by user-defined alias(es) under `ref` object.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // expose data with `id` = 1 as "data_1"
+    items.expose(1, "data_1");
+
+    // expose data with `id` = [2, 3, 5] as `["data_2", "cherry", "rec6"]
+    items.expose(
+        [2, 3, 5], 
+        ["data_2", "cherry", "rec6"]
+    );
+
+    // using direct data object
+    var date = items.get_by_primary(4, {
+        access: NIMBUSDB_DATA_ACCESS.DIRECT
+    });
+    items.alias(date, "date");      // `.alias()` is the same as `.expose()`
+
+    // or using both
+    var lemon = items.get_by_primary(10, {
+        access: NIMBUSDB_DATA_ACCESS.DIRECT
+    });
+    items.expose(
+        [9, lemon], 
+        ["kiwi", "lemon"]
+    );
+
+    // map over the model's data that return the key of the to be exposed data
+    items.expose(function(data, index) {
+        if (data.price < 5) return;     // don't expose data with `price` < 5
+
+        return "data_" + data.id;       // expose all data with `price` >= 5 as "data_<id>"
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+## Retrieving Exposed Data
+
+Use `.get_alias()` method for safer access to exposed data, or `.ref[alias]` to access it directly.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // get exposed data by alias
+    var data_1 = items.get_alias("data_1");
+    var banana_price = items.get_alias("data_2").price;
+
+    // or using ref object
+    var banana = items.ref.data_2;
+    var item9_name = items.ref.kiwi.name;
+    var cherry = items.ref[$ "cherry"];
+    var date_price = items.ref[$ "date"].price;
+    ```
+    </TabItem>
+</Tabs>
+
+:::danger
+**You must treat the exposed data as read-only**. Do not modify any exposed data, because it will affect the original data, which will lead to inconsistency.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```diff lang='ts' ".isolate()"
+    var banana = items.get_alias("banana");
+    var banana_price = banana.price;
+    var data_2 = banana;            // `data_2` now reference the same data as `banana`
+
+    // DO NOT DO THIS:
+    - banana.price = 0;             // This will update `price` in the original data
+    - data_2.name = "Blueberry";    // This will also update the original data
+
+    // DO THIS instead:
+    banana = banana.isolate();      // isolate the data first
+    banana.price = 0;               // This will NOT update `price` in the original data
+
+    var cherry = items.ref.cherry.isolate();
+    cherry.price = 0;               // This will NOT update `price` in the original data
+
+    var data_1 = items.get_alias("data_1").isolate();
+    data_1.name = "Green Apple";    // This will NOT update `name` in the original data
+    ```
+    </TabItem>
+</Tabs>
+:::
+
+## Removing Exposed Data
+
+You can use `.unexpose()` method to remove exposed data by user-defined alias(es).
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // remove exposed data
+    items.unexpose("data_1");
+
+    items.unexpose(["data_2", "cherry", "rec6"]);
+
+    // using direct data object
+    var date = items.get_by_primary(4, {
+        access: NIMBUSDB_DATA_ACCESS.DIRECT
+    });
+    items.unexpose(date);
+
+    // or using both
+    var lemon = items.get_by_primary(10, {
+        access: NIMBUSDB_DATA_ACCESS.DIRECT
+    });
+    items.unexpose([9, lemon]);
+    ```
+    </TabItem>
+</Tabs>
+
+## `ref` Object
+
+`ref` object will always hold references to the model's exposed data. You can use this object to access exposed data directly or by key.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // using ref object to access exposed data
+    var banana = items.ref.banana;
+    var banana_price = banana.price;
+    var data_2 = items.ref.data_2;
+    var item9_name = items.ref.kiwi.name;
+    var cherry = items.ref[$ "cherry"];
+    var date_price = items.ref[$ "date"].price;
+    ```
+    </TabItem>
+</Tabs>
+
+---
+
+## References
+
+### Model.alias() | Model.expose()
+
+Exposes (create one or more aliases) model data by user-defined alias(es) under `ref` object.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static expose(
+            _original_data: NimbusDBData | int | NimbusDBData[] | int[],
+            _as: string | string[]
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_original_data`
+    
+    - Type: `NimbusDBData` | `int` | `NimbusDBData[]` | `int[]`
+    - The original data (`access: NIMBUSDB_DATA_ACCESS.DIRECT`), or primary key(s) of data to be exposed.
+
+    ##### `_as`
+    
+    - Type: `string` | `string[]`
+    - The key(s) to expose the data as. Example: `data_1`, `["data_2", "data_3"]`.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static expose(
+            _map_func: (data: NimbusDBData, index: int) => string | undefined
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_map_func`
+    
+    - Type: `(data: NimbusDBData, index: int) => string | undefined`
+    - The function to iterate over the model's data that return the key of the to be exposed data. If `undefined` is returned, the current data will be skipped.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.get_alias()
+
+Get original data that are exposed by user-defined alias.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static get_alias(
+		_exposed_key: string
+	): NimbusDBData | undefined;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_exposed_key`
+
+- Type: `string`
+- The key of the exposed data to retrieve.
+
+#### Returns
+
+- Type: `NimbusDBData` | `undefined`
+- Returns the original data if it exists, otherwise `undefined`.
+</section>
+
+### Model.unexpose()
+
+Remove one or more user-defined alias(es).
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static unexpose(
+            _exposed_key: string | string[]
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_exposed_key`
+
+    - Type: `string` | `string[]`
+    - The key of the exposed data to remove.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static unexpose(
+            _original_data: NimbusDBData | int | NimbusDBData[] | int[]
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_original_data`
+
+    - Type: `NimbusDBData` | `int` | `NimbusDBData[]` | `int[]`
+    - The original data (`access: NIMBUSDB_DATA_ACCESS.DIRECT`), or primary key(s) of data to be unexposed.
+    </section>
+    </TabItem>
+</Tabs>

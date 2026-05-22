@@ -5,7 +5,7 @@ description: Learn how to create and execute queries in NimbusDB.
 
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 
-In this section, we will explore how to create and execute queries in NimbusDB. We'll use this schema and the `items` model as an example to demonstrate how to get data from a model:
+In this section, we will explore how to create and execute queries in **NimbusDB**. We'll use this schema and the `items` model as an example to demonstrate how to get data from a model:
 
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
@@ -44,7 +44,7 @@ In this section, we will explore how to create and execute queries in NimbusDB. 
 
 ## Querying Data
 
-To query data from your models in NimbusDB, you can use various methods such as `.get()` and `.find()`. These methods allow you to retrieve records based on specific criteria defined in your queries.
+To query data from your models in **NimbusDB**, you can use various methods such as `.get()` and `.find()`. These methods allow you to retrieve records based on specific criteria defined in your queries.
 
 ### By Index
 
@@ -152,7 +152,7 @@ Use `match_all: true` option to get all matching records instead of just the fir
 
 #### Operators
 
-NimbusDB supports various operators for value-based queries, including:
+**NimbusDB** supports various operators for value-based queries, including:
 
 - Equality: `=`, `==`
 - Inequality: `!=`, `!==`, `<>`
@@ -484,7 +484,7 @@ Query results can be transformed in various ways using the `transform` or `postp
 
 ### NimbusDBData <Badge text="Internal" variant="caution" />
 
-Represents a single record (row) in a NimbusDB model, wrapping the raw data struct with reactivity, linked access, and mutation utilities.
+Represents a single record (row) in a **NimbusDB** model, wrapping the raw data struct with reactivity, linked access, and mutation utilities.
 
 :::caution
 This is an internal class, and you shouldn't create an instance of this class manually in your code.
@@ -744,7 +744,7 @@ Finds all matching data in the model using a selector object.
 </Tabs>
 
 
-### Model.get()
+### Model.get() <Badge text="Master" variant="success" size='medium' />
 
 Retrieves data from the model using a selector object.
 
@@ -1332,7 +1332,7 @@ type NimbusDBGetOptions = Partial<{
 #### `access`
 - Type: `NIMBUSDB_DATA_ACCESS`
 - Default: `ISOLATED`
-- The data access type. See the [NIMBUSDB_DATA_ACCESS](#nimbusdbdata_access) enum for the available options, and check out how NimbusDB handles data access in the [Data Access](/concepts/data-access) section.
+- The data access type. See the [NIMBUSDB_DATA_ACCESS](#nimbusdbdata_access) enum for the available options, and check out how **NimbusDB** handles data access in the [Data Access](/concepts/data-access) section.
 
 #### `destruct`
 - Type: `boolean` | `NIMBUSDB_DESTRUCT`
