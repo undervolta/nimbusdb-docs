@@ -187,13 +187,10 @@ In some cases, you may encounter arrow functions in the API documentation. Arrow
 
 #### Example
 
-```ts
+```ts {3}
 function ndb_find(
     model: NimbusDBModel,
-    func: (
-        data: Struct,
-        index: number,
-    ) => boolean,
+    func: (data: Struct, index: number) => boolean,
     options?: NimbusDBFindOptions
 ): NimbusDBData | any[] | null;
 ```
@@ -202,7 +199,7 @@ In the above example, `func` is an arrow function that takes two parameters: `da
 
 In GML, we can use the `ndb_find()` function with an arrow function like this:
 
-```ts
+```ts "function(data, index) {" "return data.price > 0.5;" "}"
 var result = ndb_find(items, function(data, index) {
     return data.price > 0.5;
 });
@@ -217,22 +214,18 @@ In some cases, you may encounter function or method overloading in the API docum
 
 #### Example
 
-```ts
+```ts {3, 8}
 class NimbusDBModel {
     // ... other methods
+    static find(
+        primary: int | int[],
+        options?: NimbusDBGetOptions
+    ): NimbusDBData | any[] | null;
 
     static find(
-		primary: int | int[],
-		options?: NimbusDBGetOptions
-	): NimbusDBData | any[] | null;
-
-    static find(
-		func: (
-			data: Struct,
-			index: int
-		) => boolean,
-		options?: NimbusDBGetOptions
-	): NimbusDBData | any[] | null;
+        func: (data: Struct, index: int) => boolean,
+        options?: NimbusDBGetOptions
+    ): NimbusDBData | any[] | null;
 }
 ```
 

@@ -1,0 +1,619 @@
+---
+title: Catalog Essentials
+description: Get started with setting up your NimbusDB catalog, including installation instructions and initial configuration steps to create your first catalog.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+In this section, we will go through the fundamental operations of setting up and managing catalogs in NimbusDB.
+
+## Creating Catalogs
+
+To create a new catalog, you can create a new instance of `NimbusDBCatalog` class. 
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // create a catalog named "items"
+    my_catalog = new NimbusDBCatalog("catalog_test");
+
+    // with options
+    my_catalog = new NimbusDBCatalog("catalog_test", {
+        debug: 2, 		// level 2 debug, show warning and success messages
+        model: items 	// assume you have `items` model defined before creating this catalog
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+## Managing Models in Catalogs
+
+You can use various methods to manage models in catalogs. 
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // let's assume we have `items` model defined before creating this catalog
+    ctg_items = new NimbusDBCatalog("items", {
+        model: items        // add `items` model to the catalog
+    });
+
+    // or you can use `.add_model()` method
+    // ctg_items.add_model(items);
+    // ctg_items.add_model([model1, ..., modelN]);   // add multiple models
+
+    // you can create a new model inside this catalog
+    ctg_items.define("global", "shop", {     // define "shop" model inside `ctg_items` catalog
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        item_id: NIMBUSDB_DATA_TYPE.INTEGER,
+        stock: NIMBUSDB_DATA_TYPE.INTEGER
+    }, undefined, {
+        custom_id: 1    // set a custom id for this model
+    });
+
+    // remove `items` model by name
+    ctg_items.drop("items");
+    // ctg_items.drop(["model1", ..., "modelN"]);  // drop multiple models
+
+    // or by custom id (`.remove_model()` is alias of `.drop()`)
+    // ctg_items.remove_model(1);  // `shop` model has custom id of 1
+
+    var items_exists = ctg_items.has("items");  // check if `items` model is exists (false)
+    var model_names = ctg_items.list();         // get array of model names
+    
+    // rename model from `shop` to `storage`
+    // ctg_items.rename("shop", "storage");
+    ```
+    </TabItem>
+</Tabs>
+
+## Using Models
+
+After you add or define a model in a catalog, you can use it as normal model instance. You can also use `.use()` or `.model()` to get the model instance by name or custom id.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // let's re-add the `items` model first
+    ctg_items.add_model(items);                 // add existing model instance
+
+    // declare local variable to store model instance
+    var storage = ctg_items.use("storage");     // get model instance by name
+    var also_storage = ctg_items.model(1);      // get model instance by custom id (`.model()` is alias of `.use()`)
+
+    // both `storage` and `also_storage` refer to the same model instance
+    // and it's reusable in this script as normal model instance
+    storage.insert([
+        { id: 1, item_id: 1, stock: 10 },
+        { id: 2, item_id: 2, stock: 7 }
+    ]);
+    
+    storage.print();
+
+    // you can also do a one-time operation without assigning to a variable
+    ctg_items.use("storage").insert([
+        { id: 3, item_id: 3, stock: 16 },
+        { id: 4, item_id: 4, stock: 13 }
+    ]);
+
+    var apple = ctg_items.use("items").get_by_primary(1);
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+Check out the [Model Documentation](/core/model/schema) for more information about using models.
+:::
+
+---
+
+## References
+
+### NimbusDBCatalog
+
+A collections of models that are designed to work together.
+
+```ts title="catalog.d.ts"
+class NimbusDBCatalog {
+    constructor(
+        _name: string,
+        _options?: NimbusDBCatalogOptions
+    );
+
+    debug: boolean | 2 | 3;
+    name: string;
+
+    __metadata: NimbusDBCatalogMetadata;
+    __models: NimbusDBModel[];
+    __sys_temp?: Struct;
+}
+```
+
+<section>
+#### Constructor
+
+<div className="sticky-class">
+```ts title="catalog.d.ts"
+class NimbusDBCatalog { 
+    constructor(
+        _name: string,
+        _options?: NimbusDBCatalogOptions
+    )
+}
+```
+</div>
+
+##### `_name`
+
+- Type: `string`
+- Name of the catalog.
+
+##### `_options`
+
+- Type: `NimbusDBCatalogOptions`
+- Default: `undefined`
+- Optional configuration for the catalog.
+</section>
+
+### Catalog.add_model()
+
+Registers one or more existing model instances into the catalog.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="catalog.d.ts"
+class NimbusDBCatalog {
+    // ... other methods and properties ...
+    static add_model(
+		_model: NimbusDBModel | NimbusDBModel[]
+	): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_model`
+
+- Type: `NimbusDBModel` | `NimbusDBModel[]`
+- The model(s) to add to the catalog.
+</section>
+
+### Catalog.clear() | Catalog.truncate()
+
+Clears all data and caches of one or more models in the catalog by name or custom id. If no name or custom id is provided, clears all models.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static clear(
+            _name?: string | string[]   // default = undefined, clear all models data and cache
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_name`
+
+    - Type: `string` | `string[]`
+    - Default: `undefined`
+    - The name of the model(s) to clear. If `undefined`, all models will be cleared.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static clear(
+            _custom_id?: int | int[]    // default = undefined, clear all models data and cache
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_custom_id`
+
+    - Type: `int` | `int[]`
+    - Default: `undefined`
+    - The custom id of the model(s) to clear. If `undefined`, all models will be cleared.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Catalog.define()
+
+Defines a new model within the catalog.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="catalog.d.ts"
+class NimbusDBCatalog {
+    // ... other methods and properties ...
+    static define(
+        _root: Instance | "global",
+        _name: string,
+        _schema?: NimbusDBSchema,
+        _data?: Struct | Struct[],
+        _options?: NimbusDBModelOptions
+    ): NimbusDBModel;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_root`
+
+- Type: `Instance` | `"global"`
+- The root instance or global variable storage to use for the model.
+
+##### `_name`
+
+- Type: `string`
+- The name of the model to create.
+
+##### `_schema`
+
+- Type: `NimbusDBSchema`
+- Default: `undefined`
+- Optional schema definition for the model.
+
+##### `_data`
+
+- Type: `Struct | Struct[]`
+- Default: `undefined`
+- Optional initial data to populate the model.
+
+##### `_options`
+
+- Type: `NimbusDBModelOptions`
+- Default: `undefined`
+- Optional configuration for the model.
+
+#### Returns
+
+- Type: `NimbusDBModel`
+- The newly created `NimbusDBModel`.
+</section>
+
+### Catalog.drop() | Catalog.remove_model()
+
+Drops (removes) a model from the catalog by name or custom id.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static drop(
+            _name: string,
+            _options?: NimbusDBCatalogDropOptions
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_name`
+
+    - Type: `string`
+    - The name of the model to drop.
+
+    ##### `_options`
+
+    - Type: `NimbusDBCatalogDropOptions`
+    - Default: `undefined`
+    - Optional configuration for the drop operation.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static drop(
+            _custom_id: int,
+            _options?: NimbusDBCatalogDropOptions
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_custom_id`
+
+    - Type: `int`
+    - The custom id of the model to drop.
+
+    ##### `_options`
+
+    - Type: `NimbusDBCatalogDropOptions`
+    - Default: `undefined`
+    - Optional configuration for the drop operation.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Catalog.has()
+
+Checks whether the catalog contains a model with the given name.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="catalog.d.ts"
+class NimbusDBCatalog {
+    // ... other methods and properties ...
+    static has(
+        _name: string
+    ): boolean;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_name`
+
+- Type: `string`
+- The name of the model to check for existence.
+
+#### Returns
+
+- Type: `boolean`
+- `true` if the model exists in the catalog, `false` otherwise.
+</section>
+
+### Catalog.list()
+
+List all model names in the catalog.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="catalog.d.ts"
+class NimbusDBCatalog {
+    // ... other methods and properties ...
+    static list(): string[];
+}
+```
+</div>
+
+#### Returns
+
+- Type: `string[]`
+- An array of model names in the catalog.
+</section>
+
+### Catalog.model() | Catalog.use()
+
+Retrieves a registered model from the catalog by name or custom id.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static use(
+            _name: string
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_name`
+
+    - Type: `string`
+    - The name of the model to retrieve.
+
+    #### Returns
+
+    - Type: `NimbusDBModel` | `undefined`
+    - The model instance, or `undefined` if not found.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static use(
+            _custom_id: int
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_custom_id`
+
+    - Type: `int`
+    - The custom id of the model to retrieve.
+
+    #### Returns
+
+    - Type: `NimbusDBModel` | `undefined`
+    - The model instance, or `undefined` if not found.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Catalog.purge()
+
+Destroys all models in the catalog, including their data and caches.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="catalog.d.ts"
+class NimbusDBCatalog {
+    // ... other methods and properties ...
+    static purge(): void;
+}
+```
+</div>
+</section>
+
+### Catalog.rename()
+
+Renames a registered model in the catalog.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="catalog.d.ts"
+class NimbusDBCatalog {
+    // ... other methods and properties ...
+    static rename(
+        _old_name: string,
+        _new_name: string
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_old_name`
+
+- Type: `string`
+- The old name of the model to rename.
+
+##### `_new_name`
+
+- Type: `string`
+- The new name of the model to rename.
+</section>
+
+{/* ### Catalog.transaction()
+
+Runs a transactional operation on a model identified by name or custom id.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static transaction(
+            _name: string,
+            _func: (tx: NimbusDBTransaction) => void
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_name`
+
+    - Type: `string`
+    - The name of the model to run the transaction on.
+
+    ##### `_func`
+
+    - Type: `(tx: NimbusDBTransaction) => void`
+    - The callback function to run the transaction on.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static transaction(
+            _custom_id: int,
+            _func: (tx: NimbusDBTransaction) => void
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_custom_id`
+
+    - Type: `int`
+    - The custom id of the model to run the transaction on.
+
+    ##### `_func`
+
+    - Type: `(tx: NimbusDBTransaction) => void`
+    - The callback function to run the transaction on.
+    </section>
+    </TabItem>
+</Tabs> */}
+
+### NimbusDBCatalogOptions
+
+Available options for `NimbusDBCatalog` constructor.
+
+```ts title="catalog.d.ts"
+type NimbusDBCatalogOptions = Partial<{
+    debug: boolean | 2 | 3;
+    model: NimbusDBModel | NimbusDBModel[];
+}>;
+```
+
+### NimbusDBCatalogMetadata
+
+Catalog metadata includes creation and update timestamps.
+
+```ts title="catalog.d.ts"
+type NimbusDBCatalogMetadata = {
+    created_at: string;			// ISO 8601
+    updated_at: string;			// ISO 8601
+};
+```
+
+### NimbusDBCatalogDropOptions
+
+Available options for `.drop()` method.
+
+```ts title="catalog.d.ts"
+type NimbusDBCatalogDropOptions = Partial<{
+    destroy_model: boolean;             // also destroy the model (default = false)
+    fn_name: "drop" | "remove_model"; 	// [INTERNAL] used method name in debug messages (default = "drop")
+}>;
+```

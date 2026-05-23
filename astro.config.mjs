@@ -52,7 +52,7 @@ export default defineConfig({
 						},
 						{
 							label: 'Catalog', items: [
-								{ label: 'Setup', slug: 'core/catalog/setup' },
+								{ label: 'Essentials', slug: 'core/catalog/essentials' },
 								{ label: 'Relations', slug: 'core/catalog/relations' },
 								{ label: 'Backup/Restore', slug: 'core/catalog/backup-restore' },
 							]
