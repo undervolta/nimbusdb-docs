@@ -1,0 +1,859 @@
+---
+title: Model Relations
+description: Explore the concept of relations in NimbusDB, including how to define and manage relationships between models in your catalog.
+---
+
+{/* (define_relation, define_mutual_relation, drop_relation, get_relation, RelationSelector) */}
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+In this section, we'll explore how relations work in NimbusDB and how to define and manage them in your models. We'll use `items` and `shop` models for our examples.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // `items` model
+    items = new NimbusDBModel("global", "items", {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    }, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+
+    // `shop` model
+    shop = new NimbusDBModel("global", "shop", {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        item_id: NIMBUSDB_DATA_TYPE.INTEGER,
+        stock: NIMBUSDB_DATA_TYPE.INTEGER
+    }, [
+        { id: 1, item_id: 1, stock: 20 },
+        { id: 2, item_id: 2, stock: 17 },
+        { id: 3, item_id: 3, stock: 23 },
+        { id: 4, item_id: 3, stock: 50 },
+        { id: 5, item_id: 5, stock: 10 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Defining Relations
+
+NimbusDB provides a simple way to define relations between models, either in models or catalogs.
+
+### One-Way Relations
+
+A "blind" relation that defined one-sided. In other words, the target model has no knowledge of the source model.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {2}
+    // define relation from shop.item_id to items.id
+    var rel_id = shop.define_relation(items, "item_id", "id");
+    
+    // in case you want to to get the relation id later
+    var shop_items_rel = shop.get_relation("items", "item_id", "id");
+    ```
+    </TabItem>
+</Tabs>
+
+Based on the example above, we got this:
+
+```
+┏━━━━━━━━━┓                   ┏━━━━━━━━━━━┓
+┃  shop   ┃                   ┃   items   ┃
+┣━━━━━━━━━┫                   ┣━━━━━━━━━━━┫ 
+│ id      │         ┌────────>│ id        │
+├─────────┤         │         ├───────────┤
+│ item_id │─────────┘         │ name      │
+├─────────┤                   ├───────────┤
+│ stock   │                   │ price     │
+└─────────┘                   ├───────────┤
+                              │ is_locked │
+                              └───────────┘
+```
+
+`item_id` column in `shop` model is the foreign key that points to the `id` column in `items` model.
+
+As you can see, it just one-way relation. So, later we can resolve `shop.item_id` to `items.id`, but we can't resolve `items.id` to `shop.item_id`. We'll cover this in [Data Resolving](/core/data/resolve) section.
+
+:::tip
+There's no `FOREIGN_KEY` constraint in the schema definition, because it'll set automatically when you define a relation.
+:::
+
+### Bidirectional Relations
+
+A mutual relation between two models. Both models will have knowledge of each other.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {2, 5}
+    // define relation from shop.item_id to items.id
+    shop.define_relation(items, "item_id", "id");
+    
+    // and then from items.id to shop.item_id
+    items.define_relation(shop, "id", "item_id");
+    ```
+    </TabItem>
+</Tabs>
+
+Based on the example above, we got this:
+
+```
+┏━━━━━━━━━┓                   ┏━━━━━━━━━━━┓
+┃  shop   ┃                   ┃   items   ┃
+┣━━━━━━━━━┫                   ┣━━━━━━━━━━━┫ 
+│ id      │         ┌────────>│ id        │
+├─────────┤         │         ├───────────┤
+│ item_id │<────────┘         │ name      │
+├─────────┤                   ├───────────┤
+│ stock   │                   │ price     │
+└─────────┘                   ├───────────┤
+                              │ is_locked │
+                              └───────────┘
+```
+
+We can resolve both `shop.item_id` to `items.id` and `items.id` to `shop.item_id`. 
+
+:::tip
+By default, you should use **one-way relations**, unless your database/catalog design requires data in both models to be mutually resolvable.
+:::
+
+## Relations in Catalog
+
+If you're using catalog, you can define relations cleaner. Let's use this catalog:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    ctg_items = new NimbusDBCatalog("shop_catalog", {
+        models: [items, shop]        
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### One-Way Relations
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    // define relation from shop.item_id to items.id
+    ctg_items.define_relation("shop", "item_id", "items", "id");    // using model name and column name
+    
+    ctg_items.define_relation("shop.item_id = items.id");           // using model-column string
+    ctg_items.define_relation([                                     // using array of model-column strings
+        "shop.item_id = items.id", 
+        "...relN"
+    ]);
+
+    ctg_items.get_relation({        // using relation selector, array of this object is also allowed
+        from: "shop",               // `from` and `to` can be model name, custom id, or model instance
+        from_column: "item_id",     // `from_column` and `to_column` must be string (the column name)
+        to: "items",
+        to_column: "id"
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Bidirectional Relations
+
+### Relation Operators
+
+---
+
+## References
+
+### NimbusDBRelation <Badge text="Internal" variant="caution" size='medium' />
+
+Represents a defined relationship between two models, linking a column in the source model to a column in the target model.
+
+```ts title="relation.d.ts"
+class NimbusDBRelation {
+    constructor(
+        _model: NimbusDBModel,
+        _name_id: string | int,
+        _from_column: string,
+        _to_column: string,
+        _options?: NimbusDBRelationOptions
+    )
+
+    custom_id: int | undefined;
+    from_column: string;
+    id: int;
+    is_primary: boolean;
+    model: NimbusDBModel | undefined;
+    name: string | undefined;
+    to_column: string;
+
+    static __id: int;
+}
+```
+
+{/* <section>
+#### Constructor
+
+<div className="sticky-class">
+```ts title="model.d.ts"
+class NimbusDBRelation {
+    constructor(
+        _model: NimbusDBModel,
+        _name_id: string | int,
+        _from_column: string,
+        _to_column: string,
+        _options?: NimbusDBRelationOptions
+    )
+}
+```
+</div>
+
+##### `_model`
+
+- Type: `NimbusDBModel`
+- The target model of this relation.
+
+##### `_name_id`
+
+- Type: `string` | `int`
+- The name or custom ID of the target model.
+
+##### `_from_column`
+
+- Type: `string`
+- The column in the source model used for the join.
+
+##### `_to_column`
+
+- Type: `string`
+- The column in the target model used for the join.
+
+##### `_options`
+
+- Type: `NimbusDBRelationOptions`
+- Default: `undefined`
+- Optional configuration for the relation.
+</section> */}
+
+### Model.define_relation()
+
+Defines a one-way relation between models.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static define_relation(
+		_to_model: NimbusDBModel,
+		_from_column: string,
+		_to_column: string,
+		_option?: NimbusDBRelationOptions
+	): int | NimbusDBRelation;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_to_model`
+
+- Type: `NimbusDBModel`
+- The target model of this relation.
+
+##### `_from_column`
+
+- Type: `string`
+- The column in the source model used for the join.
+
+##### `_to_column`
+
+- Type: `string`
+- The column in the target model used for the join.
+
+##### `_options`
+
+- Type: `NimbusDBRelationOptions`
+- Default: `undefined`
+- Optional configuration for the relation.
+
+#### Returns
+
+- Type: `int` | `NimbusDBRelation`
+- The relation id. If `return_object` option is set to `true`, returns the `NimbusDBRelation` instance.
+</section>
+
+### Model.drop_relation()
+
+Drops a one-way relation from the model.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static drop_relation(
+            _relation_id: int
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_relation_id`
+
+    - Type: `int`
+    - The id of the relation to drop. Can be obtained from `.define_relation()` or `.get_relation()`.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static drop_relation(
+            _model_name_id: string | int,
+            _from_column: string,
+            _to_column: string
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_model_name_id`
+
+    - Type: `string` | `int`
+    - The name or custom ID of the model.
+
+    ##### `_from_column`
+
+    - Type: `string`
+    - The column in the source model used for the join.
+
+    ##### `_to_column`
+
+    - Type: `string`
+    - The column in the target model used for the join.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.get_relation()
+
+Retrieves a relation from the model.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static get_relation(
+            _model_name_id: string | int,
+            _from_column: string,
+            _to_column: string,
+            _options?: NimbusDBGetRelationOptions
+        ): int | NimbusDBRelation | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_model_name_id`
+
+    - Type: `string` | `int`
+    - The name or custom ID of the model.
+
+    ##### `_from_column`
+
+    - Type: `string`
+    - The column in the source model used for the join.
+
+    ##### `_to_column`
+
+    - Type: `string`
+    - The column in the target model used for the join.
+
+    ##### `_options`
+
+    - Type: `NimbusDBGetRelationOptions`
+    - Default: `undefined`
+    - Optional configuration for the relation.
+
+    #### Returns
+    
+    - Type: `int` | `NimbusDBRelation` | `undefined`
+    - The relation id. Returns `NimbusDBRelation` instance if `return_object` option is set to `true`. Returns `undefined` if the relation cannot be found.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static get_relation(
+            _relation_id: int,
+            _options?: NimbusDBGetRelationOptions
+        ): int | NimbusDBRelation | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_relation_id`
+
+    - Type: `int`
+    - The id of the relation to retrieve. Can be obtained from `.define_relation()` or `.get_relation()`.
+
+    ##### `_options`
+
+    - Type: `NimbusDBGetRelationOptions`
+    - Default: `undefined`
+    - Optional configuration for the relation.
+
+    #### Returns
+    
+    - Type: `int` | `NimbusDBRelation` | `undefined`
+    - The relation id. Returns `NimbusDBRelation` instance if `return_object` option is set to `true`. Returns `undefined` if the relation cannot be found.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Catalog.define_relation() 
+
+Defines a directional relation between two models using a selector string or object.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static define_relation(
+            _from_model: string,
+            _from_column: string,
+            _to_model: string,
+            _to_column: string,
+            _options?: NimbusDBCatalogRelationOptions
+        ): int | NimbusDBRelation | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_from_model`
+
+    - Type: `string`
+    - The source model name.
+
+    ##### `_from_column`
+
+    - Type: `string`
+    - The column in the source model used for the join.
+
+    ##### `_to_model`
+
+    - Type: `string`
+    - The target model name.
+
+    ##### `_to_column`
+
+    - Type: `string`
+    - The column in the target model used for the join.
+
+    ##### `_options`
+
+    - Type: `NimbusDBCatalogRelationOptions`
+    - Default: `undefined`
+    - Optional configuration for the relation.
+
+    #### Returns
+    
+    - Type: `int` | `NimbusDBRelation` | `undefined`
+    - The relation id. Returns `NimbusDBRelation` instance if `return_object` option is set to `true`. Returns `undefined` if the relation cannot be found.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static define_relation(
+            _selector: 
+                | string | string[]
+                | NimbusDBRelationSelector | NimbusDBRelationSelector[],
+            _options?: NimbusDBCatalogRelationOptions
+        ): int | NimbusDBRelation | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_selector`
+
+    - Type: `string` | `string[]` | `NimbusDBRelationSelector` | `NimbusDBRelationSelector[]`
+    - Selector string(s) in format `"model1.col = model2.col"`, or a `NimbusDBRelationSelector` object or array of it.
+
+    ##### `_options`
+
+    - Type: `NimbusDBCatalogRelationOptions`
+    - Default: `undefined`
+    - Optional configuration for the relation.
+
+    #### Returns
+    
+    - Type: `int` | `NimbusDBRelation` | `undefined`
+    - The relation id. Returns `NimbusDBRelation` instance if `return_object` option is set to `true`. Returns `undefined` if the relation cannot be found.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Catalog.define_mutual_relation() 
+
+Defines a bidirectional relation between two models using a selector string or object.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static define_mutual_relation(
+            _from_model: string,
+            _from_column: string,
+            _to_model: string,
+            _to_column: string,
+            _options?: NimbusDBCatalogRelationOptions
+        ): int | NimbusDBRelation | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_from_model`
+
+    - Type: `string`
+    - The source model name.
+
+    ##### `_from_column`
+
+    - Type: `string`
+    - The column in the source model used for the join.
+
+    ##### `_to_model`
+
+    - Type: `string`
+    - The target model name.
+
+    ##### `_to_column`
+
+    - Type: `string`
+    - The column in the target model used for the join.
+
+    ##### `_options`
+
+    - Type: `NimbusDBCatalogRelationOptions`
+    - Default: `undefined`
+    - Optional configuration for the relation.
+
+    #### Returns
+    
+    - Type: `int` | `NimbusDBRelation` | `undefined`
+    - The relation id. Returns `NimbusDBRelation` instance if `return_object` option is set to `true`. Returns `undefined` if the relation cannot be found.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static define_mutual_relation(
+            _selector: 
+                | string | string[] 
+                | NimbusDBRelationSelector | NimbusDBRelationSelector[],
+            _options?: NimbusDBCatalogRelationOptions
+        ): int | NimbusDBRelation | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_selector`
+
+    - Type: `string` | `string[]` | `NimbusDBRelationSelector` | `NimbusDBRelationSelector[]`
+    - Selector string(s) in format `"model1.col = model2.col"`, or a `NimbusDBRelationSelector` object or array of it.
+
+    ##### `_options`
+
+    - Type: `NimbusDBCatalogRelationOptions`
+    - Default: `undefined`
+    - Optional configuration for the relation.
+
+    #### Returns
+    
+    - Type: `int` | `NimbusDBRelation` | `undefined`
+    - The relation id. Returns `NimbusDBRelation` instance if `return_object` option is set to `true`. Returns `undefined` if the relation cannot be found.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Catalog.drop_relation()
+
+Drops a relation between two models.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static drop_relation(
+            _from_model: string | int | NimbusDBModel,
+            _from_column: string,
+            _to_model: string | int | NimbusDBModel,
+            _to_column: string
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_from_model`
+
+    - Type: `string` | `int` | `NimbusDBModel`
+    - The source model name, custom id, or model instance.
+
+    ##### `_from_column`
+
+    - Type: `string`
+    - The column in the source model used for the join.
+
+    ##### `_to_model`
+
+    - Type: `string` | `int` | `NimbusDBModel`
+    - The target model name, custom id, or model instance.
+
+    ##### `_to_column`
+
+    - Type: `string`
+    - The column in the target model used for the join.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static drop_relation(
+            _model: string | int | NimbusDBModel,
+            _relation_id: int
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_model`
+
+    - Type: `string` | `int` | `NimbusDBModel`
+    - The model name, custom id, or model instance.
+
+    ##### `_relation_id`
+
+    - Type: `int`
+    - The relation id. 
+    </section>
+    </TabItem>
+</Tabs>
+
+### Catalog.get_relation()
+
+Retrieves a relation between two models.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static get_relation(
+            _from_model: string | int | NimbusDBModel,
+            _from_column: string,
+            _to_model: string | int | NimbusDBModel,
+            _to_column: string,
+            _options?: NimbusDBGetRelationOptions
+        ): int | NimbusDBRelation | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_from_model`
+
+    - Type: `string` | `int` | `NimbusDBModel`
+    - The source model name, custom id, or model instance.
+
+    ##### `_from_column`
+
+    - Type: `string`
+    - The column in the source model used for the join.
+
+    ##### `_to_model`
+
+    - Type: `string` | `int` | `NimbusDBModel`
+    - The target model name, custom id, or model instance.
+
+    ##### `_to_column`
+
+    - Type: `string`
+    - The column in the target model used for the join.
+
+    ##### `_options`
+
+    - Type: `NimbusDBGetRelationOptions`
+    - Default: `undefined`
+    - Optional configuration for the relation.
+
+    #### Returns
+    
+    - Type: `int` | `NimbusDBRelation` | `undefined`
+    - The relation id. Returns `NimbusDBRelation` instance if `return_object` option is set to `true`. Returns `undefined` if the relation cannot be found.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="catalog.d.ts"
+    class NimbusDBCatalog {
+        // ... other methods and properties ...
+        static get_relation(
+            _relation_id: int,
+            _options?: NimbusDBGetRelationOptions
+        ): int | NimbusDBRelation | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_relation_id`
+
+    - Type: `int`
+    - The relation id.
+
+    ##### `_options`
+
+    - Type: `NimbusDBGetRelationOptions`
+    - Default: `undefined`
+    - Optional configuration for the relation.
+
+    #### Returns
+    
+    - Type: `int` | `NimbusDBRelation` | `undefined`
+    - The relation id. Returns `NimbusDBRelation` instance if `return_object` option is set to `true`. Returns `undefined` if the relation cannot be found.
+    </section>
+    </TabItem>
+</Tabs>
+
+### NimbusDBRelationOptions
+
+Optional configurations for the relation.
+
+```ts title="relation.d.ts"
+type NimbusDBRelationOptions = Partial<{
+    is_primary: boolean;        // whether the target model's column is a primary key for that model (default = false)
+    use_custom_id: boolean;     // use custom_id instead of name (default = false)
+}>;
+```
+
+### NimbusDBGetRelationOptions
+
+Optional configurations for `.get_relation()` method.
+
+```ts title="model.d.ts"
+type NimbusDBGetRelationOptions = Partial<{
+    return_object: boolean;     // return relation object instead of system id (default = false)
+    temporary: boolean;         // force creating new relation and don't store in relations array (default = false)
+    use_custom_id: boolean;     // use custom_id instead of name (default = false)
+}>;
+```
+
+### NimbusDBCatalogRelationOptions
+
+Optional configurations for `.define_relation()` and `.define_mutual_relation()` methods.
+
+```ts title="catalog.d.ts"
+type NimbusDBCatalogRelationOptions = Partial<{
+    bidirectional: boolean;     // make the relation bidirectional (default = false)
+}> & NimbusDBGetRelationOptions;
+```
