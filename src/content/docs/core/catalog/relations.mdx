@@ -3,8 +3,6 @@ title: Model Relations
 description: Explore the concept of relations in NimbusDB, including how to define and manage relationships between models in your catalog.
 ---
 
-{/* (define_relation, define_mutual_relation, drop_relation, get_relation, RelationSelector) */}
-
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../../styles/custom.css";
 
@@ -142,9 +140,22 @@ Based on the example above, we got this:
 
 We can resolve both `shop.item_id` to `items.id` and `items.id` to `shop.item_id`. 
 
+#### Explanation
+
+For the example above, we got 2 different **perspectives**:
+
+1. From `shop` model perspective:
+    - `shop` model **needs** `items` model's data **through `item_id` column**.
+    - With this, we have "The first item in the `shop` will sell which item?"-like question.
+
+2. From `items` model perspective:
+    - `items` model **has** `shop` model's data **through `id` column**.
+    - With this, we have "Which shop sells this item?" or "Where do I get this item?" question.
+
 :::tip
 By default, you should use **one-way relations**, unless your database/catalog design requires data in both models to be mutually resolvable.
 :::
+
 
 ## Relations in Catalog
 
@@ -154,7 +165,7 @@ If you're using catalog, you can define relations cleaner. Let's use this catalo
     <TabItem label="GML" value="gml">
     ```ts 
     ctg_items = new NimbusDBCatalog("shop_catalog", {
-        models: [items, shop]        
+        model: [items, shop]        
     });
     ```
     </TabItem>
@@ -174,7 +185,7 @@ If you're using catalog, you can define relations cleaner. Let's use this catalo
         "...relN"
     ]);
 
-    ctg_items.get_relation({        // using relation selector, array of this object is also allowed
+    ctg_items.define_relation({     // using relation selector, array of this object is also allowed
         from: "shop",               // `from` and `to` can be model name, custom id, or model instance
         from_column: "item_id",     // `from_column` and `to_column` must be string (the column name)
         to: "items",
@@ -186,7 +197,68 @@ If you're using catalog, you can define relations cleaner. Let's use this catalo
 
 ### Bidirectional Relations
 
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "bidirectional: true" "<=>"
+    // define relation from shop.item_id to items.id and vice versa
+    
+    // when using `.define_relation()`, set `bidirectional: true` option
+    // works on any style/format that is accepted by `.define_relation()`
+    ctg_items.define_relation("shop", "item_id", "items", "id", {
+        bidirectional: true
+    });
+
+    // you can also use the bidirectional operators instead
+    ctg_items.define_relation("shop.item_id <=> items.id");
+
+    // or use `.define_mutual_relation()` to enable the bidirectional relation by default
+    ctg_items.define_mutual_relation("shop", "item_id", "items", "id");
+
+    ctg_items.define_mutual_relation("shop.item_id = items.id");           // using model-column string
+    ctg_items.define_mutual_relation([                                     // using array of model-column strings
+        "shop.item_id = items.id", 
+        "...relN"
+    ]);
+
+    ctg_items.define_mutual_relation({   // using relation selector, array of this object is also allowed
+        from: "shop",                    // `from` and `to` can be model name, custom id, or model instance
+        from_column: "item_id",          // `from_column` and `to_column` must be string (the column name)
+        to: "items",
+        to_column: "id"
+    });
+    ```
+    </TabItem>
+</Tabs>
+
 ### Relation Operators
+
+If you're using string-selector format for defining relations (`"model1.from_col {operator} model2.to_col"`), you can use the following operators:
+
+| Operator | Type | Description |
+| -------- | ---- | ----------- |
+| `=`, `->`, `=>` | One-way | Defines a relation from `left` model to `right` model. |
+| `<-`, `<=` | One-way | Defines a relation from `right` model to `left` model. |
+| `<->`, `<=>` | Bidirectional | Defines a relation from `left` model to `right` model and vice versa. |
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "=" "->" "=>" "<-" "<=" "<->" "<=>"
+    // using one-way operator
+    // from left (source) to right (target)
+    ctg_items.define_relation("shop.item_id = items.id");
+    ctg_items.define_relation("shop.item_id -> items.id");
+    ctg_items.define_relation("shop.item_id => items.id");
+    
+    // from right (source) to left (target)
+    ctg_items.define_relation("shop.item_id <- items.id");
+    ctg_items.define_relation("shop.item_id <= items.id");
+    
+    // using bidirectional operator
+    ctg_items.define_relation("shop.item_id <-> items.id");
+    ctg_items.define_relation("shop.item_id <=> items.id");
+    ```
+    </TabItem>
+</Tabs>
 
 ---
 
@@ -824,6 +896,18 @@ Retrieves a relation between two models.
     </section>
     </TabItem>
 </Tabs>
+
+### NimbusDBRelationSelector
+
+```ts title="relation.d.ts" 
+type NimbusDBRelationSelector = {
+    from: string | int | NimbusDBModel;     // int = model's custom_id
+    from_column: string;
+    to: string | int | NimbusDBModel;       // int = model's custom_id
+    to_column: string;
+    options?: NimbusDBGetRelationOptions;
+};
+```
 
 ### NimbusDBRelationOptions
 
