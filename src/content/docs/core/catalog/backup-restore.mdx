@@ -1,0 +1,248 @@
+---
+title: Backup and Restore
+description: Learn how to backup and restore your NimbusDB catalog to ensure data safety and recovery in case of failures.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+In this section, we will go through how to backup and restore your **NimbusDB** catalog. We'll use `items` and `shop` models, and `ctg_items` catalog for our examples.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // `items` model
+    items = new NimbusDBModel("global", "items", {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    }, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+
+    // `shop` model
+    shop = new NimbusDBModel("global", "shop", {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        item_id: NIMBUSDB_DATA_TYPE.INTEGER,
+        stock: NIMBUSDB_DATA_TYPE.INTEGER
+    }, [
+        { id: 1, item_id: 1, stock: 20 },
+        { id: 2, item_id: 2, stock: 17 },
+        { id: 3, item_id: 3, stock: 23 },
+        { id: 4, item_id: 3, stock: 50 },
+        { id: 5, item_id: 5, stock: 10 }
+    ], {
+        custom_id: 100
+    });
+
+    // `ctg_items` catalog
+    ctg_items = new NimbusDBCatalog("shop_catalog", {
+        model: [items, shop]        
+    });
+
+    // define mutual relation between `shop` and `items` models
+    ctg_items.define_relation("shop.item_id <=> items.id");
+    ```
+    </TabItem>
+</Tabs>
+
+## Backup
+
+NimbusDB provides universal (cross-platform and cross-game) backup and restore functionality, which allows you to back up your entire catalog to a file and restore it later, preserving the structure of your models and data, as well as their relations.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts ".nimbusdb" "model:"
+    // save the backup in the save area
+    ctg_items.backup("ctg_items_backup.nimbusdb");
+    ctg_items.backup("ctg_items_backup");           // the extension is optional
+
+    // under folder(s)/directory
+    directory_create("backup");
+    ctg_items.backup("backup/ctg_items_backup");
+
+    // back up selected models by name
+    ctg_items.backup("ctg_items_backup", {
+        model: "items"              // backup only `items` model
+    });
+
+    // back up selected models by custom_id
+    ctg_items.backup("ctg_items_backup", {
+        model: 100                  // backup only `shop` model (custom_id = 100)
+    });
+
+    // back up multiple models by name or custom_id
+    ctg_items.backup("ctg_items_backup", {
+        model: ["items", "shop"]    // backup both `items` and `shop` models
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+Use `~` or `~/` prefix as shorthand for `working_directory/`. Works for `.backup` and `.restore` methods.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "~/"
+    ctg_items.backup("~/ctg_items_backup");         // equal to `working_directory/ctg_items_backup`
+    ctg_items.backup("~/backup/ctg_items_backup");  // equal to `working_directory/backup/ctg_items_backup`
+    ```
+    </TabItem>
+</Tabs>
+:::
+
+## Restore
+
+To restore NimbusDB catalog data from a `.nimbusdb` backup file, use `.restore()` method with the path to the backup file.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts ".nimbusdb" "new_model:"
+    // restore catalog with default settings
+    ctg_items.restore("ctg_items_backup.nimbusdb");
+    ctg_items.restore("ctg_items_backup");           // the extension is optional
+
+    // under folder(s)/directory
+    ctg_items.restore("backup/ctg_items_backup");
+    ctg_items.restore("~/backup/ctg_items_backup");
+
+    // configure restored model(s) by passing options
+    ctg_items.restore("backup/ctg_items_backup", {
+        new_model: {
+            root: id,           // set model root
+            options: {          // set model options
+                debug: true     // enable debug mode
+            }
+        }
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+---
+
+## References
+
+### Catalog.backup()
+
+Backs up all or selected models in the catalog to a file.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="catalog.d.ts"
+class NimbusDBCatalog {
+    // ... other methods and properties ...
+    static backup(
+        _path: string,
+        _options?: NimbusDBBackupOptions
+    ): boolean;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_path`
+
+- Type: `string`
+- The path to the backup file.
+
+##### `_options`
+
+- Type: `NimbusDBBackupOptions`
+- Default: `undefined`
+- Options for the backup operation. 
+
+#### Returns
+
+- Type: `boolean`
+- `true` if the backup was successful, `false` otherwise.
+</section>
+
+### Catalog.restore()
+
+Restores catalog data from a backup file.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="catalog.d.ts"
+class NimbusDBCatalog {
+    // ... other methods and properties ...
+    static restore(
+        _path: string,
+        _options?: NimbusDBRestoreOptions
+    ): boolean;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_path`
+
+- Type: `string`
+- The path to the backup file.
+
+##### `_options`
+
+- Type: `NimbusDBRestoreOptions`
+- Default: `undefined`
+- Options for the restore operation. 
+
+#### Returns
+
+- Type: `boolean`
+- `true` if the restore was successful, `false` otherwise.
+</section>
+
+### NimbusDBBackupOptions
+
+Optional configuration for the `Catalog.backup()` method.
+
+```ts title="catalog.d.ts"
+type NimbusDBBackupOptions = Partial<{
+    model: string | int | string[] | int[];     // model(s) to be backed up by name or custom_id (default = undefined, backup all models)
+}>;
+```
+
+### NimbusDBRestoreOptions
+
+Optional configuration for the `Catalog.restore()` method.
+
+```ts title="catalog.d.ts"
+type NimbusDBRestoreOptions = Partial<{
+    new_model: Partial<{                // configurations for new model(s) created from backup file (default = undefined, use catalog default)
+        root: Instance | "global";          // the root instance reference, or `"global"` for global storage (default = "global")
+        options: NimbusDBModelOptions;      // configuration for the new model(s) (default = undefined)
+    }>;
+}>;
+```
