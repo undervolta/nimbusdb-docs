@@ -1,0 +1,454 @@
+---
+title: Data Mutation
+description: Learn about data mutations in NimbusDB, including how to create, update, and delete fields in your records, and how to manage data changes effectively.
+---
+
+{/* (inc/dec, add, remove, isolate) */}
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+In this section, we will discuss how to mutate/modify `NimbusDBData` instances. We'll use this schema and the `items` model as an example:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Adding/Removing Fields
+
+We can add or remove fields from a record regardless of the schema.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "_linked"
+    // let's use `apple` record as an example
+    var apple = items.get_by_primary_linked(1);
+
+    // you can also use `.find()` to get the linked data
+    // var apple = items.find(1);
+
+    // add a new field
+    apple.add({ color: "red" });
+    apple.print();
+
+    // add multiple fields
+    apple.add({ 
+        weight: 150,
+        unit: "grams"
+    });
+    apple.print();
+
+    // remove a field
+    apple.remove("color");
+    apple.print();
+
+    // remove multiple fields
+    apple.remove(["id", "name"]);
+    apple.print();
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+- You need to use [`LINKED`](/concepts/data-access#linked-access) or [`DIRECT`](/concepts/data-access#direct-access) to use the built-in methods.
+- You **can't** remove:
+    - primary key,
+    - column(s) that defined in the schema using object form, and doesn't have [`NIMBUSDB_CONSTRAINT.OPTIONAL`](/core/model/schema#constraints) constraint.
+:::
+
+:::tip
+If you're using `.remove()` method and the affected property is defined in the schema, the value will be changed into `undefined` instead, without removing the key from the data instance. This is to prevent the data from being inconsistent with the schema.
+:::
+
+## Value Increment/Decrement
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "create_if_missing: true"
+    // let's use `apple` record as an example
+    var apple = items.get_by_primary_linked(1);
+
+    // you can also use `.find()` to get the linked data
+    // var apple = items.find(1);
+
+    // increment `price` by 1
+    apple.inc("price");
+    apple.print();
+
+    // increment `price` by 2.5
+    apple.inc("price", 2.5);
+    apple.print();
+
+    // increment `price` and `owned` by 1
+    apple.inc(["price", "owned"]);
+    // but only `price` will be incremented, because `owned` doesn't exist in the record
+    apple.print();
+
+    // increment `price` and `owned` by 2, and create all columns if it doesn't exist
+    apple.inc(["price", "owned"], [2, 2], {
+        create_if_missing: true
+    });
+    apple.print();      // now "owned" column exist in the record
+
+    // decrement `price` by 1
+    apple.dec("price");
+    apple.print();
+
+    // decrement `price` by 2.5
+    apple.dec("price", 2.5);
+    apple.print();
+
+    // decrement `price` by 2.5 and `owned` by 1
+    apple.dec(["price", "owned"], [2.5, 1]);
+    apple.print();
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+If you not set `create_if_missing: true` option, then column(s) that doesn't exist in both schema and record will be ignored.
+:::
+
+## Modification to the Original Record
+
+You can use `write_through: true` or `affect_original: true` option to sync the changes back to the original data.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts "write_through: true"
+    // let's use `apple` record for non-write-through example
+    // and `banana` for write-through example
+    var apple = items.find(1);
+    var banana = items.find(2);
+
+    // add a new field
+    apple.add({ color: "red" });
+    banana.add({ color: "yellow" }, {
+        write_through: true
+    });
+
+    // now print to see the differences
+    apple.print();
+    banana.print();
+    items.print({
+        pick: ["id", "name", "price", "color"]
+    });
+
+    // remove a field
+    apple.remove("color");
+    banana.remove("color", {
+        write_through: true
+    });
+
+    // increment/decrement price
+    apple.inc("price");
+    banana.inc("price", 2, {
+        write_through: true
+    });
+
+    // check the differences again
+    apple.print();      // `price` = 6
+    banana.print();     // `price` = 9.2
+    items.print({       // apple `price` = 5, banana `price` = 9.2
+        pick: ["id", "name", "price", "color"]
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+1. Even after using write-through option, if you want to get the value of extra column(s), you need to specify the column name(s) using [`pick`, `column`, or `select`](/core/model/query#nimbusdbgetoptions) option.
+
+    <Tabs syncKey='lang'>
+        <TabItem label="GML" value="gml">
+        ```ts "pick: \"color\""
+        var banana_color = items.find(2, {
+            pick: "color",
+            destruct: true
+        });
+        show_debug_message($"The color of banana is {banana_color}.");
+        ```
+        </TabItem>
+    </Tabs>
+
+2. You can remove extra column(s) that was added using `.add()` with write-through option, but it **won't** remove the column(s) from the original record.
+
+    <Tabs syncKey='lang'>
+        <TabItem label="GML" value="gml">
+        ```ts "pick: \"color\""
+        banana.remove("color", {
+            write_through: true
+        });
+
+        banana.print();     // the `color` column is removed from the banana record
+        items.print({       // but the `color` column is still exist in the original data (`items` model)
+            pick: ["id", "name", "price", "color"]
+        });
+        ```
+        </TabItem>
+    </Tabs>
+:::
+
+## Isolating Records
+
+Use `.isolate()` method to get an isolated copy of a record, which can be used to modify the record without affecting the original data.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // both are linked copies
+    var apple = items.find(1);
+    var banana = items.find(2);
+
+    // isolate `banana` record
+    banana = banana.isolate();
+    // now `banana` is isolated copy, and `apple` is still linked copy
+    // you can't do any data-scope operation on `banana`
+
+    // these will throw an error
+    // banana.inc("price");
+    // banana.dec("price");
+    // banana.remove("color");
+    // banana.add("color", "yellow");
+
+    // any modification on `banana` won't affect the original record
+    banana.name = "strawberry";
+    show_debug_message($"Modified name: {banana.name}.");   // "strawberry"
+    items.find(2).print();                                  // `name` is still "banana"
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+The `.isolate()` method only works on data with [`LINKED`](/concepts/data-access#linked-access) or [`DIRECT`](/concepts/data-access#direct-access) access. It will throw an error if used on data with [`ISOLATED`](/concepts/data-access#isolated-data) access.
+:::
+
+---
+
+## References
+
+### Data.add()
+
+Adds extra properties or update existing properties of this data instance, bypassing schema rules, type checks, and validators.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="data.d.ts"
+class NimbusDBData {
+    // ... other methods and properties ...
+    static add(
+        _data: Struct,
+        _options?: NimbusDBDataOpsOptions
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_data`
+
+- Type: `Struct`
+- The extra data object/struct to merge in.
+
+##### `_options`
+
+- Type: `NimbusDBDataOpsOptions`
+- Default: `undefined`
+- Optional configurations for the operation.
+</section>
+
+
+### Data.dec() | Data.decrement()
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="data.d.ts"
+class NimbusDBData {
+    // ... other methods and properties ...
+    static dec(
+        _column: string | string[],
+        _by?: number | number[],
+        _options?: NimbusDBDataNumopsOptions
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_column`
+
+- Type: `string` | `string[]`
+- The column name or array of column names to decrement.
+
+##### `_by`
+
+- Type: `number` | `number[]`
+- Default: `1` | `[1, ..., 1]` (array length equals to `_column` length)
+- Amount or array of amounts to decrement by.
+
+##### `_options`
+
+- Type: `NimbusDBDataNumopsOptions`
+- Default: `undefined`
+- Optional configurations for the operation.
+</section>
+
+### Data.inc() | Data.increment()
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="data.d.ts"
+class NimbusDBData {
+    // ... other methods and properties ...
+    static inc(
+        _column: string | string[],
+        _by?: number | number[],
+        _options?: NimbusDBDataNumopsOptions
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_column`
+
+- Type: `string` | `string[]`
+- The column name or array of column names to increment.
+
+##### `_by`
+
+- Type: `number` | `number[]`
+- Default: `1` | `[1, ..., 1]` (array length equals to `_column` length)
+- Amount or array of amounts to increment by.
+
+##### `_options`
+
+- Type: `NimbusDBDataNumopsOptions`
+- Default: `undefined`
+- Optional configurations for the operation.
+</section>
+
+### Data.isolate()
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="data.d.ts"
+class NimbusDBData {
+    // ... other methods and properties ...
+    static isolate(): Struct;
+}
+```
+</div>
+
+#### Returns
+
+- Type: `Struct`
+- Returns an isolated copy of the data.
+</section>
+
+### Data.print()
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="data.d.ts"
+class NimbusDBData {
+    // ... other methods and properties ...
+    static print(): void;
+}
+```
+</div>
+</section>
+
+### Data.remove()
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="data.d.ts"
+class NimbusDBData {
+    // ... other methods and properties ...
+    static remove(
+        _prop: string | string[],
+        _options?: NimbusDBDataOpsOptions
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_prop`
+
+- Type: `string` | `string[]`
+- The column name or array of column names to remove.
+
+##### `_options`
+
+- Type: `NimbusDBDataOpsOptions`
+- Default: `undefined`
+- Optional configurations for the operation.
+</section>
+
+### NimbusDBDataOpsOptions
+
+Optional configurations for `NimbusDBData` operations.
+
+```ts title="data.d.ts"
+type NimbusDBDataOpsOptions = Partial<{
+    write_through: boolean;         // sync the change to the original data (default = false)
+    affect_original: boolean;       // alias for `write_through`
+}>;
+```
+
+### NimbusDBDataNumopsOptions
+
+Optional configurations for numeric operations on `NimbusDBData` instances.
+
+```ts title="data.d.ts"
+type NimbusDBDataNumopsOptions = Partial<{
+	create_if_missing: boolean;		// create the column if it's missing (default = false)
+}> & NimbusDBDataOpsOptions;
+```
