@@ -44,7 +44,7 @@ You can use various methods to manage models in catalogs.
     // ctg_items.add_model([model1, ..., modelN]);   // add multiple models
 
     // you can create a new model inside this catalog
-    ctg_items.define("global", "shop", {     // define "shop" model inside `ctg_items` catalog
+    ctg_items.define("global", "shop_items", {     // define "shop_items" model inside `ctg_items` catalog
         id: {
             type: NIMBUSDB_DATA_TYPE.INTEGER,
             const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
@@ -60,13 +60,13 @@ You can use various methods to manage models in catalogs.
     // ctg_items.drop(["model1", ..., "modelN"]);  // drop multiple models
 
     // or by custom id (`.remove_model()` is alias of `.drop()`)
-    // ctg_items.remove_model(1);  // `shop` model has custom id of 1
+    // ctg_items.remove_model(1);  // `shop_items` model has custom id of 1
 
     var items_exists = ctg_items.has("items");  // check if `items` model is exists (false)
     var model_names = ctg_items.list();         // get array of model names
     
-    // rename model from `shop` to `storage`
-    // ctg_items.rename("shop", "storage");
+    // rename model from `shop_items` to `storage_items`
+    // ctg_items.rename("shop_items", "storage_items");
     ```
     </TabItem>
 </Tabs>
@@ -82,20 +82,20 @@ After you add or define a model in a catalog, you can use it as normal model ins
     ctg_items.add_model(items);                 // add existing model instance
 
     // declare local variable to store model instance
-    var storage = ctg_items.use("storage");     // get model instance by name
-    var also_storage = ctg_items.model(1);      // get model instance by custom id (`.model()` is alias of `.use()`)
+    var shop_items = ctg_items.use("shop_items");       // get model instance by name
+    var also_shop_items = ctg_items.model(1);           // get model instance by custom id (`.model()` is alias of `.use()`)
 
-    // both `storage` and `also_storage` refer to the same model instance
+    // both `shop_items` and `also_shop_items` refer to the same model instance
     // and it's reusable in this script as normal model instance
-    storage.insert([
+    shop_items.insert([
         { id: 1, item_id: 1, stock: 10 },
         { id: 2, item_id: 2, stock: 7 }
     ]);
     
-    storage.print();
+    shop_items.print();
 
     // you can also do a one-time operation without assigning to a variable
-    ctg_items.use("storage").insert([
+    ctg_items.use("shop_items").insert([
         { id: 3, item_id: 3, stock: 16 },
         { id: 4, item_id: 4, stock: 13 }
     ]);

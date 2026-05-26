@@ -43,8 +43,8 @@ In this section, we'll go through how relations work in **NimbusDB** and how to 
         { id: 10, name: "Lemon", price: 3 }
     ]);
 
-    // `shop` model
-    shop = new NimbusDBModel("global", "shop", {
+    // `shop_items` model
+    shop_items = new NimbusDBModel("global", "shop_items", {
         id: {
             type: NIMBUSDB_DATA_TYPE.INTEGER,
             const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
@@ -73,11 +73,11 @@ A "blind" relation that defined one-sided. In other words, the target model has 
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
     ```ts {2}
-    // define relation from shop.item_id to items.id
-    var rel_id = shop.define_relation(items, "item_id", "id");
+    // define relation from shop_items.item_id to items.id
+    var rel_id = shop_items.define_relation(items, "item_id", "id");
     
     // in case you want to to get the relation id later
-    var shop_items_rel = shop.get_relation("items", "item_id", "id");
+    var shop_items_rel = shop_items.get_relation("items", "item_id", "id");
     ```
     </TabItem>
 </Tabs>
@@ -85,22 +85,22 @@ A "blind" relation that defined one-sided. In other words, the target model has 
 Based on the example above, we got this:
 
 ```
-┏━━━━━━━━━┓                   ┏━━━━━━━━━━━┓
-┃  shop   ┃                   ┃   items   ┃
-┣━━━━━━━━━┫                   ┣━━━━━━━━━━━┫ 
-│ id      │         ┌────────>│ id        │
-├─────────┤         │         ├───────────┤
-│ item_id │─────────┘         │ name      │
-├─────────┤                   ├───────────┤
-│ stock   │                   │ price     │
-└─────────┘                   ├───────────┤
-                              │ is_locked │
-                              └───────────┘
+┏━━━━━━━━━━━━━━┓             ┏━━━━━━━━━━━┓
+┃ shop_items   ┃             ┃   items   ┃
+┣━━━━━━━━━━━━━━┫             ┣━━━━━━━━━━━┫ 
+│ id           │      ┌─────>│ id        │
+├──────────────┤      │      ├───────────┤
+│ item_id      │──────┘      │ name      │
+├──────────────┤             ├───────────┤
+│ stock        │             │ price     │
+└──────────────┘             ├───────────┤
+                             │ is_locked │
+                             └───────────┘
 ```
 
-`item_id` column in `shop` model is the foreign key that points to the `id` column in `items` model.
+`item_id` column in `shop_items` model is the foreign key that points to the `id` column in `items` model.
 
-As you can see, it just one-way relation. So, later we can resolve `shop.item_id` to `items.id`, but we can't resolve `items.id` to `shop.item_id`. We'll cover this in [Data Resolving](/core/data/resolve) section.
+As you can see, it just one-way relation. So, later we can resolve `shop_items.item_id` to `items.id`, but we can't resolve `items.id` to `shop_items.item_id`. We'll cover this in [Data Resolving](/core/data/resolve) section.
 
 :::tip
 There's no `FOREIGN_KEY` constraint in the schema definition, because it'll set automatically when you define a relation.
@@ -113,11 +113,11 @@ A mutual relation between two models. Both models will have knowledge of each ot
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
     ```ts {2, 5}
-    // define relation from shop.item_id to items.id
-    shop.define_relation(items, "item_id", "id");
+    // define relation from shop_items.item_id to items.id
+    shop_items.define_relation(items, "item_id", "id");
     
-    // and then from items.id to shop.item_id
-    items.define_relation(shop, "id", "item_id");
+    // and then from items.id to shop_items.item_id
+    items.define_relation(shop_items, "id", "item_id");
     ```
     </TabItem>
 </Tabs>
@@ -125,31 +125,31 @@ A mutual relation between two models. Both models will have knowledge of each ot
 Based on the example above, we got this:
 
 ```
-┏━━━━━━━━━┓                   ┏━━━━━━━━━━━┓
-┃  shop   ┃                   ┃   items   ┃
-┣━━━━━━━━━┫                   ┣━━━━━━━━━━━┫ 
-│ id      │         ┌────────>│ id        │
-├─────────┤         │         ├───────────┤
-│ item_id │<────────┘         │ name      │
-├─────────┤                   ├───────────┤
-│ stock   │                   │ price     │
-└─────────┘                   ├───────────┤
-                              │ is_locked │
-                              └───────────┘
+┏━━━━━━━━━━━━━━┓             ┏━━━━━━━━━━━┓
+┃ shop_items   ┃             ┃   items   ┃
+┣━━━━━━━━━━━━━━┫             ┣━━━━━━━━━━━┫ 
+│ id           │      ┌─────>│ id        │
+├──────────────┤      │      ├───────────┤
+│ item_id      │<─────┘      │ name      │
+├──────────────┤             ├───────────┤
+│ stock        │             │ price     │
+└──────────────┘             ├───────────┤
+                             │ is_locked │
+                             └───────────┘
 ```
 
-We can resolve both `shop.item_id` to `items.id` and `items.id` to `shop.item_id`. 
+We can resolve both `shop_items.item_id` to `items.id` and `items.id` to `shop_items.item_id`. 
 
 #### Explanation
 
 For the example above, we got 2 different **perspectives**:
 
-1. From `shop` model perspective:
-    - `shop` model **needs** `items` model's data **through `item_id` column**.
-    - With this, we have "The first item in the `shop` will sell which item?"-like question.
+1. From `shop_items` model perspective:
+    - `shop_items` model **needs** `items` model's data **through `item_id` column**.
+    - With this, we have "The first item in the `shop_items` will sell which item?"-like question.
 
 2. From `items` model perspective:
-    - `items` model **has** `shop` model's data **through `id` column**.
+    - `items` model **has** `shop_items` model's data **through `id` column**.
     - With this, we have "Which shop sells this item?" or "Where do I get this item?" question.
 
 :::tip
@@ -176,17 +176,17 @@ If you're using catalog, you can define relations cleaner. Let's use this catalo
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
     ```ts 
-    // define relation from shop.item_id to items.id
-    ctg_items.define_relation("shop", "item_id", "items", "id");    // using model name and column name
+    // define relation from shop_items.item_id to items.id
+    ctg_items.define_relation("shop_items", "item_id", "items", "id");  // using model name and column name
     
-    ctg_items.define_relation("shop.item_id = items.id");           // using model-column string
-    ctg_items.define_relation([                                     // using array of model-column strings
-        "shop.item_id = items.id", 
+    ctg_items.define_relation("shop_items.item_id = items.id");         // using model-column string
+    ctg_items.define_relation([                                         // using array of model-column strings
+        "shop_items.item_id = items.id", 
         "...relN"
     ]);
 
     ctg_items.define_relation({     // using relation selector, array of this object is also allowed
-        from: "shop",               // `from` and `to` can be model name, custom id, or model instance
+        from: "shop_items",         // `from` and `to` can be model name, custom id, or model instance
         from_column: "item_id",     // `from_column` and `to_column` must be string (the column name)
         to: "items",
         to_column: "id"
@@ -200,28 +200,28 @@ If you're using catalog, you can define relations cleaner. Let's use this catalo
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
     ```ts "bidirectional: true" "<=>"
-    // define relation from shop.item_id to items.id and vice versa
+    // define relation from shop_items.item_id to items.id and vice versa
     
     // when using `.define_relation()`, set `bidirectional: true` option
     // works on any style/format that is accepted by `.define_relation()`
-    ctg_items.define_relation("shop", "item_id", "items", "id", {
+    ctg_items.define_relation("shop_items", "item_id", "items", "id", {
         bidirectional: true
     });
 
     // you can also use the bidirectional operators instead
-    ctg_items.define_relation("shop.item_id <=> items.id");
+    ctg_items.define_relation("shop_items.item_id <=> items.id");
 
     // or use `.define_mutual_relation()` to enable the bidirectional relation by default
-    ctg_items.define_mutual_relation("shop", "item_id", "items", "id");
+    ctg_items.define_mutual_relation("shop_items", "item_id", "items", "id");
 
-    ctg_items.define_mutual_relation("shop.item_id = items.id");           // using model-column string
+    ctg_items.define_mutual_relation("shop_items.item_id = items.id");           // using model-column string
     ctg_items.define_mutual_relation([                                     // using array of model-column strings
-        "shop.item_id = items.id", 
+        "shop_items.item_id = items.id", 
         "...relN"
     ]);
 
     ctg_items.define_mutual_relation({   // using relation selector, array of this object is also allowed
-        from: "shop",                    // `from` and `to` can be model name, custom id, or model instance
+        from: "shop_items",                    // `from` and `to` can be model name, custom id, or model instance
         from_column: "item_id",          // `from_column` and `to_column` must be string (the column name)
         to: "items",
         to_column: "id"
@@ -245,17 +245,17 @@ If you're using string-selector format for defining relations (`"model1.from_col
     ```ts "=" "->" "=>" "<-" "<=" "<->" "<=>"
     // using one-way operator
     // from left (source) to right (target)
-    ctg_items.define_relation("shop.item_id = items.id");
-    ctg_items.define_relation("shop.item_id -> items.id");
-    ctg_items.define_relation("shop.item_id => items.id");
+    ctg_items.define_relation("shop_items.item_id = items.id");
+    ctg_items.define_relation("shop_items.item_id -> items.id");
+    ctg_items.define_relation("shop_items.item_id => items.id");
     
     // from right (source) to left (target)
-    ctg_items.define_relation("shop.item_id <- items.id");
-    ctg_items.define_relation("shop.item_id <= items.id");
+    ctg_items.define_relation("shop_items.item_id <- items.id");
+    ctg_items.define_relation("shop_items.item_id <= items.id");
     
     // using bidirectional operator
-    ctg_items.define_relation("shop.item_id <-> items.id");
-    ctg_items.define_relation("shop.item_id <=> items.id");
+    ctg_items.define_relation("shop_items.item_id <-> items.id");
+    ctg_items.define_relation("shop_items.item_id <=> items.id");
     ```
     </TabItem>
 </Tabs>

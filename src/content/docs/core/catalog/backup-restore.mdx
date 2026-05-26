@@ -43,8 +43,8 @@ In this section, we will go through how to backup and restore your **NimbusDB** 
         { id: 10, name: "Lemon", price: 3 }
     ]);
 
-    // `shop` model
-    shop = new NimbusDBModel("global", "shop", {
+    // `shop_items` model
+    shop_items = new NimbusDBModel("global", "shop_items", {
         id: {
             type: NIMBUSDB_DATA_TYPE.INTEGER,
             const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
@@ -63,11 +63,11 @@ In this section, we will go through how to backup and restore your **NimbusDB** 
 
     // `ctg_items` catalog
     ctg_items = new NimbusDBCatalog("shop_catalog", {
-        model: [items, shop]        
+        model: [items, shop_items]        
     });
 
-    // define mutual relation between `shop` and `items` models
-    ctg_items.define_relation("shop.item_id <=> items.id");
+    // define mutual relation between `shop_items` and `items` models
+    ctg_items.define_relation("shop_items.item_id <=> items.id");
     ```
     </TabItem>
 </Tabs>
@@ -94,12 +94,12 @@ NimbusDB provides universal (cross-platform and cross-game) backup and restore f
 
     // back up selected models by custom_id
     ctg_items.backup("ctg_items_backup", {
-        model: 100                  // backup only `shop` model (custom_id = 100)
+        model: 100                  // backup only `shop_items` model (custom_id = 100)
     });
 
     // back up multiple models by name or custom_id
     ctg_items.backup("ctg_items_backup", {
-        model: ["items", "shop"]    // backup both `items` and `shop` models
+        model: ["items", "shop_items"]    // backup both `items` and `shop_items` models
     });
     ```
     </TabItem>
