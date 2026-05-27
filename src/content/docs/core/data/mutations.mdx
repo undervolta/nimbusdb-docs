@@ -83,7 +83,7 @@ We can add or remove fields from a record regardless of the schema.
 </Tabs>
 
 :::note
-- You need to use [`LINKED`](/concepts/data-access#linked-access) or [`DIRECT`](/concepts/data-access#direct-access) to use the built-in methods.
+- You need to use data with [`LINKED`](/concepts/data-access#linked-access) or [`DIRECT`](/concepts/data-access#direct-access) access to use the built-in methods.
 - You **can't** remove:
     - primary key,
     - column(s) that defined in the schema using object form, and doesn't have [`NIMBUSDB_CONSTRAINT.OPTIONAL`](/core/model/schema#constraints) constraint.
