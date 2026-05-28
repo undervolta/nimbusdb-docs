@@ -474,13 +474,14 @@ Object for resolving data by object form.
 type NimbusDBDataResolve = {
 	with_model: NimbusDBModel;
 
-	as?: string;				// set new property instead of overwriting the original (default = undefined). no effect if `expand` is true
-	expand?: boolean;			// set the result directly to the data
-	isolate?: boolean;			// return an isolated copy of the data after the operation (default = false)
-	on?: string;				// column name to resolve (default = with.primary_key)
-	write_through?: boolean;	// sync the change to the original data (default = false)
-	affect_original?: boolean;	// alias for `write_through`
-	populate?: boolean;			// alias for `expand`
+	as?: string;                // set new property instead of overwriting the original (default = undefined). no effect if `expand` is true
+    expand?: boolean;           // set the result directly to the data
+	isolate?: boolean;          // return an isolated copy of the data after the operation (default = false)
+    match_all?: boolean;        // match all records instead of the first one (default = false)
+    on?: string;                // column name to resolve (default = with.primary_key)
+    write_through?: boolean;    // sync the change to the original data (default = false)
+    affect_original?: boolean;  // alias for `write_through`
+    populate?: boolean;         // alias for `expand`
 };
 ```
 
