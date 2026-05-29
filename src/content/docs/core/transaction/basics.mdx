@@ -55,23 +55,31 @@ In this section, we will go through the fundamentals of transactions in **Nimbus
 
 ## ACID Properties in Transactions
 
-The **ACID** properties in NimbusDB are **not** the same as ACID in relational databases due its design philosophy (in-memory and client-side first).
+**ACID** (**A**tomicity, **C**onsistency, **I**solation, **D**urability) properties are mandatory for transactions in traditional relational databases to ensure data integrity and reliability. But, transactions in **NimbusDB** are **not** the same as ACID in relational databases due its design philosophy (in-memory and client-side first).
 
 #### Atomicity <Badge text="Supported" variant="success" />
-    
-The operations in a transaction are performed on a copy of the original model. So, if one operation fails, the entire transaction will be rolled back, and the original model will remain unchanged.
+
+Atomicity means that all operations in a transaction are treated as a single unit of work. If any operation fails, the entire transaction will be rolled back, and the original model will remain unchanged.
+
+**NimbusDB** transactions support atomicity by default, so if any operation fails during the transaction, it will automatically rollback to the original state.
 
 #### Consistency <Badge text="Supported" variant="success" />
 
-The schema supports constraint and validator for each column/field. Data entering the model must satisfy defined rules, or it gets rejected. So, it's supported if you're using it correctly.
+Consistency means that a transaction must bring the database from one valid state to another valid state, maintaining the integrity of the data.
+
+In **NimbusDB**, the schema supports constraint and validator for each column/field. Data entering the model must satisfy defined rules, or it gets rejected. This ensures that the data remains consistent and valid according to the defined schema.
 
 #### Isolation <Badge text="Not Supported" variant="danger" />
 
-GML is single-threaded, so technically no two transactions can run simultaneously. 
+Isolation means that the operations in a transaction are isolated from other transactions, preventing concurrent transactions from interfering with each other. 
+
+But, since **NimbusDB** is currently designed to be single-threaded and client-side first, it does not support true isolation between transactions.
 
 #### Durability <Badge text="Partially Supported" variant="caution" />
 
-You need to manually save and load your data back from persistent storage to achieve data persistence (e.g using `Model.export()`/`Catalog.backup()` and `Model.import()`/`Catalog.restore()` methods).
+Durability means that once a transaction is committed, its changes are permanent and will survive any subsequent failures. 
+
+But, since **NimbusDB** is an in-memory database, it does not provide durability by default. You need to manually save and load your data back from persistent storage to achieve data persistence (e.g using `Model.export()`/`Catalog.backup()` and `Model.import()`/`Catalog.restore()` methods).
 
 ## Creating a Transaction
 
@@ -101,7 +109,7 @@ Use `.transaction()` method on model or catalog instance to create and begin a t
 
 ### Buffered Transaction
 
-By default, NimbusDB performs operations in a **buffered** mode, meaning that all operations are performed on temporary model copy first before applying it to the original model once committed.
+By default, **NimbusDB** performs operations in a **buffered** mode, meaning that all operations are performed on temporary model copy first before applying it to the original model once committed.
 
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
@@ -293,7 +301,7 @@ Used to rollback the transaction manually, like the `return` keyword in a normal
 
 ### NimbusDBTransaction <Badge text="Internal" variant="caution" size='medium' />
 
-Represents an isolated transaction context over a NimbusDB model, supporting atomic CRUD operations with commit and rollback capabilities.
+Represents an isolated transaction context over a **NimbusDB** model, supporting atomic CRUD operations with commit and rollback capabilities.
 
 ```ts title="transaction.d.ts"
 class NimbusDBTransaction {
