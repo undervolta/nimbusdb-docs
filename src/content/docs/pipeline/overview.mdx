@@ -6,7 +6,7 @@ description: An introduction to pipelines in NimbusDB, including how to create a
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../styles/custom.css";
 
-In this section, we will explore the basics of pipelines in **NimbusDB**. We'll use this schema and the `items` model as an example to demonstrate how to create and manage pipelines to transform and process data in **NimbusDB** models.
+In this section, we will explore the basics of pipelines in **NimbusDB**. We'll use this schema and the `items` model as an example:
 
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
@@ -91,6 +91,23 @@ To create a pipeline, you can use the `.pipe()` method on a model instance. It r
     ```
     </TabItem>
 </Tabs>
+
+:::tip
+By default, the pipeline uses the [Linked Data Access](/concepts/data-access#linked-access) strategy. If you want to isolate the data, you can call `.isolate()` after creating the pipeline instance.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts ".isolate()"
+    var items_pl = items.pipe().isolate();      // use default options
+
+    var items_pl = items.pipe({                 // with options
+        cache_strategy: NIMBUSDB_PIPELINE_CACHE.FULL,
+        mutable: true
+    }).isolate();
+    ```
+    </TabItem>
+</Tabs>
+:::
 
 ## Transforming Data
 
@@ -200,11 +217,11 @@ You can use the `.move_to()`, `.move_to_first()`, and `.move_to_last()` methods 
 </Tabs>
 
 ```
-┌───────────┐   ┌──────────┐  ┳  ┌────────┐
-│ .filter() │──>│ .limit() │──╋─>│ .map() │
-└───────────┘   └──────────┘  ┻  └────────┘
-                              │
-       your cursor position <─┘
+┌───────────┐  ┳  ┌──────────┐   ┌────────┐
+│ .filter() │──╋─>│ .limit() │──>│ .map() │
+└───────────┘  ┻  └──────────┘   └────────┘
+               │
+               └─> your cursor position
 ```
 
 <Tabs syncKey='lang'>
@@ -285,8 +302,8 @@ If you move the cursor to a specific step and define new operations, the old ope
             };
         });
 
-    // move to step 2 (.limit operation)
-    items_pl.move_to(2);
+    // move to step 3 (.map operation)
+    items_pl.move_to(3);
 
     // now, if we define a new operation, it will overwrite the next operation (.map)
     items_pl.pluck("name");

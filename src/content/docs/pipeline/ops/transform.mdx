@@ -1,0 +1,690 @@
+---
+title: Data Transformation in Pipelines
+description: Learn how to use pipelines in NimbusDB to transform and process your data, including common transformation operations and best practices for structuring your pipelines for optimal performance and maintainability.
+---
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../../styles/custom.css";
+
+In this section, we will explore the data transformation capabilities of **NimbusDB** pipelines. We'll use this schema and the `items` model as an example:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Transforming Data
+
+**Transforming data** refers to the process of modifying or altering the structure of data in a pipeline. This can involve operations such as mapping, flattening, and filtering data. 
+
+### Map <Badge text="Array" variant="success" size='medium' /> <Badge text="Object" variant="success" size='medium' />
+
+The `map` operation is used to transform data by applying a **mapper** function to each element in the pipeline. The function takes two arguments: the **current element** and its **index**. The function should return the transformed element.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `map` operation is the first operation in the pipeline
+        .map(function(data, index) {    
+            return {
+                name: data.name,
+                price: data.price,
+                discounted_price: data.price * 0.9,
+                is_cheap: (data.price <= 5)
+            };
+        });
+
+    // result (isolated data): 
+    // [
+    //     { name: "Apple", price: 5, discounted_price: 4.5, is_cheap: true },
+    //     { name: "Banana", price: 7.2, discounted_price: 6.48, is_cheap: false },
+    //     ...
+    //     { name: "Lemon", price: 3, discounted_price: 2.7, is_cheap: true }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+### Flat Map <Badge text="Array" variant="success" size='medium' /> 
+
+The `flat_map` operation is similar to the `map` operation, but it flattens the result after applying the mapper function. So, you can return an array of transformed elements from the mapper function, and they will be flattened into the final result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you somehow have this in your pipeline (before the `flat_map` operation):
+        // [
+        //     { id: 1, name: "Apple", price: 5 },
+        //     [
+        //        { id: 2, name: "Banana", price: 7.2 ]},
+        //        { id: 3, name: "Cherry", price: 15 }
+        //     ]
+        // ]
+        .flat_map(function(data, index) {
+            if (!is_array(data)) {      // if the current element is not an array
+                return data.name;       // return the name of the item
+            }
+
+            // otherwise, apply the mapper function to each item in the array
+            return array_map(data, function(item) {
+                return item.name;       // return the name of each item in the array
+            });
+        });
+
+        // result after mapping:
+        // [ "Apple", [ "Banana", "Cherry" ] ]
+
+        // and the final result after flattening:
+        // [ "Apple", "Banana", "Cherry" ]
+    ```
+    </TabItem>
+</Tabs>
+
+:::caution
+Both `.map()` and `.flat_map()` mapper functions should return a new item. So, if you do what the example above shows, it will **isolate** the data, which is maybe not what you want.
+:::
+
+### Filter <Badge text="Array" variant="success" size='medium' /> <Badge text="Object" variant="success" size='medium' />
+
+The `filter` operation is used to filter the data based on a **predicate** function. The function should return `true` if the data should be included in the result, and `false` otherwise.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `filter` operation is the first operation in the pipeline
+        .filter(function(data, index) { 
+            return (data.price % 5 == false);     // include only items with a price that is divisible by 5
+        });
+
+    // result (linked data):
+    // [
+    //     { id: 1, name: "Apple", price: 5 },
+    //     { id: 3, name: "Cherry", price: 15 },
+    //     { id: 6, name: "Fig", price: 10 }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+### Reject <Badge text="Array" variant="success" size='medium' /> 
+
+The `reject` operation is the opposite of the `filter` operation. It is used to filter the data based on a **predicate** function. The function should return `true` if the data should be excluded from the result, and `false` otherwise.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `reject` operation is the first operation in the pipeline
+        .reject(function(data, index) { 
+            return data.price >= 5;     // exclude items with a price greater than or equal to 5
+        });
+
+    // result (linked data):
+    // [
+    //     { id: 9, name: "Kiwi", price: 4 },
+    //     { id: 10, name: "Lemon", price: 3 }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+### Find <Badge text="Array" variant="success" size='medium' />
+
+The `find` operation is used to find the first element in the data that matches the **predicate** function. The function should return `true` if the element should be included in the result, and `false` otherwise.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `find` operation is the first operation in the pipeline
+        .find(function(data, index) { 
+            return data.price >= 8;     // find the first item with a price greater than or equal to 8
+        });
+
+        // result (linked data):
+        // { id: 3, name: "Cherry", price: 15 }
+    ```
+    </TabItem>
+</Tabs>
+
+### Pluck <Badge text="Array of Objects" variant="success" size='medium' /> <Badge text="Object" variant="success" size='medium' />
+
+The `pluck` operation is used to extract specific properties from the data. It takes a string or array of string of property names to extract.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 14}
+    // (1) pluck by column name
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `pluck` operation is the first operation in the pipeline
+        .pluck("name");                 // extract the `name` property
+
+    // result (isolated data):
+    // [
+    //     { name: "Apple" },
+    //     { name: "Banana" },
+    //     ...
+    //     { name: "Lemon" }
+    // ]
+
+    // (2) multiple column names
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `pluck` operation is the first operation in the pipeline
+        .pluck(["name", "price"]);      // extract the `name` and `price` properties
+
+    // result (isolated data):
+    // [
+    //     { name: "Apple", price: 5 },
+    //     { name: "Banana", price: 7.2 },
+    //     ...
+    //     { name: "Lemon", price: 3 }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+### Rename <Badge text="Array of Objects" variant="success" size='medium' /> <Badge text="Object" variant="success" size='medium' />
+
+The `rename` operation is used to rename one or more properties in the data. It takes a string,  array of string, or a map of old to new property names.
+
+You can use `:`, `->`, `=>`, ` as `, or ` AS ` to separate the old and new property names.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `rename` operation is the first operation in the pipeline
+        .rename("name: item_name")                          // rename the `name` property to `item_name`
+        .rename("id as item_id, price -> item_price")       // rename the `id` property to `item_id` and the `price` property to `item_price`
+        .rename({ item_id: "id", item_price: "cost" });     // rename the `item_id` property to `id` and the `item_price` property to `cost`
+    
+    // result (isolated data):
+    // [
+    //     { id: 1, item_name: "Apple", cost: 5 },
+    //     { id: 2, item_name: "Banana", cost: 7.2 },
+    //     ...
+    //     { id: 10, item_name: "Lemon", cost: 3 }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+### Construct <Badge text="Array" variant="success" size='medium' /> 
+
+The `construct` operation is used to construct an object from an array of values. It takes an optional column name(s) to use as object keys.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 16, 31}
+    // (1) index-based construction
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `construct` operation):
+        // [ 1, "Apple", 5, true, [ 2, "Green Apple", 7.3 ] ]
+        .construct();
+
+    // result (isolated data):
+    // { 
+    //     0: 1, 
+    //     1: "Apple", 
+    //     2: 5, 
+    //     3: true, 
+    //     4: [ 2, "Green Apple", 7.3 ] 
+    // }
+
+    // (2) column-based construction
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `construct` operation):
+        // [ 1, "Apple", 5, true, [ 2, "Green Apple", 7.3 ] ]
+        .construct(["id", "name", "price", "is_locked", "variants"]);   // with column names
+
+    // result (isolated data):
+    // { 
+    //     id: 1, 
+    //     name: "Apple", 
+    //     price: 5, 
+    //     is_locked: true, 
+    //     variants: [ 2, "Green Apple", 7.3 ] 
+    // }
+
+    // (3) column-based construction with level
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `construct` operation):
+        // [ 1, "Apple", 5, true, [ 2, "Green Apple", 7.3 ] ]
+        .construct(["id", "name", "price", "is_locked", "variants"], 2);    // with column names and level = 2
+
+    // result (isolated data):
+    // { 
+    //     id: 1, 
+    //     name: "Apple", 
+    //     price: 5, 
+    //     is_locked: true, 
+    //     variants: { id: 2, name: "Green Apple", price: 7.3 } 
+    // }
+    ```
+    </TabItem>
+</Tabs>
+
+### Destruct <Badge text="Array" variant="success" size='medium' /> <Badge text="Object" variant="success" size='medium' />
+
+The `destruct` operation is used to destruct object(s) into an array of values. It takes an optional column name(s) to use as the column order.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 35, 52}
+    // (1) auto-detect column order
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `destruct` operation):
+        // [
+        //     { name: "Apple", price: 5 },
+        //     { name: "Banana", price: 7.2, is_cheap: true },
+        //     { name: "Cherry", price: 15, discounted_price: 12.5 }
+        // ]
+        .destruct();
+
+    // result (isolated data):
+    // [
+    //     [ "Apple", 5 ],
+    //     [ "Banana", 7.2 ],
+    //     [ "Cherry", 15 ]
+    // ]
+
+    // other example for this format:
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `destruct` operation):
+        // [
+        //     { name: "Banana", price: 7.2, is_cheap: true },
+        //     { name: "Apple", price: 5 },
+        //     { name: "Cherry", price: 15, discounted_price: 12.5 }
+        // ]
+        .destruct();
+
+    // result (isolated data):
+    // [
+    //     [ "Banana", 7.2, true ],
+    //     [ "Apple", 5, undefined ],
+    //     [ "Cherry", 15, undefined ]
+    // ]
+
+    // (2) column-based destruction
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `destruct` operation):
+        // [
+        //     { name: "Apple", price: 5 },
+        //     { name: "Banana", price: 7.2, is_cheap: true },
+        //     { name: "Cherry", price: 15, discounted_price: 12.5 }
+        // ]
+        .destruct("name");              // with column names
+
+    // result (isolated data):
+    // [
+    //     [ "Apple" ],
+    //     [ "Banana" ],
+    //     [ "Cherry" ]
+    // ]
+
+    // (3) multiple column destruction
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `destruct` operation):
+        // [
+        //     { name: "Apple", price: 5 },
+        //     { name: "Banana", price: 7.2, is_cheap: true },
+        //     { name: "Cherry", price: 15, discounted_price: 12.5 }
+        // ]
+        .destruct(["price", "name"]);   // with column names
+
+    // result (isolated data):
+    // [
+    //     [ 5, "Apple" ],
+    //     [ 7.2, "Banana" ],
+    //     [ 15, "Cherry" ]
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+For the result consistency, if you don't specify any column names for the `.destruct()` method, the pipeline will try to auto-detect the column order from the **first** data object as the column order.
+:::
+
+---
+
+## References
+
+### Pipeline.construct()
+
+Converts an array of values into struct objects using the provided column names as keys.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static construct(
+        _columns?: string | string[],
+        _level?: int
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_columns`
+- Type: `string` | `string[]`
+- Default: `undefined` (use index as the object keys)
+- An optional array of column names defining the output order.
+
+##### `_level`
+- Type: `int`
+- Default: `1`
+- An optional nesting level (default = 1).
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### Pipeline.destruct()
+
+Converts struct objects into arrays (destructures) using the given column order.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static destruct(
+        _column_order?: string[]
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_column_order`
+- Type: `string[]`
+- Default: `undefined` (auto-detect column order)
+- An optional array of column names defining the output order.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### Pipeline.filter()
+
+Filters the pipeline data using a predicate function on array elements.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static filter(
+        _func: 
+            | ((data: any, index: int) => boolean)      // array
+            | ((prop: string, value: any) => boolean),  // object
+        _options?: NimbusDBPipelineOpsOptions
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: any, index: int) => boolean` | `(prop: string, value: any) => boolean`
+- The predicate function to use for the filter operation.
+
+##### `_options`
+- Type: `NimbusDBPipelineOpsOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the filter operation.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### Pipeline.find()
+
+Finds the first element in the pipeline that satisfies the condition and stores it as the result.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static find(
+        _func: (data: any, index: int) => boolean,
+        _options?: NimbusDBPipelineOpsOptions
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: any, index: int) => boolean`
+- The predicate function to use for the find operation.
+
+##### `_options`
+- Type: `NimbusDBPipelineOpsOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the find operation.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### Pipeline.flat_map()
+
+Maps each element through a function then flattens the result by `level` levels.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static flat_map(
+        _func: (data: any, index: int) => any,
+        _level?: int,
+        _options?: NimbusDBPipelineOpsOptions
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: any, index: int) => any`
+- The mapping function to use for the flat_map operation.
+
+##### `_level`
+- Type: `int`
+- Default: `1`
+- The number of levels to flatten the result.
+
+##### `_options`
+- Type: `NimbusDBPipelineOpsOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the flat_map operation.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### Pipeline.map()
+
+Transforms each element using a mapping function. 
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static map(
+        _func: 
+            | ((data: any, index: int) => any)      // array
+            | ((prop: string, value: any) => any),  // object
+        _options?: NimbusDBPipelineOpsOptions
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: any, index: int) => any` | `(prop: string, value: any) => any`
+- The mapping function to use for the map operation.
+
+##### `_options`
+- Type: `NimbusDBPipelineOpsOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the map operation.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### Pipeline.pluck()
+
+Extracts one or more columns from each element, returning only those values.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static pluck(
+        _column: string | string[]
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_column`
+- Type: `string` | `string[]`
+- The column name(s) to pluck.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### Pipeline.reject()
+
+Filters the pipeline data using a predicate function on array elements.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static reject(
+        _func: (data: any, index: int) => boolean,
+        _options?: NimbusDBPipelineOpsOptions
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: any, index: int) => boolean`
+- The predicate function to use for the reject operation.
+
+##### `_options`
+- Type: `NimbusDBPipelineOpsOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the reject operation.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### Pipeline.rename()
+
+Renames one or more columns in the pipeline data.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static rename(
+        _columns: string | string[] | {
+            [column_name: string]: string;
+        }
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_columns`
+- Type: `string` | `string[]` | `{ [column_name: string]: string; }`
+- The column name(s) to rename.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
