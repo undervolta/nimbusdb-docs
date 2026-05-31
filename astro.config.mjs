@@ -78,12 +78,21 @@ export default defineConfig({
 						{
 							label: 'Operations', items: [
 								{ label: 'Transform', slug: 'pipeline/ops/transform' },
-								{ label: 'Aggregation', slug: 'pipeline/ops/aggregation' },
+								{ label: 'Pagination', slug: 'pipeline/ops/pagination' },
+								{ label: 'Shaping', slug: 'pipeline/ops/shaping' },
 								{ label: 'Ordering', slug: 'pipeline/ops/ordering' },
 								{ label: 'Control', slug: 'pipeline/ops/control' },
 							]
 						},
-						{ label: 'Terminal', slug: 'pipeline/terminal' },
+						{ 
+							label: 'Terminals', items: [
+								{ label: 'Accessors', slug: 'pipeline/terminal/accessors' },
+								{ label: 'Assertions', slug: 'pipeline/terminal/assertions' },
+								{ label: 'Aggregation', slug: 'pipeline/terminal/aggregation' },
+								{ label: 'Iteration', slug: 'pipeline/terminal/iteration' },
+								{ label: 'Write-back', slug: 'pipeline/terminal/write-back' },
+							] 
+						},	
 					],
 				},
 				{

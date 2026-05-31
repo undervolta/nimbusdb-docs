@@ -165,6 +165,89 @@ The `reject` operation is the opposite of the `filter` operation. It is used to 
     </TabItem>
 </Tabs>
 
+### Take While <Badge text="Array" variant="success" size='medium' />
+
+The `take_while` operation is used to keep elements of the data while a **predicate** function returns `true`.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `take_while` operation is the first operation in the pipeline
+        .take_while(function(data, index) { 
+            return (data.price != 6);   // keep items until item with `price = 6` is found
+        });
+
+    // result (linked data):
+    // [
+    //     { id: 1, name: "Apple", price: 5 },
+    //     { id: 2, name: "Banana", price: 7.2 },
+    //     ...
+    //     { id: 6, name: "Fig", price: 10 }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+### Drop While <Badge text="Array" variant="success" size='medium' />
+
+The `drop_while` operation is the opposite of the `take_while` operation, which is used to skip elements of the data while a **predicate** function returns `true`.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 16, 33} "from_end: true" "reverse: true"
+    // (1) from the start
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `drop_while` operation is the first operation in the pipeline
+        .drop_while(function(data, index) { 
+            return (data.price != 6);   // exclude items until item with `price = 6` is found
+        });
+
+    // result (linked data):
+    // [
+    //     { id: 7, name: "Grape", price: 6 },
+    //     { id: 8, name: "Honeydew", price: 9 },
+    //     { id: 9, name: "Kiwi", price: 4 },
+    //     { id: 10, name: "Lemon", price: 3 }
+    // ]
+
+    // (2) from the end
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `drop_while` operation is the first operation in the pipeline
+        .drop_while(function(data, index) { 
+            return (data.price != 6);   // exclude items until item with `price = 6` is found
+        }, { 
+            from_end: true
+        });
+
+    // result (linked data):
+    // [
+    //     { id: 1, name: "Apple", price: 5 },
+    //     { id: 2, name: "Banana", price: 7.2 },
+    //     ...
+    //     { id: 7, name: "Grape", price: 6 }
+    // ]
+
+    // (3) reverse the array
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say the `drop_while` operation is the first operation in the pipeline
+        .drop_while(function(data, index) { 
+            return (data.price != 6);   // exclude items until item with `price = 6` is found
+        }, { 
+            reverse: true
+        });
+
+    // result (linked data):
+    // [
+    //     { id: 10, name: "Lemon", price: 3 },
+    //     { id: 9, name: "Kiwi", price: 4 },
+    //     { id: 8, name: "Honeydew", price: 9 },
+    //     { id: 7, name: "Grape", price: 6 }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
 ### Find <Badge text="Array" variant="success" size='medium' />
 
 The `find` operation is used to find the first element in the data that matches the **predicate** function. The function should return `true` if the element should be included in the result, and `false` otherwise.
@@ -451,6 +534,40 @@ class NimbusDBPipeline {
 - A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
 </section>
 
+### Pipeline.drop_while()
+
+Skip elements from the start (or end) of the pipeline while a condition is true.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static drop_while(
+        _func: (data: any, index: int) => boolean,
+        _options?: NimbusDBPipelineDropWhileOptions
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: any, index: int) => boolean`
+- The predicate function to use for the drop_while operation.
+
+##### `_options`
+- Type: `NimbusDBPipelineDropWhileOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the drop_while operation.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
 ### Pipeline.filter()
 
 Filters the pipeline data using a predicate function on array elements.
@@ -688,3 +805,48 @@ class NimbusDBPipeline {
 - Type: `NimbusDBPipeline`
 - A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
 </section>
+
+### Pipeline.take_while()
+
+Keeps elements from the start of the pipeline while the predicate returns `true`, and stops if the predicate returns `false`.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static take_while(
+        _func: (data: any, index: int) => boolean,
+        _options?: NimbusDBPipelineOpsOptions
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_func`
+- Type: `(data: any, index: int) => boolean`
+- The predicate function to use for the take_while operation.
+
+##### `_options`
+- Type: `NimbusDBPipelineOpsOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the take_while operation.
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### NimbusDBPipelineDropWhileOptions
+
+Optional configurations for `.drop_while()` method.
+
+```ts title="pipeline.d.ts"
+export type NimbusDBPipelineDropWhileOptions = Partial<{
+	from_end: boolean;      // drop from the end to the start (default = false)
+	reverse: boolean;       // reverse the array after operation (default = false)
+}>;
+```

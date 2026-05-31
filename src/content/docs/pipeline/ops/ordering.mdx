@@ -1,9 +1,263 @@
 ---
-title: Data Ordering and Pagination in Pipelines
-description: Learn how to use pipelines in NimbusDB to order and paginate your data, including common ordering and pagination operations and best practices for structuring your pipelines for optimal performance and maintainability.
+title: Data Ordering in Pipelines
+description: Learn how to use pipelines in NimbusDB to order your data, including common ordering operations and best practices for structuring your pipelines for optimal performance and maintainability.
 ---
 
-{/*(sort, distinct, flatten, flatten_deep, limit, offset, slice, sample)*/}
-
-import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 import "../../../../styles/custom.css";
+
+In this section, we'll explore how to order your data in Pipeline. We'll use `items` model for this example.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Ordering Data
+
+You can order the data in Pipeline using the `.sort()` method. 
+
+### On Flat Values
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 10}
+    // (1) ascending sort
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [ 5, 7.2, 15, 12.5, 8, 10, 6, 9, 4, 3 ]
+        .sort();            // sort the data (ascending)
+
+    // result:
+    // [ 3, 4, 5, 6, 7.2, 8, 9, 10, 12.5, 15 ]
+
+    // (2) descending sort
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [ 5, 7.2, 15, 12.5, 8, 10, 6, 9, 4, 3 ]
+        .sort(false);       // sort the data (descending)
+
+    // result:
+    // [ 15, 12.5, 10, 9, 8, 7.2, 6, 5, 4, 3 ]
+    ```
+    </TabItem>
+</Tabs>
+
+### On Array of Objects
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 20}
+    // (1) sort by a column (ascending)
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [
+        //     { id: 1, name: "Apple", price: 5 },
+        //     { id: 2, name: "Banana", price: 7.2 },
+        //     { id: 3, name: "Cherry", price: 15 },
+        //     { id: 4, name: "Date", price: 12.5 }
+        // ]
+        .sort("price");     // sort the data by the `price` column (ascending)
+
+    // result (inherited):
+    // [
+    //     { id: 1, name: "Apple", price: 5 },
+    //     { id: 2, name: "Banana", price: 7.2 },
+    //     { id: 4, name: "Date", price: 12.5 },
+    //     { id: 3, name: "Cherry", price: 15 }
+    // ]
+
+    // (2) sort by a column (descending)
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [
+        //     { id: 3, name: "Cherry", price: 15 },
+        //     { id: 4, name: "Date", price: 12.5 },
+        //     { id: 2, name: "Banana", price: 7.2 },
+        //     { id: 1, name: "Apple", price: 5 }
+        // ]
+        .sort("price", false);     // sort the data by the `price` column (descending)
+    ```
+    </TabItem>
+</Tabs>
+
+### Using Comparator Function
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 12}
+    // (1) flat values
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [ 5, 7.2, 15, 12.5, 8, 10, 6, 9, 4, 3 ]
+        .sort(function(a, b) { 
+            return a - b;               // return the difference between `a` and `b`
+        });
+
+    // result:
+    // [ 3, 4, 5, 6, 7.2, 8, 9, 10, 12.5, 15 ]
+
+    // (2) array of objects
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [
+        //     { id: 1, name: "Apple", price: 5 },
+        //     { id: 2, name: "Banana", price: 7.2 },
+        //     { id: 3, name: "Cherry", price: 15 },
+        //     { id: 4, name: "Date", price: 12.5 }
+        // ]
+        .sort(function(a, b) { 
+            return b.price - a.price;   // return the difference between `b.price` and `a.price`
+        });
+
+    // result (inherited):
+    // [
+    //     { id: 3, name: "Cherry", price: 15 },
+    //     { id: 4, name: "Date", price: 12.5 },
+    //     { id: 2, name: "Banana", price: 7.2 },
+    //     { id: 1, name: "Apple", price: 5 }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+It's recommended to return `-1`, `0`, or `1` from the comparator function to indicate the sort order, though you can return any numeric value.
+:::
+
+---
+
+## References
+
+### Pipeline.sort()
+
+Sorts the pipeline data using an optional column name or a custom comparator function.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static sort(
+            _ascending?: boolean
+        ): NimbusDBPipeline;
+    }
+    ```
+    </div>
+
+    :::caution
+    Only use this overload if the array contains only flat values.
+    :::
+
+    #### Parameters
+    
+    ##### `_ascending`
+    - Type: `boolean`
+    - Default: `true`
+    - Optional sort direction (ascending = `true`, descending = `false`).
+
+    #### Returns
+    - Type: `NimbusDBPipeline`
+    - A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static sort(
+            _column: string,
+            _ascending?: boolean
+        ): NimbusDBPipeline;
+    }
+    ```
+    </div>
+
+    :::caution
+    Only use this overload if the array is array of objects.
+    :::
+
+    #### Parameters
+    
+    ##### `_column`
+    - Type: `string`
+    - The column name to sort by.
+
+    ##### `_ascending`
+    - Type: `boolean`
+    - Default: `true`
+    - Optional sort direction (ascending = `true`, descending = `false`).
+
+    #### Returns
+    - Type: `NimbusDBPipeline`
+    - A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 3' value='overload-3'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static sort(
+            _func: (current: any, next: any) => number
+        ): NimbusDBPipeline;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_func`
+    - Type: `(current: any, next: any) => number`
+    - The comparator function to use for sorting.
+
+    #### Returns
+    - Type: `NimbusDBPipeline`
+    - A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+    </section>
+    </TabItem>
+</Tabs>
