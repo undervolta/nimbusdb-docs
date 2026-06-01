@@ -51,9 +51,168 @@ In this section, we'll explore how to shape your data in Pipeline. We'll use `it
 
 ## Flattening Data
 
+### Flatten <Badge text="Array" variant="success" size='medium' />
+
+The `flatten` operation is used to flatten the data by one (or more) level(s). It is useful when you want to flatten a nested array in the pipeline.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 27}
+    // (1) flatten the data by one level
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `flatten` operation):
+        // [ 
+        //     "Apple",
+        //     "Banana",
+        //     [
+        //        "Cherry",
+        //        "Date",
+        //        [ 
+        //            "Elderberry",
+        //            "Fig"
+        //        ]
+        //     ]
+        // }
+        .flatten();
+
+    // result:
+    // [
+    //     "Apple",
+    //     "Banana",
+    //     "Cherry",
+    //     "Date",
+    //     [ "Elderberry", "Fig" ]
+    // ]
+
+    // (2) flatten the data by two levels
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `flatten` operation):
+        // [ 
+        //     "Apple",
+        //     "Banana",
+        //     [
+        //        "Cherry",
+        //        "Date",
+        //        [ 
+        //            "Elderberry",
+        //            "Fig"
+        //        ]
+        //     ]
+        // }
+        .flatten(2);
+
+    // result:
+    // [
+    //     "Apple",
+    //     "Banana",
+    //     "Cherry",
+    //     "Date",
+    //     "Elderberry",
+    //     "Fig"
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+### Flatten Deep <Badge text="Array" variant="success" size='medium' />
+
+The `flatten_deep` operation is similar to the `flatten` operation, but it flattens the result to a single level.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this in your pipeline (before the `flatten_deep` operation):
+        // [ 
+        //     "Apple",
+        //     [
+        //        "Banana",
+        //        [ "Cherry" ],
+        //        "Date",
+        //        [ 
+        //            "Elderberry",
+        //            "Fig",
+        //            [ "Grape", "Honeydew" ]
+        //        ]
+        //     ]
+        // }
+        .flatten_deep();
+
+    // result:
+    // [ "Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape", "Honeydew" ]
+    ```
+    </TabItem>
+</Tabs>
+
 ## Deduping Data
 
+### Distinct <Badge text="Array of Objects" variant="success" size='medium' /> <Badge text="Object" variant="success" size='medium' />
+
+The `distinct` operation is used to remove duplicate values from the pipeline data based on one or more columns.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1}
+    // (1) dedupe single column
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [
+        //     { id: 1, name: "Apricot", price: 5 },
+        //     { id: 2, name: "Blueberry", price: 7 },
+        //     { id: 3, name: "Coconut", price: 5 },
+        //     { id: 4, name: "Durian", price: 10 },
+        //     { id: 5, name: "Fuji Apple", price: 7 }
+        // ]
+
+    // result:
+    // [ 
+    //     { price: 5 },
+    //     { price: 7 },
+    //     { price: 10 }
+    // ]
+
+    // (2) dedupe multiple columns
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [
+        //     { id: 1, name: "Apricot", price: 5, is_soft: true },
+        //     { id: 2, name: "Blueberry", price: 7, is_soft: true },
+        //     { id: 3, name: "Coconut", price: 5, is_soft: false },
+        //     { id: 4, name: "Durian", price: 10, is_soft: false },
+        //     { id: 5, name: "Fuji Apple", price: 7, is_soft: true }
+        // ]
+        .distinct(["price", "is_soft"]);
+
+    // result:
+    // [ 
+    //     { price: 5, is_soft: true },
+    //     { price: 7, is_soft: true },
+    //     { price: 5, is_soft: false },
+    //     { price: 10, is_soft: false }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
 ## Sampling Data
+
+### Sample <Badge text="Array" variant="success" size='medium' />
+
+The `sample` operation is used to randomly sample `_count` elements from the pipeline data.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [ 5, 7.2, 15, 12.5, 8, 10, 6, 9, 4, 3 ]
+        .sample(5);            // sample 5 elements
+
+    // result:
+    // [ (random 5 elements) ]
+    ```
+    </TabItem>
+</Tabs>
 
 ---
 

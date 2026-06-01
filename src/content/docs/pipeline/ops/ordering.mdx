@@ -93,7 +93,7 @@ You can order the data in Pipeline using the `.sort()` method.
         // ]
         .sort("price");     // sort the data by the `price` column (ascending)
 
-    // result (inherited):
+    // result (inherited data):
     // [
     //     { id: 1, name: "Apple", price: 5 },
     //     { id: 2, name: "Banana", price: 7.2 },
@@ -144,7 +144,7 @@ You can order the data in Pipeline using the `.sort()` method.
             return b.price - a.price;   // return the difference between `b.price` and `a.price`
         });
 
-    // result (inherited):
+    // result (inherited data):
     // [
     //     { id: 3, name: "Cherry", price: 15 },
     //     { id: 4, name: "Date", price: 12.5 },
