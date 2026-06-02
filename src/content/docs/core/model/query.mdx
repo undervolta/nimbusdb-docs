@@ -478,6 +478,30 @@ Query results can be transformed in various ways using the `transform` or `postp
     </TabItem>
 </Tabs>
 
+## Debugging Data
+
+Use `.print()` method to print the data in the console/output.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    items.print();      // print all data stored in the model
+
+    items.print({
+        message: "Printing only the name and price columns...",    // print a custom message before the data
+        pick: ["name", "price"],        // print only the `name` and `price` columns
+        max_char: 50                    // set the max characters length per cell
+    });
+
+    items.print({
+        data: function(data, index) {
+            return data.price > 5;      // print only the data where the `price` is greater than 5
+        }
+    });
+    ```
+    </TabItem>
+</Tabs>
+
 ---
 
 ## References
@@ -1383,6 +1407,49 @@ type NimbusDBGetOptions = Partial<{
 - Type: `(res_data: Struct | any[], res_index: int) => any`
 - Default: `undefined`
 - The function to transform the result before returning. 
+
+### NimbusDBPrintOptions
+
+Optional configurations for `Model.print()` and `Pipeline.tap()` methods.
+
+```ts title="pipeline.d.ts"
+type NimbusDBPrintOptions = Partial<{
+    data:
+		| NimbusDBData | NimbusDBData[] 
+		| ((data: NimbusDBData, index: int) => boolean);
+	keep_systemp: boolean;			// default = false
+	max_char: int;					// max characters length per cell (default = 28). <= 0 -> unlimited
+	message: string;				// displayed message before the printed data
+	pick: string | string[];		// displayed columns (default = __column_names). alias is supported
+	column: string | string[];		// alias for `pick`
+	select: string | string[];		// alias for `pick`
+}>;
+```
+
+#### `data`
+- Type: `NimbusDBData` | `NimbusDBData[]` | `(data: NimbusDBData, index: int) => boolean`
+- Default: `undefined` (print all data)
+- The data to print. If the data is an array, it will be printed as a table. If the data is a function, it will be used to filter the data to be printed.
+
+#### `keep_systemp` <Badge text="Internal" variant="caution" size='medium' />
+- Type: `boolean`
+- Default: `false`
+- Whether to keep the system data after the operation. **Don't use this option on your own code.**
+
+#### `max_char`
+- Type: `int`
+- Default: `28`
+- The max characters length per cell. If the cell length is greater than this value, it will be truncated.
+
+#### `message`
+- Type: `string`
+- Default: `"Data in Model "${model.name}" (${model.custom_id}):"`
+- The message to print before the data.
+
+#### `pick` | `column` | `select`
+- Type: `string` | `string[]`
+- Default: `undefined` (use `__column_names` as the column order)
+- The column(s) to pick from the data. If the data is an array, this option will be treated as the column(s) order of the array.
 
 ### NimbusDBQueryOperator
 

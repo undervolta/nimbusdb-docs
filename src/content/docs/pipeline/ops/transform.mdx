@@ -130,7 +130,7 @@ The `filter` operation is used to filter the data based on a **predicate** funct
     var items_pl = items.pipe()         // create an `items` pipeline
         // let's say the `filter` operation is the first operation in the pipeline
         .filter(function(data, index) { 
-            return (data.price % 5 == false);     // include only items with a price that is divisible by 5
+            return (data.price % 5 == 0);     // include only items with a price that is divisible by 5
         });
 
     // result (linked data):

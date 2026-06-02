@@ -144,6 +144,42 @@ The `flatten_deep` operation is similar to the `flatten` operation, but it flatt
     </TabItem>
 </Tabs>
 
+## Merging Data
+
+### Merge <Badge text="Array" variant="success" size='medium' /> 
+
+The `merge` operation is used to merge additional data by appending it to the current pipeline result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe()         // create an `items` pipeline
+        // let's say you have this data in your pipeline:
+        // [
+        //     "abc",
+        //     123,
+        //     true,
+        //     [ 1, 2, 3 ],
+        //     { a: 1, b: 2 }
+        // ]
+        .merge("element 1", 456, [ 4, 5, 6 ], { c: 3, d: 4 });
+
+    // result:
+    // [
+    //     "abc",
+    //     123,
+    //     true,
+    //     [ 1, 2, 3 ],
+    //     { a: 1, b: 2 },
+    //     "element 1",
+    //     456,
+    //     [ 4, 5, 6 ],
+    //     { c: 3, d: 4 }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
 ## Deduping Data
 
 ### Distinct <Badge text="Array of Objects" variant="success" size='medium' /> <Badge text="Object" variant="success" size='medium' />
@@ -152,7 +188,7 @@ The `distinct` operation is used to remove duplicate values from the pipeline da
 
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
-    ```ts {1}
+    ```ts {1, 19}
     // (1) dedupe single column
     var items_pl = items.pipe()         // create an `items` pipeline
         // let's say you have this data in your pipeline:
@@ -289,6 +325,34 @@ class NimbusDBPipeline {
 }
 ```
 </div>
+
+#### Returns
+- Type: `NimbusDBPipeline`
+- A new `NimbusDBPipeline` instance (`mutable = false`) or the current pipeline instance (`mutable = true`).
+</section>
+
+### Pipeline.merge()
+
+Merges additional data into the current pipeline result.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static merge(
+        ..._extra_data: any
+    ): NimbusDBPipeline;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_extra_data`
+- Type: `any`
+- One or more data items to merge in.
 
 #### Returns
 - Type: `NimbusDBPipeline`
