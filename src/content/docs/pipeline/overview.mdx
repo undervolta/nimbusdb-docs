@@ -391,6 +391,17 @@ class NimbusDBModel {
 - The pipeline instance.
 </section>
 
+### NimbusDBPipelineCheckpoint <Badge text="Internal" variant="caution" size='medium' />
+
+A save point for the pipeline. Used to restore the pipeline to a specific state.
+
+```ts title="pipeline.d.ts"
+type NimbusDBPipelineCheckpoint = {
+    name: string;
+    pos: int;
+}
+```
+
 ### NimbusDBPipelineOptions
 
 An optional object that allows you to customize the behavior of the pipeline instance.
@@ -410,6 +421,19 @@ type NimbusDBPipelineOptions = Partial<{
     mutable: boolean;                           // return current pipeline instead of new pipeline (default = false)
     result: int;                                // [INTERNAL] latest result of the pipeline, stored as cache key (default = -1)
 }>;
+```
+
+### NimbusDBPipelineOpsError 
+
+An object that contains information about an error that occurred during pipeline execution.
+
+```ts title="pipeline.d.ts"
+type NimbusDBPipelineOpsError = {
+    data: any;                      // current pipeline result
+    message: string;                // error message
+    pos: int;                       // current cursor position
+    type: NIMBUSDB_PIPELINE_OPS;    // type of the current operation
+}
 ```
 
 ### NimbusDBPipelineOpsOptions
@@ -472,17 +496,6 @@ type NimbusDBPipelineSave = (
 ) & NimbusDBPipelineOpsOptions;
 ```
 
-### NimbusDBPipelineCheckpoint <Badge text="Internal" variant="caution" size='medium' />
-
-A save point for the pipeline. Used to restore the pipeline to a specific state.
-
-```ts title="pipeline.d.ts"
-type NimbusDBPipelineCheckpoint = {
-    name: string;
-    pos: int;
-}
-```
-
 ### NimbusDBPipelineTerminalOptions 
 
 An optional object that allows you to customize the behavior of the pipeline operations.
@@ -493,20 +506,7 @@ type NimbusDBPipelineTerminalOptions = Partial<{
     ops_name: string;           // [INTERNAL] name of the current operation
     relative: boolean;          // calculate the `step` parameter from the current cursor position (default = false)
     silent: boolean;            // [INTERNAL] suppress debug messages (default = false)
-}>;
-```
-
-### NimbusDBPipelineOpsError 
-
-An object that contains information about an error that occurred during pipeline execution.
-
-```ts title="pipeline.d.ts"
-type NimbusDBPipelineOpsError = {
-    data: any;                      // current pipeline result
-    message: string;                // error message
-    pos: int;                       // current cursor position
-    type: NIMBUSDB_PIPELINE_OPS;    // type of the current operation
-}
+}> & NimbusDBPipelineOpsOptions;
 ```
 
 ### NIMBUSDB_PIPELINE_OPS <Badge text="Internal" variant="caution" size='medium' />

@@ -1,3 +1,4 @@
+
 ---
 title: Pipeline Control Operations
 description: Learn how to use control operations in NimbusDB pipelines to manage the flow of data and execution, including conditional branching, loops, and error handling, as well as best practices for structuring your pipelines for optimal performance and maintainability.
@@ -687,6 +688,9 @@ Prints the current cached pipeline result or taps into it with a callback.
     
     ##### `_func`
     - Type: `(data: any, index: int) => void`
+        - **Parameters**:
+            - `data`: The current data object.
+            - `index`: The current data index.
     - The callback function to use for the tap operation.
 
     #### Returns

@@ -3,7 +3,425 @@ title: Pipeline Terminator - Accessors
 description: Learn about the accessors terminator in NimbusDB Pipelines.
 ---
 
-{/*(exec/get, first, last, peek, collect)*/}
-
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../../styles/custom.css";
+
+In this section, we'll explore how to use control operations in Pipeline. We'll use `items` model for this example.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Executing the Pipeline
+
+Once you have a pipeline instance, you can use the `.exec()` or `.get()` method to execute the pipeline and return the result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {10, 17}
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    // (1) get the result
+    var result = items_pl.exec();       // or `items_pl.get()`
+    show_debug_message($"Result: {result}");
+
+    // result:
+    // [ "Cherry", "Date", "Elderberry" ]
+
+    // (2) get the result with custom step
+    var result = items_pl.exec(2);      // only execute the first operation to the second step (`.limit`)
+    show_debug_message($"Result: {result}");
+
+    // result:
+    // [
+    //     { id: 3, name: "Cherry", price: 15, is_locked: false },
+    //     { id: 4, name: "Date", price: 12.5, is_locked: false },
+    //     { id: 5, name: "Elderberry", price: 8, is_locked: false }
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+- If you don't provide the execution position, the pipeline will execute from the start to the end (default).
+- If you provide the execution position: 
+    - a positive value, the pipeline will execute from the start to the execution position and ignore the rest of the pipeline operations.
+    - a negative value, the pipeline will execute from start to the end, but will skip the specified number of steps in the reverse direction.
+- The execution position is zero-based, so if you pass `0`, the pipeline will **NOT** execute any operations.
+- The execution position is applied for all terminal operations, such as `.exec()`, `.get()`, `.first()`, `.last()`, etc. See each method's documentation for more details.
+:::
+
+### First <Badge text="Array" variant="success" size='medium' />
+
+The `first` method returns the first element of the pipeline result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.first();
+    show_debug_message($"First item name: {result}");
+
+    // result:
+    // First item name: Cherry
+    ```
+    </TabItem>
+</Tabs>
+
+### Last <Badge text="Array" variant="success" size='medium' />
+
+The `last` method returns the last element of the pipeline result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.last();
+    show_debug_message($"Last item name: {result}");
+
+    // result:
+    // Last item name: Elderberry
+    ```
+    </TabItem>
+</Tabs>
+
+### Collect <Badge text="Any" variant="success" size='medium' />
+
+The `collect` method calls the provided callback function for the whole pipeline result and returns the result of the callback.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.collect(function(result) {
+        // current result: [ "Cherry", "Date", "Elderberry" ]
+        return {
+            result,
+            length: array_length(result),
+            has_cherry: array_contains(result, "Cherry")
+        };
+    });
+    show_debug_message($"Result (collect): {result}");
+
+    // final result:
+    // Result (collect): {
+    //     result: [ "Cherry", "Date", "Elderberry" ],
+    //     length: 3,
+    //     has_cherry: true
+    // }
+    ```
+    </TabItem>
+</Tabs>
+
+## Getting the Recent Result
+
+### Peek <Badge text="Any" variant="success" size='medium' />
+
+The `peek` method returns the cached result from the previous terminal step without advancing the cursor and without re-executing the pipeline.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.exec();           // or other terminal operation
+
+    // and later, here or somewhere else ...
+    // for example, you add more operations to the pipeline
+    items_pl.slice(1, 1);
+
+    // but you haven't executed the pipeline yet
+    // so the `peek` method will return the last result
+    var last_result = items_pl.peek();
+    show_debug_message($"Peek result: {last_result}");
+
+    // result: 
+    // Peek result: [ "Cherry", "Date", "Elderberry" ]
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+If you haven't executed the pipeline yet, the `.peek()` method will return `undefined`.
+:::
+
+---
+
+## References
+
+### Pipeline.collect()
+
+Applies a transformation function to the last result and returns the final value.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static collect(
+            _func: (result: any) => any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): any;
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_func`
+    - Type: `(result: any) => any`
+        - **Parameters**:
+            - `result`: The last result of the pipeline.
+        - **Returns**: The final result of the collect operation.
+    - The transformation function to use for the collect operation.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the collect operation.
+
+    #### Returns
+    - Type: `any`
+    - The final result of the collect operation.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static collect(
+            _pos: int,
+            _func: (result: any) => any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): any;
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position to read from.
+
+    ##### `_func`
+    - Type: `(result: any) => any`
+        - **Parameters**:
+            - `result`: The last result of the pipeline.
+        - **Returns**: The final result of the collect operation.
+    - The transformation function to use for the collect operation.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the collect operation.
+
+    #### Returns
+    - Type: `any`
+    - The final result of the collect operation.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Pipeline.exec() | Pipeline.get()
+
+Executes the pipeline and returns the result at the specified cursor position.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static exec(
+        _pos?: int,
+        _options?: NimbusDBPipelineTerminalOptions
+    ): any;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_pos`
+- Type: `int`
+- Default: `-1` (the last step)
+- The cursor position to execute from.
+
+##### `_options`
+- Type: `NimbusDBPipelineTerminalOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the exec operation.
+
+#### Returns
+- Type: `any`
+- The result at the specified cursor position.
+</section>
+
+### Pipeline.first()
+
+Executes the pipeline at the given cursor position and returns the first result.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static first(
+        _pos?: int,
+        _options?: NimbusDBPipelineTerminalOptions
+    ): any;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_pos`
+- Type: `int`
+- Default: `-1` (the last step)
+- The cursor position to execute from.
+
+##### `_options`
+- Type: `NimbusDBPipelineTerminalOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the first operation.
+
+#### Returns
+- Type: `any`
+- The first result.
+</section>
+
+### Pipeline.last()
+
+Executes the pipeline at the given cursor position and returns the last result.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static last(
+        _pos?: int,
+        _options?: NimbusDBPipelineTerminalOptions
+    ): any;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_pos`
+- Type: `int`
+- Default: `-1` (the last step)
+- The cursor position to execute from.
+
+##### `_options`
+- Type: `NimbusDBPipelineTerminalOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the last operation.
+
+#### Returns
+- Type: `any`
+- The last result.
+</section>
+
+### Pipeline.peek()
+
+Returns the cached result from the previous terminal step without advancing the cursor and without re-executing the pipeline.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static peek(): any | undefined;
+}
+```
+</div>
+
+#### Returns
+- Type: `any` | `undefined`
+- The peeked result, or `undefined` if unavailable.
+</section>
