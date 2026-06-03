@@ -3,7 +3,533 @@ title: Pipeline Terminator - Assertions
 description: Learn about the assertions terminator in NimbusDB Pipelines.
 ---
 
-{/*(every, some, includes, index_of, is_empty)*/}
-
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../../styles/custom.css";
+
+In this section, we'll explore how to use assertion terminators in Pipeline. We'll use `items` model for this example.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Assertions
+
+It means to check if the pipeline result meets the specified condition.
+
+### Every <Badge text="Array" variant="success" size='medium' />
+
+The `every` method checks if all elements in the pipeline result meet the specified condition.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.every(function(data, index) {
+        return string_length(data) >= 5;
+    });
+    show_debug_message($"Result: {result}");
+
+    // Result: false
+    ```
+    </TabItem>
+</Tabs>
+
+### Some <Badge text="Array" variant="success" size='medium' />
+
+The `some` method checks if at least one element in the pipeline result meets the specified condition.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.some(function(data, index) {
+        return string_length(data) >= 5;
+    });
+    show_debug_message($"Result: {result}");
+
+    // Result: true
+    ```
+    </TabItem>
+</Tabs>
+
+### Includes <Badge text="Array" variant="success" size='medium' />
+
+The `includes` method checks if the pipeline result contains the specified element.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.includes("Cherry");
+    show_debug_message($"Result: {result}");
+
+    // Result: true
+    ```
+    </TabItem>
+</Tabs>
+
+### Index of <Badge text="Array" variant="success" size='medium' />
+
+The `index_of` method returns the index of the first occurrence of the specified element in the pipeline result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.index_of("Date");
+    show_debug_message($"Result: {result}");
+
+    // Result: 1
+    ```
+    </TabItem>
+</Tabs>
+
+:::note
+If the specified element is not found, the `index_of` method returns `-1`.
+:::
+
+### Is Empty <Badge text="Array" variant="success" size='medium' />
+
+The `is_empty` method checks if the pipeline result is empty.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.is_empty();
+    show_debug_message($"Result: {result}");
+
+    // Result: false
+    ```
+    </TabItem>
+</Tabs>
+
+---
+
+## References
+
+### Pipeline.every()
+
+Returns `true` if every element at the given cursor position satisfies the condition.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static every(
+            _func: (element: any, index: int) => boolean,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): boolean;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_func`
+    - Type: `(element: any, index: int) => boolean`
+        - **Parameters**:
+            - `element`: The current element.
+            - `index`: The current index.
+        - **Returns**: `true` if the condition is met, `false` otherwise.
+    - The condition function to use for the every operation.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the every operation.
+
+    #### Returns
+    - Type: `boolean`
+    - The result of the every operation.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static every(
+            _pos: int,
+            _func: (element: any, index: int) => boolean,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): boolean;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_func`
+    - Type: `(element: any, index: int) => boolean`
+        - **Parameters**:
+            - `element`: The current element.
+            - `index`: The current index.
+        - **Returns**: `true` if the condition is met, `false` otherwise.
+    - The condition function to use for the every operation.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the every operation.
+
+    #### Returns
+    - Type: `boolean`
+    - The result of the every operation.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Pipeline.includes()
+
+Checks if the pipeline result contains the specified element.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static includes(
+            _value: any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): boolean;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_value`
+    - Type: `any`
+    - The value to search for.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the includes operation.
+
+    #### Returns
+    - Type: `boolean`
+    - The result of the includes operation.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static includes(
+            _value: any,
+            _pos?: int,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): boolean;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_value`
+    - Type: `any`
+    - The value to search for.
+
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the includes operation.
+
+    #### Returns
+    - Type: `boolean`
+    - The result of the includes operation.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Pipeline.index_of()
+
+Finds the index of an element matching a value or predicate function.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static index_of(
+            _value: any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): int;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_value`
+    - Type: `any`
+    - The value to search for.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the index_of operation.
+
+    #### Returns
+    - Type: `int`
+    - The result of the index_of operation.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static index_of(
+            _value: any,
+            _pos?: int,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): int;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_value`
+    - Type: `any`
+    - The value to search for.
+
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the index_of operation.
+
+    #### Returns
+    - Type: `int`
+    - The result of the index_of operation.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Pipeline.is_empty()
+
+Checks whether the pipeline data at the given cursor position is empty.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static is_empty(
+        _pos?: int,
+        _options?: NimbusDBPipelineTerminalOptions
+    ): boolean;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_pos`
+- Type: `int`
+- Default: `-1` (the last step)
+- The cursor position used as the end of the pipeline operations.
+
+##### `_options`
+- Type: `NimbusDBPipelineTerminalOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the is_empty operation.
+
+#### Returns
+- Type: `boolean`
+- The result of the is_empty operation.
+</section>
+
+### Pipeline.some()
+
+Returns `true` if at least one element satisfies the condition.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static some(
+            _func: (element: any, index: int) => boolean,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): boolean;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_func`
+    - Type: `(element: any, index: int) => boolean`
+        - **Parameters**:
+            - `element`: The current element.
+            - `index`: The current index.
+        - **Returns**: `true` if the condition is met, `false` otherwise.
+    - The condition function to use for the some operation.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the some operation.
+
+    #### Returns
+    - Type: `boolean`
+    - The result of the some operation.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static some(
+            _pos: int,
+            _func: (element: any, index: int) => boolean,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): boolean;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_func`
+    - Type: `(element: any, index: int) => boolean`
+        - **Parameters**:
+            - `element`: The current element.
+            - `index`: The current index.
+        - **Returns**: `true` if the condition is met, `false` otherwise.
+    - The condition function to use for the some operation.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the some operation.
+
+    #### Returns
+    - Type: `boolean`
+    - The result of the some operation.
+    </section>
+    </TabItem>
+</Tabs>
