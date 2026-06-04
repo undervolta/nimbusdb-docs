@@ -3,7 +3,970 @@ title: Pipeline Terminator - Aggregation
 description: Learn about the aggregation terminator in NimbusDB Pipelines.
 ---
 
-{/*(count, sum, avg, min, max, group_by, group_count, group_reduce, partition)*/}
-
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../../styles/custom.css";
+
+In this section, we'll explore how to use aggregation terminators in Pipeline. We'll use `items` model for this example.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        },
+        color: NIMBUSDB_DATA_TYPE.STRING
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5, color: "red" },
+        { id: 2, name: "Banana", price: 7.2, color: "yellow" },
+        { id: 3, name: "Cherry", price: 15, color: "red" },
+        { id: 4, name: "Date", price: 12.5, color: "green" },
+        { id: 5, name: "Elderberry", price: 8, color: "purple" },
+        { id: 6, name: "Fig", price: 10, color: "purple" },
+        { id: 7, name: "Grape", price: 6, color: "purple" },
+        { id: 8, name: "Honeydew", price: 9, color: "green" },
+        { id: 9, name: "Kiwi", price: 4, color: "green" },
+        { id: 10, name: "Lemon", price: 3, color: "yellow" }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Numerical Aggregation
+
+The result of the pipeline operations must be an array of numbers (except for `.count()`) if you want to use the numerical aggregation terminators.
+
+### Count <Badge text="Any" variant="success" size='medium' />
+
+The `count` terminator returns the number of elements in the pipeline result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.count();
+    show_debug_message($"Result: {result}");
+
+    // Result: 3
+    ```
+    </TabItem>
+</Tabs>
+
+### Sum <Badge text="Array of Numbers" variant="success" size='medium' />
+
+The `sum` terminator returns the sum of the numeric values in the pipeline result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of numbers
+            return data.price;
+        });
+
+    var result = items_pl.sum();
+    show_debug_message($"Result: {result}");
+
+    // Result: 35.5
+    ```
+    </TabItem>
+</Tabs>
+
+### Average <Badge text="Array of Numbers" variant="success" size='medium' />
+
+The `avg` terminator returns the average of the numeric values in the pipeline result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of numbers
+            return data.price;
+        });
+
+    var result = items_pl.avg();
+    show_debug_message($"Result: {result}");
+
+    // Result: 11.833
+    ```
+    </TabItem>
+</Tabs>
+
+### Min <Badge text="Array of Numbers" variant="success" size='medium' />
+
+The `min` terminator returns the minimum value in the pipeline result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of numbers
+            return data.price;
+        });
+
+    var result = items_pl.min();
+    show_debug_message($"Result: {result}");
+
+    // Result: 8
+    ```
+    </TabItem>
+</Tabs>
+
+### Max <Badge text="Array of Numbers" variant="success" size='medium' />
+
+The `max` terminator returns the maximum value in the pipeline result.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of numbers
+            return data.price;
+        });
+
+    var result = items_pl.max();
+    show_debug_message($"Result: {result}");
+
+    // Result: 15
+    ```
+    </TabItem>
+</Tabs>
+
+## Grouping
+
+### Group by <Badge text="Array" variant="success" size='medium' />
+
+The `group_by` terminator groups the pipeline data by a column value.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {4, 25}
+    var items_pl = items.pipe().isolate()
+        .limit(6);          // limit the result to 6 items
+    
+    // (1) using a column name
+    var result = items_pl.group_by("color");
+    show_debug_message($"Result: {result}");
+
+    // Result: {
+    //     red: [
+    //         { id: 1, name: "Apple", price: 5, color: "red" },
+    //         { id: 3, name: "Cherry", price: 15, color: "red" }
+    //     ],
+    //     yellow: [
+    //         { id: 2, name: "Banana", price: 7.2, color: "yellow" }
+    //     ],
+    //     green: [
+    //         { id: 4, name: "Date", price: 12.5, color: "green" }
+    //     ],
+    //     purple: [
+    //         { id: 5, name: "Elderberry", price: 8, color: "purple" },
+    //         { id: 6, name: "Fig", price: 10, color: "purple" }
+    //     ]
+    // }
+
+    // (2) using mapper function
+    var result = items_pl.group_by(function(data, index) {
+        return data.price <= 5 
+            ? "cheap_items" 
+            : (data.price <= 10 ? "normal_items" : "expensive_items");
+    });
+    show_debug_message($"Result: {result}");
+
+    // Result: {
+    //     cheap_items: [
+    //         { id: 1, name: "Apple", price: 5, color: "red" }
+    //     ],
+    //     normal_items: [
+    //         { id: 2, name: "Banana", price: 7.2, color: "yellow" },
+    //         { id: 5, name: "Elderberry", price: 8, color: "purple" },
+    //         { id: 6, name: "Fig", price: 10, color: "purple" }
+    //     ],
+    //     expensive_items: [
+    //         { id: 3, name: "Cherry", price: 15, color: "red" },
+    //         { id: 4, name: "Date", price: 12.5, color: "green" }
+    //     ]
+    // }
+    ```
+    </TabItem>
+</Tabs>
+
+:::caution
+If you're using the a column name as the group separator, make sure the pipeline result is an **array of objects**.
+:::
+
+### Group Count <Badge text="Array" variant="success" size='medium' />
+
+The `group_count` terminator groups the pipeline data by a mapper function and counts the number of elements in each group.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe().isolate()
+        .limit(6);          // limit the result to 6 items
+    
+    var result = items_pl.group_by(function(data, index) {
+        return data.price <= 5 
+            ? "cheap_items_count"
+            : (data.price <= 10 ? "normal_items_count" : "expensive_items_count");
+    });
+    show_debug_message($"Result: {result}");
+
+    // Result: {
+    //     cheap_items_count: 1,
+    //     normal_items_count: 3,
+    //     expensive_items_count: 2
+    // }
+    ```
+    </TabItem>
+</Tabs>
+
+### Group Reduce <Badge text="Array" variant="success" size='medium' />
+
+The `group_reduce` terminator groups the pipeline data by a mapper function and reduces each group using a reducer function.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe().isolate()
+        .limit(6);          // limit the result to 6 items
+    
+    var result = items_pl.group_reduce(
+        function(data, index) {         // mapper function
+            return data.price <= 5 
+                ? "cheap_item"
+                : (data.price <= 10 ? "normal_item" : "expensive_item");
+        },
+        function(acc, data, index) {    // reducer function
+            acc.count++;
+            acc.total_price += data.price;
+
+            return acc;
+        },
+        {                               // initial accumulator for each group
+            count: 0,
+            total_price: 0
+        }
+    );
+    show_debug_message($"Result: {result}");
+
+    // Result: { 
+    //     cheap_item : { 
+    //         count : 1, 
+    //         total_price : 5 
+    //     }, 
+    //     normal_item : { 
+    //         count : 3, 
+    //         total_price : 25.20 
+    //     }, 
+    //     expensive_item : { 
+    //         count : 2, 
+    //         total_price : 27.50 
+    //     } 
+    // }
+    ```
+    </TabItem>
+</Tabs>
+
+## Partitioning
+
+### Partition <Badge text="Array" variant="success" size='medium' />
+
+The `partition` terminator partitions the pipeline data into a tuple of 2 arrays: 
+- index `0`: elements that match, and 
+- index `1`: elements that don't match.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts 
+    var items_pl = items.pipe().isolate()
+        .limit(6);          // limit the result to 6 items
+    
+    var result = items_pl.partition(function(data, index) {
+        return data.price < 8;
+    });
+    show_debug_message($"Result: {result}");
+
+    // Result: [ 
+    //     [ 
+    //         { id: 1, name: "Apple", price: 5, color: "red" }, 
+    //         { id: 2, name: "Banana", price: 7.2, color: "yellow" } 
+    //     ], 
+    //     [ 
+    //         { id: 3, name: "Cherry", price: 15, color: "red" }, 
+    //         { id: 4, name: "Date", price: 12.5, color: "green" }, 
+    //         { id: 5, name: "Elderberry", price: 8, color: "purple" }, 
+    //         { id: 6, name: "Fig", price: 10, color: "purple" } 
+    //     ] 
+    // ]
+    ```
+    </TabItem>
+</Tabs>
+
+---
+
+## References
+
+### Pipeline.avg()
+
+Executes the pipeline at the given cursor position and returns the average of numeric values.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static avg(
+        _pos?: int,
+        _options?: NimbusDBPipelineTerminalOptions
+    ): number | undefined;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_pos`
+- Type: `int`
+- Default: `-1` (the last step)
+- The cursor position used as the end of the pipeline operations.
+
+##### `_options`
+- Type: `NimbusDBPipelineTerminalOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the avg operation.
+
+#### Returns
+- Type: `number` | `undefined`
+- The average, or `undefined` if unavailable.
+</section>
+
+### Pipeline.count()
+
+Executes the pipeline at the given cursor position and returns the number of elements.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static count(
+        _pos?: int,
+        _options?: NimbusDBPipelineTerminalOptions
+    ): int | undefined;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_pos`
+- Type: `int`
+- Default: `-1` (the last step)
+- The cursor position used as the end of the pipeline operations.
+
+##### `_options`
+- Type: `NimbusDBPipelineTerminalOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the count operation.
+
+#### Returns
+- Type: `int`
+- The element count, or `undefined` if unavailable.
+</section>
+
+### Pipeline.group_by()
+
+Executes the pipeline at the given cursor position and groups the pipeline data by a column value, returning a keyed object of arrays.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static group_by(
+            _column: string,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): {
+            [key: string]: any[];
+        };
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_column`
+    - Type: `string`
+    - The column name to group by.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the group_by operation.
+
+    #### Returns
+    - Type: `{ [key: string]: any[]; }`
+    - The keyed object of arrays.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static group_by(
+            _pos: int,
+            _column: string,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): {
+            [key: string]: any[];
+        };
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_column`
+    - Type: `string`
+    - The column name to group by.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the group_by operation.
+
+    #### Returns
+    - Type: `{ [key: string]: any[]; }`
+    - The keyed object of arrays.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 3' value='overload-3'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static group_by(
+            _key_fn: (data: any, index: int) => string,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): {
+            [key: string]: any[];
+        };
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_key_fn`
+    - Type: `(data: any, index: int) => string`
+        - **Parameters**:
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: The key to group by.
+    - The function to use to group by.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the group_by operation.
+
+    #### Returns
+    - Type: `{ [key: string]: any[]; }`
+    - The keyed object of arrays.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 4' value='overload-4'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static group_by(
+            _pos: int,
+            _key_fn: (data: any, index: int) => string,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): {
+            [key: string]: any[];
+        };
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_key_fn`
+    - Type: `(data: any, index: int) => string`
+        - **Parameters**:
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: The key to group by.
+    - The function to use to group by.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the group_by operation.
+
+    #### Returns
+    - Type: `{ [key: string]: any[]; }`
+    - The keyed object of arrays.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Pipeline.group_count()
+
+Executes the pipeline at the given cursor position, groups and counts elements using a key function, returning a keyed object of counts.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static group_count(
+            _func: (data: any, index: int) => any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): {
+            [key: string]: int;
+        };
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_func`
+    - Type: `(data: any, index: int) => any`
+        - **Parameters**:
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: The key to group by.
+    - The function to use to group by.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the group_count operation.
+
+    #### Returns
+    - Type: `{ [key: string]: int; }`
+    - The keyed object of counts.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static group_count(
+            _pos: int,
+            _func: (data: any, index: int) => any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): {
+            [key: string]: int;
+        };
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_func`
+    - Type: `(data: any, index: int) => any`
+        - **Parameters**:
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: The key to group by.
+    - The function to use to group by.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the group_count operation.
+
+    #### Returns
+    - Type: `{ [key: string]: int; }`
+    - The keyed object of counts.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Pipeline.group_reduce()
+
+Executes the pipeline at the given cursor position, groups the pipeline data by a key function and reduces each group using an accumulator.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static group_reduce(
+            _key_func: (data: any, index: int) => string,
+            _reducer: (acc: any, data: any, index: int) => any,
+            _acc?: any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): {
+            [key: string]: any;
+        };
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_key_func`
+    - Type: `(data: any, index: int) => string`
+        - **Parameters**:
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: The key to group by.
+    - The function to use to group by.
+
+    ##### `_reducer`
+    - Type: `(acc: any, data: any, index: int) => any`
+        - **Parameters**:
+            - `acc`: The current accumulator.
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: The reduced value.
+    - The function to use to reduce each group.
+
+    ##### `_acc`
+    - Type: `any`
+    - The initial accumulator value.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the group_reduce operation.
+
+    #### Returns
+    - Type: `{ [key: string]: any; }`
+    - The keyed object of reduced values.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static group_reduce(
+            _pos: int,
+            _key_func: (data: any, index: int) => string,
+            _reducer: (acc: any, data: any, index: int) => any,
+            _acc?: any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): {
+            [key: string]: any;
+        };
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_key_func`
+    - Type: `(data: any, index: int) => string`
+        - **Parameters**:
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: The key to group by.
+    - The function to use to group by.
+
+    ##### `_reducer`
+    - Type: `(acc: any, data: any, index: int) => any`
+        - **Parameters**:
+            - `acc`: The current accumulator.
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: The reduced value.
+    - The function to use to reduce each group.
+
+    ##### `_acc`
+    - Type: `any`
+    - The initial accumulator value.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the group_reduce operation.
+
+    #### Returns
+    - Type: `{ [key: string]: any; }`
+    - The keyed object of reduced values.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Pipeline.max()
+
+Executes the pipeline at the given cursor position and returns the maximum numeric value.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static max(
+        _pos?: int,
+        _options?: NimbusDBPipelineTerminalOptions
+    ): number | undefined;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_pos`
+- Type: `int`
+- Default: `-1` (the last step)
+- The cursor position used as the end of the pipeline operations.
+
+##### `_options`
+- Type: `NimbusDBPipelineTerminalOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the max operation.
+
+#### Returns
+- Type: `number` | `undefined`
+- The maximum value, or `undefined` if unavailable.
+</section>
+
+### Pipeline.min()
+
+Executes the pipeline at the given cursor position and returns the minimum numeric value.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static min(
+        _pos?: int,
+        _options?: NimbusDBPipelineTerminalOptions
+    ): number | undefined;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_pos`
+- Type: `int`
+- Default: `-1` (the last step)
+- The cursor position used as the end of the pipeline operations.
+
+##### `_options`
+- Type: `NimbusDBPipelineTerminalOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the min operation.
+
+#### Returns
+- Type: `number` | `undefined`
+- The minimum value, or `undefined` if unavailable.
+</section>
+
+### Pipeline.partition()
+
+Executes the pipeline at the given cursor position and splits the pipeline data into two arrays: 
+- index `0`: elements that match, and 
+- index `1`: elements that don't match.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static partition(
+            _func: (data: any, index: int) => boolean,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): [ any[], any[] ];
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_func`
+    - Type: `(data: any, index: int) => boolean`
+        - **Parameters**:
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: `true` if the element matches, `false` otherwise.
+    - The function to use to partition the data.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the partition operation.
+
+    #### Returns
+    - Type: `[ any[], any[] ]`
+    - The partitioned data. Index `0` contains elements that match, and index `1` contains elements that don't match.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static partition(
+            _pos: int,
+            _func: (data: any, index: int) => boolean,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): [ any[], any[] ];
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_func`
+    - Type: `(data: any, index: int) => boolean`
+        - **Parameters**:
+            - `data`: The current data element.
+            - `index`: The current index.
+        - **Returns**: `true` if the element matches, `false` otherwise.
+    - The function to use to partition the data.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the partition operation.
+
+    #### Returns
+    - Type: `[ any[], any[] ]`
+    - The partitioned data. Index `0` contains elements that match, and index `1` contains elements that don't match.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Pipeline.sum()
+
+Executes the pipeline at the given cursor position and returns the sum of numeric values.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="pipeline.d.ts"
+class NimbusDBPipeline {
+    // ... other methods and properties ...
+    static sum(
+        _pos?: int,
+        _options?: NimbusDBPipelineTerminalOptions
+    ): number | undefined;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_pos`
+- Type: `int`
+- Default: `-1` (the last step)
+- The cursor position used as the end of the pipeline operations.
+
+##### `_options`
+- Type: `NimbusDBPipelineTerminalOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the sum operation.
+
+#### Returns
+- Type: `number` | `undefined`
+- The sum, or `undefined` if unavailable.
+</section>

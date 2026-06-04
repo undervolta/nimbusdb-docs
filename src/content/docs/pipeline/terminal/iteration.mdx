@@ -3,7 +3,304 @@ title: Pipeline Terminator - Iteration
 description: Learn about the iteration terminator in NimbusDB Pipelines.
 ---
 
-{/*(foreach, reduce)*/}
-
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../../styles/custom.css";
+
+In this section, we'll explore how to use iteration terminators in Pipeline. We'll use `items` model for this example.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Iteration
+
+### Foreach <Badge text="Any" variant="success" size='medium' />
+
+The `foreach` terminator iterates over each element in the pipeline and executes a function on each element.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of strings
+            return data.name;
+        });
+
+    var result = items_pl.foreach(function(data, index) {
+        show_debug_message($"Item {index + 1}: {data}");
+    });
+
+    // Item 1: Cherry
+    // Item 2: Date
+    // Item 3: Elderberry
+    ```
+    </TabItem>
+</Tabs>
+
+### Reduce <Badge text="Any" variant="success" size='medium' />
+
+The `reduce` terminator iterates over each element in the pipeline and reduces the result to a single value using a reducer function.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var items_pl = items.pipe().isolate()
+        .filter(function(data, index) {     // include only items with `price` greater than or equal to 8
+            return data.price >= 8;
+        })
+        .limit(3)                           // limit the result to 3 items
+        .map(function(data, index) {        // map the result to an array of numbers
+            return data.price;
+        });
+
+    var result = items_pl.reduce(function(acc, data, index) {
+        acc.total_price += data;
+        return acc;
+    }, { 
+        total_price: 0 
+    });
+    show_debug_message($"Total price: {result.total_price}");
+
+    // Total price: 35.5
+    ```
+    </TabItem>
+</Tabs>
+
+---
+
+## References
+
+### Pipeline.foreach()
+
+Executes the pipeline and iterates over each element in the result. 
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static foreach(
+            _func: 
+                | ((element: any, index: int) => void)  // array
+                | ((prop: string, value: any) => void)  // object
+                | ((result: any) => void),              // non-array or object
+            _options?: NimbusDBPipelineTerminalOptions
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_func`
+    - Type: `(element: any, index: int) => void` | `(prop: string, value: any) => void` | `(result: any) => void`
+        - **Parameters**:
+            - `element`: The current data element.
+            - `index`: The current index.
+            - `prop`: The current property name.
+            - `value`: The current property value.
+            - `result`: The current result.
+        - **Returns**: `void`
+    - The function to use to iterate over the result.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the foreach operation.
+
+    #### Returns
+    - Type: `void`
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static foreach(
+            _pos: int,
+            _func: 
+                | ((element: any, index: int) => void)  // array
+                | ((prop: string, value: any) => void)  // object
+                | ((result: any) => void),              // non-array or object
+            _options?: NimbusDBPipelineTerminalOptions
+        ): void;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_func`
+    - Type: `(element: any, index: int) => void` | `(prop: string, value: any) => void` | `(result: any) => void`
+        - **Parameters**:
+            - `element`: The current data element.
+            - `index`: The current index.
+            - `prop`: The current property name.
+            - `value`: The current property value.
+            - `result`: The current result.
+        - **Returns**: `void`
+    - The function to use to iterate over the result.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the foreach operation.
+
+    #### Returns
+    - Type: `void`
+    </section>
+    </TabItem>
+</Tabs>
+
+### Pipeline.reduce()
+
+Executes the pipeline and reduces the result to a single value using a reducer function.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static reduce(
+            _func: 
+                | ((acc: any, element: any, index: int) => any)  // array
+                | ((acc: any, prop: string, value: any) => any)  // object
+                | ((acc: any, result: any) => any),              // non-array or object
+            _acc?: any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): any;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_func`
+    - Type: `(acc: any, element: any, index: int) => any` | `(acc: any, prop: string, value: any) => any` | `(acc: any, result: any) => any`
+        - **Parameters**:
+            - `acc`: The current accumulator.
+            - `element`: The current element.
+            - `index`: The current index.
+        - **Returns**: The reduced value.
+    - The function to use to reduce the result.
+
+    ##### `_acc`
+    - Type: `any`
+    - Default: `undefined`
+    - The initial accumulator value.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the reduce operation.
+
+    #### Returns
+    - Type: `any`
+    - The reduced value.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="pipeline.d.ts"
+    class NimbusDBPipeline {
+        // ... other methods and properties ...
+        static reduce(
+            _pos: int,
+            _func: 
+                | ((acc: any, element: any, index: int) => any)  // array
+                | ((acc: any, prop: string, value: any) => any)  // object
+                | ((acc: any, result: any) => any),              // non-array or object
+            _acc?: any,
+            _options?: NimbusDBPipelineTerminalOptions
+        ): any;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_pos`
+    - Type: `int`
+    - The cursor position used as the end of the pipeline operations.
+
+    ##### `_func`
+    - Type: `(acc: any, element: any, index: int) => any` | `(acc: any, prop: string, value: any) => any` | `(acc: any, result: any) => any`
+        - **Parameters**:
+            - `acc`: The current accumulator.
+            - `element`: The current element.
+            - `index`: The current index.
+        - **Returns**: The reduced value.
+    - The function to use to reduce the result.
+
+    ##### `_acc`
+    - Type: `any`
+    - Default: `undefined`
+    - The initial accumulator value.
+
+    ##### `_options`
+    - Type: `NimbusDBPipelineTerminalOptions`
+    - Default: `undefined`
+    - An optional object that allows you to customize the behavior of the reduce operation.
+
+    #### Returns
+    - Type: `any`
+    - The reduced value.
+    </section>
+    </TabItem>
+</Tabs>
