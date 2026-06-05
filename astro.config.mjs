@@ -122,8 +122,6 @@ export default defineConfig({
 					label: 'API Reference',
 					items: [
 						{ label: 'ndb Functions', slug: 'api-reference/ndb-functions' },
-						{ label: 'Enums', slug: 'api-reference/enums' },
-						{ label: 'Types', slug: 'api-reference/types' },
 					],
 				},
 				{

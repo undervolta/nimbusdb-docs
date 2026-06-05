@@ -1,0 +1,94 @@
+---
+title: Data Migration
+description: An overview of data migration in NimbusDB, including strategies for migrating existing data into the database and best practices for ensuring a smooth transition.
+---
+
+{/*(migrate, all NIMBUSDB_MIGRATION enum variants, MigrationOptions)*/}
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../styles/custom.css";
+
+---
+
+## References
+
+### Model.migrate()
+
+Migrates internal data into `NimbusDBModel`.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static migrate(
+        _migration_type: NIMBUSDB_MIGRATION,
+        _data: any,
+        _option?: NimbusDBMigrationOptions
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_migration_type`
+- Type: `NIMBUSDB_MIGRATION`
+- The migration strategy to apply.
+
+##### `_data`
+- Type: `any`
+- The data payload used by the operation.
+
+##### `_option`
+- Type: `NimbusDBMigrationOptions`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `void`
+- The operation is executed asynchronously.
+</section>
+
+### NimbusDBMigrationOptions
+
+An optional configuration object for the `NimbusDBModel.migrate()` method.
+
+```ts title="io.d.ts"
+type NimbusDBMigrationOptions = Partial<{
+    columns: string[];              // required for ARRAY_OF_ARRAY, ARRAY_OF_TUPLE, or ARRAY_OF_DSLIST
+    destroy: boolean;               // destroy ds_* or struct after converting (default = false)
+    keys_equal: boolean;            // whether the keys in a struct/ds_map is the same (default = false)
+    mode: "append" | "replace";     // append = append to existing data (upsert on primary key, default), replace = clear existing data and import
+}> & NimbusDBUpsertOptions;
+```
+
+### NIMBUSDB_MIGRATION
+
+An enum that defines the migration strategy to apply.
+
+```ts title="io.d.ts"
+enum NIMBUSDB_MIGRATION {
+    ARRAY_OF_STRUCT,
+    ARRAY_OF_TUPLE,
+    ARRAY_OF_ARRAY,
+    ARRAY_OF_DSMAP,
+    ARRAY_OF_DSLIST,
+    DSLIST_OF_STRUCT,
+    DSLIST_OF_TUPLE,
+    DSLIST_OF_ARRAY,
+    DSLIST_OF_DSMAP,
+    DSLIST_OF_DSLIST,
+    STRUCT_OF_STRUCT,
+    STRUCT_OF_TUPLE,
+    STRUCT_OF_ARRAY,
+    STRUCT_OF_DSMAP,
+    STRUCT_OF_DSLIST,
+    DSMAP_OF_STRUCT,
+    DSMAP_OF_TUPLE,
+    DSMAP_OF_ARRAY,
+    DSMAP_OF_DSMAP,
+    DSMAP_OF_DSLIST
+}
+```

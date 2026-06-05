@@ -1,0 +1,206 @@
+---
+title: Derived Value
+description: Learn how to use derived values in NimbusDB to create dynamic data that is automatically updated based on changes to other data, including how to define derived values and best practices for using them to maintain data integrity and consistency in your NimbusDB models.
+---
+
+{/*(NimbusDBDerived, var binding, global prefix, on_update)*/}
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../styles/custom.css";
+
+---
+
+## References
+
+### NimbusDBDerived <Badge text="Internal" variant="caution" size='medium' />
+
+The `NimbusDBDerived` class is used to define derived values in NimbusDB models. 
+
+```ts title="reactivity.d.ts"
+class NimbusDBDerived {
+    constructor(
+        _inst_id: Instance | "global",
+        _var_name: string,			// use "global" or "g" prefix to use global variable
+        _model: NimbusDBModel,
+        _data: Struct,				// from data
+        _watch_column?: string | string[],
+        _options?: NimbusDBDerivedConstOptions
+    )
+
+    data: Struct;
+    id: int;
+    last_val: any;
+    prop_name: string;
+    var_name: string;       // variable name in ref
+
+    on_update?: (           // called when the data is updated
+        data: Struct,
+        new_val: any,
+        old_val: any,
+        prop: string
+    ) => void;
+
+    static refresh: () => void;
+    static update: () => void;
+
+    static __id: int;
+    __inst: Instance | "global";
+    __model: NimbusDBModel;
+    __ref: Instance | Struct | "global";	// root reference
+    __source?: NIMBUSDB_DERIVED.SOURCE_INSTANCE | NIMBUSDB_DERIVED.SOURCE_GLOBAL | NIMBUSDB_DERIVED.SOURCE_STRUCT;
+    __target?: NIMBUSDB_DERIVED;			// .TARGET_*
+    __indexes?: int[];
+    __sys_temp?: Struct;
+    __reinit_count: int;
+
+    static __init: () => void;
+}
+```
+
+### Model.derived()
+
+Creates a derived value from watched model data.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static derived(
+            _var_name: string,
+            _original_data: int | NimbusDBData,
+            _watch_column: string,
+            _instance?: Instance
+        ): any;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_var_name`
+    - Type: `string`
+    - The name of the variable to bind to.
+
+    ##### `_original_data`
+    - Type: `int` | `NimbusDBData`
+    - The original model data reference (direct-access data) or primary key of the data.
+
+    ##### `_watch_column`
+    - Type: `string`
+    - The column to watch for changes.
+
+    ##### `_instance`
+    - Type: `Instance`
+    - The instance reference to bind the derived value to.
+
+    #### Returns
+    - Type: `any`
+    - The value of a column from the related data.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static derived(
+            _var_name: string,
+            _original_data: int | NimbusDBData,
+            _watch_column: string,
+            _options?: NimbusDBDerivedOptions
+        ): any;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_var_name`
+    - Type: `string`
+    - The name of the variable to bind to.
+
+    ##### `_original_data`
+    - Type: `int` | `NimbusDBData`
+    - The original model data reference (direct-access data) or primary key of the data.
+
+    ##### `_watch_column`
+    - Type: `string`
+    - The column to watch for changes.
+
+    ##### `_options`
+    - Type: `NimbusDBDerivedOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `any`
+    - The value of a column from the related data.
+    </section>
+    </TabItem>
+</Tabs>
+
+### NimbusDBDerivedConstOptions <Badge text="Internal" variant="caution" size='medium' />
+
+An optional configuration object for the `NimbusDBDerived` constructor.
+
+```ts title="reactivity.d.ts"
+type NimbusDBDerivedConstOptions = Partial<{
+    ref: Instance | Struct | "global";	// override NimbusDBModel.__root
+    on_update: (						// called when the data is updated
+        data: Struct,
+        new_val: any,
+        old_val: any,
+        prop: string
+    ) => void;
+}
+```
+
+### NimbusDBDerivedOptions
+
+An optional configuration object for the `NimbusDBModel.derived()` method.
+
+```ts title="reactivity.d.ts"
+type NimbusDBDerivedOptions = Partial<{
+    inst: Instance | "global";          // override NimbusDBDerived.__inst
+    immediate: boolean;                 // call .on_update immediately after creation (default = false)
+    ref: Instance | Struct | "global";  // override NimbusDBDerived.__sys_temp.ref
+    return_id: boolean;	                // return the id of the data instead of the data (default = false)
+    on_update: (                        // called when the data is updated
+        data: Struct,
+        new_val: any,
+        old_val: any,
+        prop: string
+    ) => void;
+}>;
+```
+
+### NIMBUSDB_DERIVED <Badge text="Internal" variant="caution" size='medium' />
+
+An enum that defines the source and target of a derived value.
+
+```ts title="reactivity.d.ts"
+enum NIMBUSDB_DERIVED {
+	SOURCE_INSTANCE = 1,
+	SOURCE_GLOBAL,
+	SOURCE_STRUCT,
+	TARGET_INSTANCE = 1,
+	TARGET_INSTANCE_ARRAY_1D,
+	TARGET_INSTANCE_ARRAY_2D,
+	TARGET_INSTANCE_ARRAY_3D,
+	TARGET_GLOBAL_STRUCT,
+	TARGET_GLOBAL_ARRAY_1D,
+	TARGET_GLOBAL_ARRAY_2D,
+	TARGET_GLOBAL_ARRAY_3D,
+	TARGET_STRUCT,
+	TARGET_STRUCT_ARRAY_1D,
+	TARGET_STRUCT_ARRAY_2D,
+	TARGET_STRUCT_ARRAY_3D
+}
+```

@@ -1,0 +1,515 @@
+---
+title: Model Joins
+description: An introduction to model joins in NimbusDB, including how to define and use joins to combine data from multiple models for more complex queries and data relationships.
+---
+
+{/*(inner, left, right, full, cross join + JoinOptions, prefix, intersection)*/}
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../styles/custom.css";
+
+---
+
+## References
+
+### Model.cross_join()
+
+Creates a cross join with another model.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static cross_join(
+        _with: NimbusDBModel,
+        _options?: NimbusDBJoinOptions
+    ): NimbusDBModel | undefined;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_with`
+- Type: `NimbusDBModel`
+- The related model reference to join with.
+
+##### `_options`
+- Type: `NimbusDBJoinOptions`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `NimbusDBModel` | `undefined`
+- The resulting model, or `undefined` if the operation cannot be completed.
+</section>
+
+### Model.full_join()
+
+Creates an full join with another model.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static full_join(
+            _with: int | string | NimbusDBModel,
+            _on?: string,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_with`
+    - Type: `int` | `string` | `NimbusDBModel`
+    - The related model to join with.
+
+    ##### `_on`
+    - Type: `string`
+    - The column used for the join in both models.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static full_join(
+            _with: int | string | NimbusDBModel,
+            _from_column: string,
+            _to_column: string,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_with`
+    - Type: `int` | `string` | `NimbusDBModel`
+    - The related model to join with.
+
+    ##### `_from_column`
+    - Type: `string`
+    - The column name used in the source/left model.
+
+    ##### `_to_column`
+    - Type: `string`
+    - The column name used in the target/right model.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 3' value='overload-3'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static full_join(
+            _relation_id: int,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_relation_id`
+    - Type: `int`
+    - The relation ID to use for the operation.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.inner_join()
+
+Creates an inner join with another model.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static inner_join(
+            _with: int | string | NimbusDBModel,
+            _on?: string,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_with`
+    - Type: `int` | `string` | `NimbusDBModel`
+    - The related model to join with.
+
+    ##### `_on`
+    - Type: `string`
+    - The column used for the join in both models.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static inner_join(
+            _with: int | string | NimbusDBModel,
+            _from_column: string,
+            _to_column: string,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_with`
+    - Type: `int` | `string` | `NimbusDBModel`
+    - The related model to join with.
+
+    ##### `_from_column`
+    - Type: `string`
+    - The column name used in the source/left model.
+
+    ##### `_to_column`
+    - Type: `string`
+    - The column name used in the target/right model.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 3' value='overload-3'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static inner_join(
+            _relation_id: int,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_relation_id`
+    - Type: `int`
+    - The relation ID to use for the operation.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.left_join()
+
+Creates a left join with another model.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static left_join(
+            _with: int | string | NimbusDBModel,
+            _on?: string,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_with`
+    - Type: `int` | `string` | `NimbusDBModel`
+    - The related model to join with.
+
+    ##### `_on`
+    - Type: `string`
+    - The column used for the join in both models.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static left_join(
+            _with: int | string | NimbusDBModel,
+            _from_column: string,
+            _to_column: string,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_with`
+    - Type: `int` | `string` | `NimbusDBModel`
+    - The related model to join with.
+
+    ##### `_from_column`
+    - Type: `string`
+    - The column name used in the source/left model.
+
+    ##### `_to_column`
+    - Type: `string`
+    - The column name used in the target/right model.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 3' value='overload-3'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static left_join(
+            _relation_id: int,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_relation_id`
+    - Type: `int`
+    - The relation ID to use for the operation.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.right_join()
+
+Creates a right join with another model.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static right_join(
+            _with: int | string | NimbusDBModel,
+            _on?: string,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_with`
+    - Type: `int` | `string` | `NimbusDBModel`
+    - The related model to join with.
+
+    ##### `_on`
+    - Type: `string`
+    - The column used for the join in both models.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static right_join(
+            _with: int | string | NimbusDBModel,
+            _from_column: string,
+            _to_column: string,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_with`
+    - Type: `int` | `string` | `NimbusDBModel`
+    - The related model to join with.
+
+    ##### `_from_column`
+    - Type: `string`
+    - The column name used in the source/left model.
+
+    ##### `_to_column`
+    - Type: `string`
+    - The column name used in the target/right model.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 3' value='overload-3'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static right_join(
+            _relation_id: int,
+            _options?: NimbusDBJoinOptions
+        ): NimbusDBModel | undefined;
+    }
+    ```
+    </div>
+
+    #### Parameters
+    
+    ##### `_relation_id`
+    - Type: `int`
+    - The relation ID to use for the operation.
+
+    ##### `_options`
+    - Type: `NimbusDBJoinOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBModel` | `undefined`
+    - The resulting model, or `undefined` if the operation cannot be completed.
+    </section>
+    </TabItem>
+</Tabs>

@@ -1,0 +1,320 @@
+---
+title: Model Imports
+description: Learn how to import models into NimbusDB, including best practices for organizing and sharing your model definitions across different projects and teams.
+---
+
+{/*(import, import_csv, import_json, import_ndbin, async ndbin, custom reader)*/}
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../styles/custom.css";
+
+---
+
+## References
+
+### Model.import()
+
+Imports model data from a file, raw string, async result, or custom reader.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static import(
+            _path: string,
+            _options?: NimbusDBImportOptions
+        ): NimbusDBImportResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_path`
+    - Type: `string`
+    - The file path to read from.
+
+    ##### `_options`
+    - Type: `NimbusDBImportOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBImportResult`
+    - The import result metadata.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static import(
+            _raw_body: string,
+            _options?: NimbusDBImportOptions
+        ): NimbusDBImportResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_raw_body`
+    - Type: `string`
+    - The raw file content to import.
+
+    ##### `_options`
+    - Type: `NimbusDBImportOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBImportResult`
+    - The import result metadata.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 3' value='overload-3'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static import(
+            _resolve_async: NimbusDBImportResult
+        ): NimbusDBImportResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_resolve_async`
+    - Type: `NimbusDBImportResult`
+    - The asynchronous import result to resolve.
+
+    #### Returns
+    - Type: `NimbusDBImportResult`
+    - The import result metadata.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 4' value='overload-4'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static import(
+            _reader_fn: (model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => void
+        ): NimbusDBImportResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_reader_fn`
+    - Type: `(model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => void`
+        - **Parameters**:
+            - `model`: The model instance.
+            - `data`: The data to import.
+            - `temp`: The temporary data.
+    - The custom reader callback used during import.
+
+    #### Returns
+    - Type: `NimbusDBImportResult`
+    - The import result metadata.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.import_csv()
+
+Imports model data from a CSV file.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static import_csv(
+        _path: string,
+        _options?: NimbusDBImportOptions
+    ): NimbusDBImportResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_path`
+- Type: `string`
+- The file path to read from.
+
+##### `_options`
+- Type: `NimbusDBImportOptions`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `NimbusDBImportResult`
+- The import result metadata.
+</section>
+
+### Model.import_json()
+
+Imports model data from a JSON file.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static import_json(
+        _path: string,
+        _options?: NimbusDBImportOptions
+    ): NimbusDBImportResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_path`
+- Type: `string`
+- The file path to read from.
+
+##### `_options`
+- Type: `NimbusDBImportOptions`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `NimbusDBImportResult`
+- The import result metadata.
+</section>
+
+### Model.import_ndbin()
+
+Imports model data from an NDBIN file.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static import_ndbin(
+        _path: string,
+        _options?: NimbusDBImportOptions
+    ): NimbusDBImportResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_path`
+- Type: `string`
+- The file path to read from.
+
+##### `_options`
+- Type: `NimbusDBImportOptions`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `NimbusDBImportResult`
+- The import result metadata.
+</section>
+
+### NimbusDBImportOptions
+
+An optional configuration object for the `NimbusDBModel.import()` method.
+
+```ts title="io.d.ts"
+type NimbusDBImportOptions = Partial<{
+    from_string: boolean;                // whether the first parameter is a raw body string (default = false)
+    mode: "append" | "replace";          // append = append to existing data (upsert on primary key, default), replace = clear existing data and import
+    no_debug: boolean;                   // don't output warning and success debug messages (default = false)
+    type: NIMBUSDB_FILE                  // override import type, default = AUTO
+}> & (
+    | NimbusDBImportCsvOptions
+    | NimbusDBImportJsonOptions
+    | NimbusDBImportJsonlOptions
+    | NimbusDBImportNdbinOptions
+) & NimbusDBUpsertOptions;
+```
+
+### NimbusDBImportCsvOptions
+
+An optional configuration object for the `NimbusDBModel.import_csv()` method.
+
+```ts title="io.d.ts"
+type NimbusDBImportCsvOptions = Partial<{
+    headers: boolean | string[]          // use first line in .csv as header, default = true. string[] = false, and override it with provided array
+    columns: boolean | string[]          // alias for `headers`
+}>;
+```
+
+### NimbusDBImportJsonOptions
+
+An optional configuration object for the `NimbusDBModel.import_json()` method.
+
+```ts title="io.d.ts"
+type NimbusDBImportJsonOptions = Partial<{
+
+}>;
+```
+
+### NimbusDBImportJsonlOptions
+
+An optional configuration object for the `NimbusDBModel.import_jsonl()` method.
+
+```ts title="io.d.ts"
+type NimbusDBImportJsonlOptions = Partial<{
+    line_count: int;                     // length of line to import (default = 0, total line in the file)
+    start_line: int;                     // start line for importing (default = 1)
+    line_offset: int;                    // alias for `start_line`
+}>;
+```
+
+### NimbusDBImportNdbinOptions
+
+An optional configuration object for the `NimbusDBModel.import_ndbin()` method.
+
+```ts title="io.d.ts"
+type NimbusDBImportNdbinOptions = Partial<{
+    async: boolean;                      // import asynchronously (default = true)
+    columns: string | string[];          // pick certain column(s) for each data only (default = undefined, get all columns)
+    data_only: boolean;                  // only import the data (default = false)
+    size: int;                           // size of the file in bytes (default = undefined, total size of the file)
+}>;
+```
+
+### NimbusDBImportResult
+
+The import result metadata.
+
+```ts title="io.d.ts"
+type NimbusDBImportResult = {
+    deserialized: boolean;
+    path: string;
+    success: boolean;
+    async_id: AsyncID | undefined;
+    buffer_id: Buffer | undefined;
+    opt: Struct | undefined;
+};
+```

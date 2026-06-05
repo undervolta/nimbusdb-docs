@@ -246,6 +246,23 @@ class NimbusDBModel {
 - An object containing the result of the insert operation, including the number of records inserted, an array of the inserted records, and the number of records skipped due to validation failure or other reasons.
 </section>
 
+### Model.get_count()
+
+Retrieves the number of records in the model.
+
+#### Signature
+
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static get_count(): int;
+}
+```
+
+#### Returns
+- Type: `int`
+- The number of records in the model.
+
 ### NimbusDBInsertOptions
 
 The insert options are used to configure the behavior of the insert operation, such as forcing insertion, keeping temporary data, and more.

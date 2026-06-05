@@ -1,0 +1,117 @@
+---
+title: Computed Data
+description: Learn how to use computed data in NimbusDB to execute custom logic after the data is updated, including how to define computed data and best practices for using it to maintain data integrity and consistency in your NimbusDB models.
+---
+
+{/*(NimbusDBComputed, getter, update)*/}
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../styles/custom.css";
+
+---
+
+## References
+
+### NimbusDBComputed <Badge text="Internal" variant="caution" size='medium' />
+
+The `NimbusDBComputed` class is used to define computed data in NimbusDB models. 
+
+```ts title="reactivity.d.ts"
+class NimbusDBComputed {
+    constructor(
+        _inst_id: Instance,
+        _original_data: Struct,
+        _getter: (data: Struct) => any
+    );
+
+    id: int;
+    value: any;			// default = undefined
+
+    static refresh(
+        _col: string, 
+        _idx: int
+    ): void;
+    static update(): void;
+
+    static __id: int;
+    __data: Struct;
+    __inst: Instance;
+    __last_vals: any[];
+    __model: NimbusDBModel;
+    __watch_columns: string[];
+
+    __callback: (
+        data: Struct,
+        new_val: any,
+        old_val: any,
+        prop: string
+    ) => void;
+}
+```
+
+### Model.computed()
+
+Creates a computed value from model data.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static computed(
+        _original_data: int | NimbusDBData,
+        _getter: (data: Struct) => any,
+        _option?: NimbusDBComputedOptions
+    ): NimbusDBComputed | null;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_original_data`
+- Type: `int` | `NimbusDBData`
+- The original model data reference (direct-access data) or primary key of the data.
+
+##### `_getter`
+- Type: `(data: Struct) => any`
+    - **Parameters**:
+        - `data`: The data to compute.
+    - **Returns**:
+        - The computed value.
+- The getter callback used to compute the derived value.
+
+##### `_option`
+- Type: `NimbusDBComputedOptions`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `NimbusDBComputed` | `null`
+- The computed binding when it can be created, or `null` if the operation cannot be completed.
+</section>
+
+### NimbusDBComputedOptions
+
+An optional configuration object for the `NimbusDBModel.computed()` method.
+
+```ts title="reactivity.d.ts"
+type NimbusDBComputedOptions = Partial<{
+    inst: Instance | "global";          // override NimbusDBComputed.__inst
+    immediate: boolean;                 // call .update() immediately after creation (default = false)
+    global: boolean;                    // use global variable as reference, override __inst (default = false)
+}>;
+```
+
+### NimbusDBListener <Badge text="Internal" variant="caution" size='medium' />
+
+A type that represents a listener for all reactive data-binding.
+
+```ts title="reactivity.d.ts"
+type NimbusDBListener = 
+    | NimbusDBComputed 
+    | NimbusDBWatcher 
+    | NimbusDBDerived
+;
+```

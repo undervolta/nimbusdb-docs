@@ -1,0 +1,373 @@
+---
+title: Model Exports
+description: Learn how to export your models in NimbusDB, including best practices for organizing and sharing your model definitions across different projects and teams.
+---
+
+{/*(export, export_csv, export_json, export_ndbin, ExportIncludes, YAML/TOML)*/}
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import "../../../styles/custom.css";
+
+---
+
+## References
+
+### Model.export()
+
+Exports model data using the built-in file writer or custom writer.
+
+<Tabs>
+    <TabItem label='Overload 1' value='overload-1'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static export(
+            _path: string,
+            _options?: NimbusDBExportOptions
+        ): NimbusDBExportResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_path`
+    - Type: `string`
+    - The file path to write to.
+
+    ##### `_options`
+    - Type: `NimbusDBExportOptions`
+    - Default: `undefined`
+    - Optional configuration for the operation.
+
+    #### Returns
+    - Type: `NimbusDBExportResult`
+    - The export result metadata.
+    </section>
+    </TabItem>
+
+    <TabItem label='Overload 2' value='overload-2'>
+    <section>
+    #### Signature
+    <div className="sticky-method">
+    ```ts title="model.d.ts"
+    class NimbusDBModel {
+        // ... other methods and properties ...
+        static export(
+            _writer_fn: (model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => boolean | undefined
+        ): NimbusDBExportResult;
+    }
+    ```
+    </div>
+
+    #### Parameters
+
+    ##### `_writer_fn`
+    - Type: `(model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => boolean | undefined`
+        - **Parameters**:
+            - `model`: The model instance.
+            - `data`: The data to export.
+            - `temp`: The temporary data.
+        - **Returns**:
+            - `true` when the operation succeeds, otherwise `false`.
+    - The custom writer callback used during export.
+
+    #### Returns
+    - Type: `NimbusDBExportResult`
+    - The export result metadata.
+    </section>
+    </TabItem>
+</Tabs>
+
+### Model.export_csv()
+
+Exports model data to a CSV file.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static export_csv(
+        _path: string,
+        _options?: NimbusDBExportCsvOptions
+    ): NimbusDBExportResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_path`
+- Type: `string`
+- The file path to write to.
+
+##### `_options`
+- Type: `NimbusDBExportCsvOptions`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `NimbusDBExportResult`
+- The export result metadata.
+</section>
+
+### Model.export_json()
+
+Exports model data to a JSON file.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static export_json(
+        _path: string,
+        _options?: NimbusDBExportJsonOptions
+    ): NimbusDBExportResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_path`
+- Type: `string`
+- The file path to write to.
+
+##### `_options`
+- Type: `NimbusDBExportJsonOptions`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `NimbusDBExportResult`
+- The export result metadata.
+</section>
+
+### Model.export_ndbin()
+
+Exports model data to an NDBIN file.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static export_ndbin(
+        _path: string,
+        _options?: NimbusDBExportNdbinOptions
+    ): NimbusDBExportResult;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_path`
+- Type: `string`
+- The file path to write to.
+
+##### `_options`
+- Type: `NimbusDBExportNdbinOptions`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `NimbusDBExportResult`
+- The export result metadata.
+</section>
+
+### NimbusDBExportOptions
+
+An optional configuration object for the `NimbusDBModel.export()` method.
+
+```ts title="io.d.ts"
+type NimbusDBExportOptions = Partial<{
+    type: NIMBUSDB_FILE			// override export type, default = AUTO
+    extension: NIMBUSDB_FILE	// alias for `type`
+    no_debug: boolean; 			// don't output warning and success debug messages (default = false)
+    no_write: boolean; 			// don't write to file (default = false)
+}> & (
+    | NimbusDBExportCsvOptions
+    | NimbusDBExportJsonOptions
+    | NimbusDBExportJsonlOptions
+    | NimbusDBExportYamlOptions
+    | NimbusDBExportTomlOptions
+    | NimbusDBExportNdbinOptions
+);
+```
+
+### NimbusDBExportCsvOptions
+
+An optional configuration object for the `NimbusDBModel.export_csv()` method.
+
+```ts title="io.d.ts"
+type NimbusDBExportCsvOptions = Partial<{
+    delimiter: string;              // cell delimiter (default = ",")
+    headers: boolean | string[];    // include __column_names as header, default = true. string[] = false, and override it with provided array
+    inner_delimiter: string;        // inner delimiter (default = ",")
+    columns: boolean | string[];    // alias for `headers`
+}>;
+```
+
+### NimbusDBExportJsonOptions
+
+An optional configuration object for the `NimbusDBModel.export_json()` method.
+
+```ts title="io.d.ts"
+type NimbusDBExportJsonOptions = Partial<{
+    compact: boolean;                   // only export the data in array format (default = false)
+    include: NimbusDBExportIncludes;    // include additional key-value pairs in the exported data (only works if `compact` is false)
+    map: (                              // map the data before exporting (default = undefined)
+        data: NimbusDBData,             // isolated copy of the data
+        index: int
+    ) => NimbusDBData;
+    pretty: boolean;                    // pretty print (default = false)
+    stringify_enum: boolean;            // convert data type and constraint enums in the schema to string (default = false, only works if `compact` is false)
+}>;
+```
+
+### NimbusDBExportJsonlOptions
+
+An optional configuration object for the `NimbusDBModel.export_jsonl()` method.
+
+```ts title="io.d.ts"
+type NimbusDBExportJsonlOptions = Partial<{
+    append: boolean;                    // append to existing file instead of overwriting (default = false)
+    length: int;                        // length of data to export (default = data.length)
+    map: (                              // map the data before exporting (default = undefined)
+        data: NimbusDBData,             // isolated copy of the data
+        index: int
+    ) => NimbusDBData;
+    start_line: int;                    // start line for exporting (default = 1, no effect if `append` is true)
+    start_index: int;                   // start index for exporting (default = 0)
+    index_offset: int;                  // alias for `start_index`
+    line_offset: int;                   // alias for `start_line`
+}>;
+```
+
+### NimbusDBExportYamlOptions
+
+An optional configuration object for the `NimbusDBModel.export_yaml()` method.
+
+```ts title="io.d.ts"
+type NimbusDBExportYamlOptions = Partial<{
+    include: NimbusDBExportIncludes;    // include additional key-value pairs in the exported data
+    map: (                              // map the data before exporting (default = undefined)
+        data: NimbusDBData,             // isolated copy of the data
+        index: int
+    ) => NimbusDBData;
+    stringify_enum: boolean;            // convert enum in the schema to string (default = false)
+}>;
+```
+
+### NimbusDBExportTomlOptions
+
+An optional configuration object for the `NimbusDBModel.export_toml()` method.
+
+```ts title="io.d.ts"
+type NimbusDBExportTomlOptions = Partial<{
+    include: NimbusDBExportIncludes;    // include additional key-value pairs in the exported data
+    inline_table: boolean;              // inline table (custom data only, default = false)
+    multiline_array: boolean;           // multiline array (custom data only, default = false)
+    map: (                              // map the data before exporting (default = undefined)
+        data: NimbusDBData,             // isolated copy of the data
+        index: int
+    ) => NimbusDBData;
+    stringify_enum: boolean;            // convert enum in the schema to string (default = false)
+}>;
+```
+
+### NimbusDBExportNdbinOptions
+
+An optional configuration object for the `NimbusDBModel.export_ndbin()` method.
+
+```ts title="io.d.ts"
+type NimbusDBExportNdbinOptions = Partial<{
+    async: boolean;                     // export asynchronously (default = false)
+}>;
+```
+
+### NimbusDBExportIncludes
+
+An optional configuration object for the `NimbusDBExportOptions` object.
+
+```ts title="io.d.ts"
+type NimbusDBExportIncludes = Partial<{
+    metadata: true | "all" | (  // export-only purpose, won't be imported
+        | "db"                  // nimbusdb (create `source` if not exists)
+        | "exported_at" 
+        | "format" 
+        | "game_engine" 
+        | "lib_version"         // NIMBUSDB_LIB_VERSION (create `source` if not exists)
+        | "version"             // file version of the used format (JSON, YAML, TOML, etc.)
+    )[];
+    stats: true | "all" | (
+        | "data_count"
+        | "row_count"           // alias for `data_count`
+        | "column_count"
+        | "cache_count"
+        | "index_count"         // alias for `cache_count`
+        | "relation_count"
+        | "total_rows"          // alias for `data_count`
+        | "total_columns"       // alias for `column_count`
+        | "total_caches"        // alias for `cache_count`
+        | "total_indexes"       // alias for `index_count`
+        | "total_relations"     // alias for `relation_count`
+    )[];
+    model: true | "all" | (     // true = "all"
+        | "columns"
+        | "custom_id"
+        | "data"
+        | "data_id"
+        | "indexes"             // based on `cache`
+        | "name"
+        | "primary_key"
+        | "relations"           // can't be imported
+        | "schema"              // `validator` or `default` with function/method won't be imported
+        | "temp"
+    )[];
+    enums: true | "all" | (     // export-only purpose, won't be imported
+        | "constraint"
+        | "data_type"
+    )[];
+    [key: string]: any;	        // custom key-value pairs
+}>;
+```
+
+### NimbusDBExportResult
+
+The export result metadata.
+
+```ts title="io.d.ts"
+type NimbusDBExportResult = {
+    path: string | undefined;
+    success: boolean;
+    async_id: AsyncID | undefined;
+    body: string | undefined;        // file content (JSON only)
+};
+```
+
+### NIMBUSDB_FILE
+
+An enum that defines the file type to export/import to.
+
+```ts title="io.d.ts"
+enum NIMBUSDB_FILE {
+    AUTO,
+    CSV,
+    JSON,
+    JSONL,
+    YAML,        // export only
+    TOML,        // export only
+    NDBIN,       // NimbusDB Binary File
+    CUSTOM
+}
+```

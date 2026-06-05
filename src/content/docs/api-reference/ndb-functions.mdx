@@ -1,0 +1,265 @@
+---
+title: ndb Functions Reference
+description: A reference for all ndb functions in the API.
+---
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../styles/custom.css";
+
+## Model
+
+### ndb_computed()
+
+See [Model.computed()](/reactivity/computed/#modelcomputed) for details.
+
+### ndb_create_alias()
+
+See [Model.expose()](/core/model/expose-alias/#modelalias--modelexpose) for details.
+
+### ndb_cross_join()
+
+See [Model.cross_join()](/joins/overview/#modelcross_join) for details.
+
+### ndb_delete_alias()
+
+See [Model.unexpose()](/core/model/expose-alias/#modelunexpose) for details. 
+
+### ndb_create_model()
+
+See [Model constructor](/core/model/schema/#defining-a-schema) for details. Substitute `new NimbusDBModel` for `ndb_create_model`.
+
+### ndb_define_relation()
+
+See [Model.define_relation()](/core/catalog/relations/#modeldefine_relation) for details.
+
+### ndb_derived()
+
+See [Model.derived()](/reactivity/derived/#modelderived) for details.
+
+### ndb_destroy_model()
+
+Destroys a model instance.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+function ndb_destroy_model(
+	_model: NimbusDBModel
+): void;
+```
+</div>
+
+#### Parameters
+
+##### `_model`
+- Type: `NimbusDBModel`
+- The model instance to operate on.
+</section>
+
+### ndb_drop_relation()
+
+See [Model.drop_relation()](/core/catalog/relations/#modeldrop_relation) for details.
+
+### ndb_export_csv()
+
+See [Model.export_csv()](/io/exports/#modelexport_csv) for details.
+
+### ndb_export_json()
+
+See [Model.export_json()](/io/exports/#modelexport_json) for details.
+
+### ndb_export_ndbin()
+
+See [Model.export_ndbin()](/io/exports/#modelexport_ndbin) for details.
+
+### ndb_find()
+
+See [Model.find()](/core/model/query/#modelfind) for details.
+
+### ndb_full_join()
+
+See [Model.full_join()](/joins/overview/#modelfull_join) for details.
+
+### ndb_get_alias()
+
+See [Model.get_alias()](/core/model/expose-alias/#modelget_alias) for details.
+
+### ndb_get_by_*()
+
+See:
+- [Model.get_by_index()](/core/model/query/#modelget_by_index) for `ndb_get_by_index()`.
+- [Model.get_by_primary()](/core/model/query/#modelget_by_primary) for `ndb_get_by_primary()`.
+- [Model.get_by_value()](/core/model/query/#modelget_by_value) for `ndb_get_by_value()`.
+- [Model.get_by_function()](/core/model/query/#modelget_by_function) for `ndb_get_by_function()`.
+
+### ndb_get_by_*_linked()
+
+See:
+- [Model.get_by_index_linked()](/core/model/query/#modelget_by_index_linked) for `ndb_get_by_index_linked()`.
+- [Model.get_by_primary_linked()](/core/model/query/#modelget_by_primary_linked) for `ndb_get_by_primary_linked()`.
+- [Model.get_by_value_linked()](/core/model/query/#modelget_by_value_linked) for `ndb_get_by_value_linked()`.
+- [Model.get_by_function_linked()](/core/model/query/#modelget_by_function_linked) for `ndb_get_by_function_linked()`.
+
+### ndb_get_by_*_destruct()
+
+See:
+- [Model.get_by_index_destruct()](/core/model/query/#modelget_by_index_destruct) for `ndb_get_by_index_destruct()`.
+- [Model.get_by_primary_destruct()](/core/model/query/#modelget_by_primary_destruct) for `ndb_get_by_primary_destruct()`.
+- [Model.get_by_value_destruct()](/core/model/query/#modelget_by_value_destruct) for `ndb_get_by_value_destruct()`.
+- [Model.get_by_function_destruct()](/core/model/query/#modelget_by_function_destruct) for `ndb_get_by_function_destruct()`.
+
+### ndb_get_count()
+
+See [Model.get_count()](/core/model/insert/#modelget_count) for details.
+
+### ndb_get_relation()
+
+See [Model.get_relation()](/core/catalog/relations/#modelget_relation) for details.
+
+### ndb_import_csv()
+
+See [Model.import_csv()](/io/imports/#modelimport_csv) for details.
+
+### ndb_import_json()
+
+See [Model.import_json()](/io/imports/#modelimport_json) for details.
+
+### ndb_import_ndbin()
+
+See [Model.import_ndbin()](/io/imports/#modelimport_ndbin) for details.
+
+### ndb_inner_join()
+
+See [Model.inner_join()](/joins/overview/#modelinner_join) for details.
+
+### ndb_insert()
+
+See [Model.insert()](/core/model/insert/#modelinsert) for details.
+
+### ndb_left_join()
+
+See [Model.left_join()](/joins/overview/#modelleft_join) for details.
+
+### ndb_migrate_data()
+
+See [Model.migrate()](/migration/overview/#modelmigrate) for details.
+
+### ndb_print()
+
+See [Model.print()](/core/model/query/#modelprint) for details.
+
+### ndb_remove_by_*()
+
+See:
+- [Model.remove_by_index()](/core/model/remove/#modelremove_by_index) for `ndb_remove_by_index()`.
+- [Model.remove_by_primary()](/core/model/remove/#modelremove_by_primary) for `ndb_remove_by_primary()`.
+- [Model.remove_by_value()](/core/model/remove/#modelremove_by_value) for `ndb_remove_by_value()`.
+- [Model.remove_by_function()](/core/model/remove/#modelremove_by_function) for `ndb_remove_by_function()`.
+
+### ndb_right_join()
+
+See [Model.right_join()](/joins/overview/#modelright_join) for details.
+
+### ndb_transaction()
+
+See [Model.transaction()](/core/transaction/basics/#modeltransaction) for details.
+
+### ndb_update_by_*()
+
+See:
+- [Model.update_by_index()](/core/model/update/#modelupdate_by_index) for `ndb_update_by_index()`.
+- [Model.update_by_primary()](/core/model/update/#modelupdate_by_primary) for `ndb_update_by_primary()`.
+- [Model.update_by_value()](/core/model/update/#modelupdate_by_value) for `ndb_update_by_value()`.
+- [Model.update_by_function()](/core/model/update/#modelupdate_by_function) for `ndb_update_by_function()`.
+
+### ndb_upsert()
+
+See [Model.upsert()](/core/model/update/#modelupsert) for details.
+
+### ndb_watch()
+
+See [Model.watch()](/reactivity/watch/#modelwatch) for details.
+
+## Catalog
+
+### ndb_backup_catalog()
+
+See [Catalog.backup()](/core/catalog/backup-restore/#catalogbackup) for details.
+
+### ndb_catalog_add_model()
+
+See [Catalog.add_model()](/core/catalog/essentials/#catalogadd_model) for details.
+
+### ndb_catalog_clear_model()
+
+See [Catalog.clear()](/core/catalog/essentials/#catalogclear--catalogtruncate) for details.
+
+### ndb_catalog_define_model()
+
+See [Catalog.define()](/core/catalog/essentials/#catalogdefine) for details.
+
+### ndb_catalog_define_relation()
+
+See [Catalog.define_relation()](/core/catalog/relations/#catalogdefine_relation) for details.
+
+### ndb_catalog_define_mutual_relation()
+
+See [Catalog.define_mutual_relation()](/core/catalog/relations/#catalogdefine_mutual_relation) for details.
+
+### ndb_catalog_drop_model()
+
+See [Catalog.drop()](/core/catalog/essentials/#catalogdrop--catalogremove_model) for details.
+
+### ndb_catalog_drop_relation()
+
+See [Catalog.drop_relation()](/core/catalog/relations/#catalogdrop_relation) for details.
+
+### ndb_catalog_get_relation()
+
+See [Catalog.get_relation()](/core/catalog/relations/#catalogget_relation) for details.
+
+### ndb_catalog_has_model()
+
+See [Catalog.has()](/core/catalog/essentials/#cataloghas) for details.
+
+### ndb_catalog_list_models()
+
+See [Catalog.list()](/core/catalog/essentials/#cataloglist) for details.
+
+### ndb_catalog_transaction()
+
+See [Catalog.transaction()](/core/transaction/basics/#catalogtransaction) for details.
+
+### ndb_catalog_use_model()
+
+See [Catalog.use()](/core/catalog/essentials/#catalogmodel--cataloguse) for details.
+
+### ndb_create_catalog()
+
+See [Catalog constructor](/core/catalog/essentials/#creating-catalogs) for details. Substitute `new NimbusDBCatalog` for `ndb_create_catalog`.
+
+### ndb_destroy_catalog()
+
+Destroys a catalog instance.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="catalog.d.ts"
+function ndb_destroy_catalog(
+	_catalog: NimbusDBCatalog
+): void;
+```
+</div>
+
+#### Parameters
+
+##### `_catalog`
+- Type: `NimbusDBCatalog`
+- The catalog instance to operate on.
+</section>
+
+### ndb_restore_catalog()
+
+See [Catalog.restore()](/core/catalog/backup-restore/#catalogrestore) for details.

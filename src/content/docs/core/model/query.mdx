@@ -1258,6 +1258,31 @@ class NimbusDBModel {
 - The data of the record(s) found, or `undefined` if no record(s) were found.
 </section>
 
+### Model.print()
+
+Prints model data.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static print(
+        _options: NimbusDBPrintOptions
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_options`
+- Type: `NimbusDBPrintOptions`
+- Default: `undefined`
+- An optional object that allows you to customize the behavior of the print operation. See the [NimbusDBPrintOptions](#nimbusdbprintoptions) type for the available options.
+</section>
+
 ### NimbusDBGetByIndex
 
 A selector object for `.get` method that allows you to retrieve data using an index.
@@ -1415,14 +1440,14 @@ Optional configurations for `Model.print()` and `Pipeline.tap()` methods.
 ```ts title="pipeline.d.ts"
 type NimbusDBPrintOptions = Partial<{
     data:
-		| NimbusDBData | NimbusDBData[] 
-		| ((data: NimbusDBData, index: int) => boolean);
-	keep_systemp: boolean;			// default = false
-	max_char: int;					// max characters length per cell (default = 28). <= 0 -> unlimited
-	message: string;				// displayed message before the printed data
-	pick: string | string[];		// displayed columns (default = __column_names). alias is supported
-	column: string | string[];		// alias for `pick`
-	select: string | string[];		// alias for `pick`
+        | NimbusDBData | NimbusDBData[] 
+        | ((data: NimbusDBData, index: int) => boolean);
+    keep_systemp: boolean;          // default = false
+    max_char: int;                  // max characters length per cell (default = 28). <= 0 -> unlimited
+    message: string;                // displayed message before the printed data
+    pick: string | string[];        // displayed columns (default = __column_names). alias is supported
+    column: string | string[];      // alias for `pick`
+    select: string | string[];      // alias for `pick`
 }>;
 ```
 

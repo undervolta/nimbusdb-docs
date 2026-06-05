@@ -1,0 +1,118 @@
+---
+title: Data Watcher
+description: Learn how to watch for changes in your NimbusDB data using the data watcher, including how to set up watchers, handle change events, and best practices for using watchers to maintain data integrity and consistency in your NimbusDB models.
+---
+
+{/*(NimbusDBWatcher, watch columns, callback, immediate)*/}
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../styles/custom.css";
+
+---
+
+## References
+
+### NimbusDBWatcher <Badge text="Internal" variant="caution" size='medium' />
+
+The `NimbusDBWatcher` class is used to watch for changes in NimbusDB data.
+
+```ts title="reactivity.d.ts"
+class NimbusDBWatcher {
+    constructor(
+        _inst_id: Instance,
+        _db_model: NimbusDBModel,
+        _original_data: Struct,
+        _watch_column: string | string[],
+        _callback: (data: Struct, new_val: any, old_val: any, prop: string) => void,
+        _options?: NimbusDBWatcherConstOptions
+    );
+
+    id: int;
+
+    static update(): void;
+
+    static __id: int;
+    __data: Struct;
+    __inst: Instance;
+    __last_vals: any[];
+    __model: NimbusDBModel;
+    __watch_columns: string[];
+
+    __callback: (
+        data: Struct,
+        new_val: any,
+        old_val: any,
+        prop: string
+    ) => void;
+}
+```
+
+### Model.watch()
+
+Watches one or more columns of a NimbusDB data record and fires a callback whenever the watched values change.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static watch(
+        _original_data: int | NimbusDBData,
+        _watch_column: string | string[],
+        _callback: (data: Struct, new_val: any, old_val: any, prop: string) => void,
+        _options?: NimbusDBWatchOptions
+    ): void;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_original_data`
+- Type: `int` | `NimbusDBData`
+- The original model data reference (direct-access data) or primary key of the data.
+
+##### `_watch_column`
+- Type: `string` | `string[]`
+- The column(s) to watch for changes.
+
+##### `_callback`
+- Type: `(data: Struct, new_val: any, old_val: any, prop: string) => void`
+    - **Parameters**:
+        - `data`: The data that changed.
+        - `new_val`: The new value of the watched column.
+        - `old_val`: The old value of the watched column.
+        - `prop`: The property name of the watched column.
+- The callback to run when the watched column(s) change.
+
+##### `_options`
+- Type: `Partial<{ immediate: boolean; }>`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `void`
+- The callback is called when the watched column(s) change.
+</section>
+
+### NimbusDBWatcherConstOptions <Badge text="Internal" variant="caution" size='medium' />
+
+An optional configuration object for the `NimbusDBWatcher` constructor.
+
+```ts title="reactivity.d.ts"
+type NimbusDBWatcherConstOptions = Partial<{
+    immediate: boolean;		// call .update() immediately after creation (default = false)
+}>;
+```
+
+### NimbusDBWatchOptions
+
+An optional configuration object for the `NimbusDBModel.watch()` method.
+
+```ts title="reactivity.d.ts"
+type NimbusDBWatchOptions = Partial<{
+    immediate: boolean;     // call .update() immediately after creation (default = false)
+    global: boolean;        // use global variable as reference (default = false)
+}>;
+```
