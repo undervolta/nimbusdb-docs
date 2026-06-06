@@ -8,6 +8,401 @@ description: An introduction to model joins in NimbusDB, including how to define
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import "../../../styles/custom.css";
 
+Joins mean combining schema and data from two models based on a model relation between them. 
+
+:::note
+You should have the relation between the models defined before you can perform a join. Read [Model Relations](/core/catalog/relations) for more information on how to define relations between models.
+:::
+
+We'll use this diagram for our examples:
+
+```
+┏━━━━━━━━━━┓             ┏━━━━━━━━━━━━┓             ┏━━━━━━━━━━━┓
+┃  shops   ┃             ┃ shop_items ┃             ┃   items   ┃
+┣━━━━━━━━━━┫             ┣━━━━━━━━━━━━┫             ┣━━━━━━━━━━━┫ 
+│ id       │<─────┐      │ id         │      ┌─────>│ id        │
+├──────────┤      │      ├────────────┤      │      ├───────────┤
+│ name     │      └─────>│ shop_id    │      │      │ name      │
+├──────────┤             ├────────────┤      │      ├───────────┤
+│ location │             │ item_id    │<─────┘      │ price     │
+└──────────┘             ├────────────┤             ├───────────┤
+                         │ stock      │             │ is_locked │
+                         └────────────┘             └───────────┘
+```
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // `shops` model
+    shops = new NimbusDBModel("global", "shops", {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        location: NIMBUSDB_DATA_TYPE.STRING
+    }, [
+        { id: 1, name: "Starter Shop", location: "Town 1" },
+        { id: 2, name: "Adventurer's Guild", location: "Alpha Dungeon" },
+        { id: 3, name: "Grand Capital Mart", location: "Capital City" }
+    ]);
+
+    // `shop_items` model
+    shop_items = new NimbusDBModel("global", "shop_items", {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        shop_id: NIMBUSDB_DATA_TYPE.INTEGER,
+        item_id: NIMBUSDB_DATA_TYPE.INTEGER,
+        stock: NIMBUSDB_DATA_TYPE.INTEGER
+    }, [
+        { id: 1, shop_id: 1, item_id: 1, stock: 20 },
+        { id: 2, shop_id: 1, item_id: 2, stock: 17 },
+        { id: 3, shop_id: 1, item_id: 3, stock: 23 },
+        { id: 4, shop_id: 2, item_id: 3, stock: 50 },
+        { id: 5, shop_id: 3, item_id: 5, stock: 10 }
+    ]);
+
+    // `items` model
+    items = new NimbusDBModel("global", "items", {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    }, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+
+    // register all models to a catalog
+    ctg_items = new NimbusDBCatalog("items", {
+        model: [shops, shop_items, items]
+    });
+
+    // define relations
+    ctg_items.define_relation([
+        "shops.id <=> shop_items.shop_id",
+        "items.id <=> shop_items.item_id"
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Inner Join
+
+The resulting model data will only include rows where there is a match in both models based on the intersection column.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 13}
+    // (1) using column name for both models
+    var shop_items_join = shop_items.inner_join(items, "item_id = id");
+    // "item_id = id" means shop_items.item_id = items.id
+    // usable operators for inner join: `=`
+
+    // OR splitting the column name by separating them into `from_column` and `to_column` parameters
+    var shop_items_join = shop_items.inner_join(items, "item_id", "id");
+
+    // print the resulting model data
+    shop_items_join.print();
+
+    // (2) using relation ID
+    var shop_items_rel_id = shop_items.get_relation("items", "item_id", "id");
+    var shop_items_join = shop_items.inner_join(shop_items_rel_id);
+
+    // print the resulting model data
+    shop_items_join.print();
+
+    // +----+---------+---------+-------+-----------+--------+-------+------------+
+    // | id | shop_id | item_id | stock | is_locked | color  | price | name       |
+    // +----+---------+---------+-------+-----------+--------+-------+------------+
+    // | 1  | 1       | 1       | 20    | 0         | red    | 5     | Apple      |
+    // | 2  | 1       | 2       | 17    | 0         | yellow | 7.20  | Banana     |
+    // | 3  | 1       | 3       | 23    | 0         | red    | 15    | Cherry     |
+    // | 4  | 2       | 3       | 50    | 0         | red    | 15    | Cherry     |
+    // | 5  | 3       | 5       | 10    | 0         | purple | 8     | Elderberry |
+    // +----+---------+---------+-------+-----------+--------+-------+------------+
+    ```
+    </TabItem>
+</Tabs>
+
+:::caution
+The resulting models from all join types are recommended to be used as **read-only** models. Modifying the data in the resulting model may cause unexpected behavior and errors. If you want to modify the data, it's recommended to create a new model with the resulting data and perform modifications on that new model instead.
+:::
+
+## Left Join
+
+The resulting model data will include all rows from the left/source model, and matching rows from the right/target model based on the intersection column. If there is no match in the right/target model, the columns from the right/target model will have `undefined` values.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 13}
+    // (1) using column name for both models
+    var shop_items_join = items.left_join(shop_items, "id -> item_id");
+    // "id -> item_id" means items.id = shop_items.item_id 
+    // the direction of the operator indicates the left and right model for the join
+    // usable operators for left join: `->`, `=>`
+
+    // OR splitting the column name by separating them into `from_column` and `to_column` parameters
+    var shop_items_join = items.left_join(shop_items, "id", "item_id");
+
+    // print the resulting model data
+    shop_items_join.print();
+
+    // (2) using relation ID
+    var shop_items_rel_id = items.get_relation("shop_items", "id", "item_id");
+    var shop_items_join = items.left_join(shop_items_rel_id);
+
+    // print the resulting model data
+    shop_items_join.print();
+
+    // +----+-----------+-----------+-----------+--------+-------+------------+---------------+
+    // | id | shop_id   | stock     | is_locked | color  | price | name       | shop_items_id |
+    // +----+-----------+-----------+-----------+--------+-------+------------+---------------+
+    // | 1  | 1         | 20        | 0         | red    | 5     | Apple      | 1             |
+    // | 2  | 1         | 17        | 0         | yellow | 7.20  | Banana     | 2             |
+    // | 3  | 1         | 23        | 0         | red    | 15    | Cherry     | 3             |
+    // | 5  | 3         | 10        | 0         | purple | 8     | Elderberry | 5             |
+    // | 6  | undefined | undefined | 0         | purple | 10    | Fig        | undefined     |
+    // | 7  | undefined | undefined | 0         | purple | 6     | Grape      | undefined     |
+    // | 8  | undefined | undefined | 0         | green  | 9     | Honeydew   | undefined     |
+    // | 9  | undefined | undefined | 0         | green  | 4     | Kiwi       | undefined     |
+    // | 10 | undefined | undefined | 0         | yellow | 3     | Lemon      | undefined     |
+    // +----+-----------+-----------+-----------+--------+-------+------------+---------------+
+    ```
+    </TabItem>
+</Tabs>
+
+## Right Join
+
+The resulting model data will include all rows from the right/target model, and matching rows from the left/source model based on the intersection column. If there is no match in the left/source model, the columns from the left/source model will have `undefined` values.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 13}
+    // (1) using column name for both models
+    var shop_items_join = shop_items.right_join(items, "item_id <- id");
+    // "item_id <- id" means shop_items.item_id = items.id 
+    // the direction of the operator indicates the left and right model for the join
+    // usable operators for right join: `<-`, `<=`
+
+    // OR splitting the column name by separating them into `from_column` and `to_column` parameters
+    var shop_items_join = shop_items.right_join(items, "item_id", "id");
+
+    // print the resulting model data
+    shop_items_join.print();
+
+    // (2) using relation ID
+    var shop_items_rel_id = items.get_relation("shop_items", "id", "item_id");
+    var shop_items_join = shop_items.right_join(shop_items_rel_id);
+
+    // print the resulting model data
+    shop_items_join.print();
+
+    // +----+-----------+-----------+-----------+--------+-------+------------+---------------+
+    // | id | shop_id   | stock     | is_locked | color  | price | name       | shop_items_id |
+    // +----+-----------+-----------+-----------+--------+-------+------------+---------------+
+    // | 1  | 1         | 20        | 0         | red    | 5     | Apple      | 1             |
+    // | 2  | 1         | 17        | 0         | yellow | 7.20  | Banana     | 2             |
+    // | 3  | 1         | 23        | 0         | red    | 15    | Cherry     | 3             |
+    // | 5  | 3         | 10        | 0         | purple | 8     | Elderberry | 5             |
+    // | 6  | undefined | undefined | 0         | purple | 10    | Fig        | undefined     |
+    // | 7  | undefined | undefined | 0         | purple | 6     | Grape      | undefined     |
+    // | 8  | undefined | undefined | 0         | green  | 9     | Honeydew   | undefined     |
+    // | 9  | undefined | undefined | 0         | green  | 4     | Kiwi       | undefined     |
+    // | 10 | undefined | undefined | 0         | yellow | 3     | Lemon      | undefined     |
+    // +----+-----------+-----------+-----------+--------+-------+------------+---------------+
+    ```
+    </TabItem>
+</Tabs>
+
+:::caution
+It's recommended to use **left join** instead of right join, because the right join may produce inconsistent results on the source/left model.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```diff lang="ts"
+    // right join (discouraged) 
+    - var shop_items_join = shop_items.right_join(items, "item_id <- id");
+
+    // swap the model order and use left join instead (recommended)
+    + var shop_items_join = items.left_join(shop_items, "id -> item_id");
+    ```
+    </TabItem>
+</Tabs>
+:::
+
+## Full Join
+
+The resulting model data will include all rows from both models, and matching rows based on the intersection column. If there is no match in one of the models, the columns from that model will have `undefined` values.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 12}
+    // (1) using column name for both models
+    var shop_items_join = items.full_join(shop_items, "id <> item_id");
+    // "id <> item_id" means items.id = shop_items.item_id 
+    // usable operators for full join: `<>`
+
+    // OR splitting the column name by separating them into `from_column` and `to_column` parameters
+    var shop_items_join = items.full_join(shop_items, "id", "item_id");
+
+    // print the resulting model data
+    shop_items_join.print();
+
+    // (2) using relation ID
+    var shop_items_rel_id = items.get_relation("shop_items", "id", "item_id");
+    var shop_items_join = items.full_join(shop_items_rel_id);
+
+    // print the resulting model data
+    shop_items_join.print();
+
+    // +-----------+-----------+-----------+-----------+-----------+-----------+-----------+------------+---------------+
+    // | id        | shop_id   | item_id   | stock     | is_locked | color     | price     | name       | shop_items_id |
+    // +-----------+-----------+-----------+-----------+-----------+-----------+-----------+------------+---------------+
+    // | 1         | 1         | 1         | 20        | 0         | red       | 5         | Apple      | 1             |
+    // | 2         | 1         | 2         | 17        | 0         | yellow    | 7.20      | Banana     | 2             |
+    // | 3         | 1         | 3         | 23        | 0         | red       | 15        | Cherry     | 3             |
+    // | 5         | 3         | 5         | 10        | 0         | purple    | 8         | Elderberry | 5             |
+    // | 6         | undefined | undefined | undefined | 0         | purple    | 10        | Fig        | undefined     |
+    // | 7         | undefined | undefined | undefined | 0         | purple    | 6         | Grape      | undefined     |
+    // | 8         | undefined | undefined | undefined | 0         | green     | 9         | Honeydew   | undefined     |
+    // | 9         | undefined | undefined | undefined | 0         | green     | 4         | Kiwi       | undefined     |
+    // | 10        | undefined | undefined | undefined | 0         | yellow    | 3         | Lemon      | undefined     |
+    // | undefined | undefined | undefined | undefined | undefined | undefined | undefined | undefined  | 4             |
+    // +-----------+-----------+-----------+-----------+-----------+-----------+-----------+------------+---------------+
+    ```
+    </TabItem>
+</Tabs>
+
+## Cross Join
+
+The resulting model data will include all combinations of rows from both models. The number of rows in the resulting model will be the product of the number of rows in each model.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var shop_items_join = shops.cross_join(shop_items);
+
+    // +---------+---------+-------+--------------------+----+---------------+
+    // | shop_id | item_id | stock | name               | id | location      |
+    // +---------+---------+-------+--------------------+----+---------------+
+    // | 1       | 1       | 20    | Starter Shop       | 1  | Town 1        |
+    // | 1       | 2       | 17    | Starter Shop       | 2  | Town 1        |
+    // | 1       | 3       | 23    | Starter Shop       | 3  | Town 1        |
+    // | 2       | 3       | 50    | Starter Shop       | 4  | Town 1        |
+    // | 3       | 5       | 10    | Starter Shop       | 5  | Town 1        |
+    // | 1       | 1       | 20    | Adventurer's Guild | 1  | Alpha Dungeon |
+    // | 1       | 2       | 17    | Adventurer's Guild | 2  | Alpha Dungeon |
+    // | 1       | 3       | 23    | Adventurer's Guild | 3  | Alpha Dungeon |
+    // | 2       | 3       | 50    | Adventurer's Guild | 4  | Alpha Dungeon |
+    // | 3       | 5       | 10    | Adventurer's Guild | 5  | Alpha Dungeon |
+    // | 1       | 1       | 20    | Grand Capital Mart | 1  | Capital City  |
+    // | 1       | 2       | 17    | Grand Capital Mart | 2  | Capital City  |
+    // | 1       | 3       | 23    | Grand Capital Mart | 3  | Capital City  |
+    // | 2       | 3       | 50    | Grand Capital Mart | 4  | Capital City  |
+    // | 3       | 5       | 10    | Grand Capital Mart | 5  | Capital City  |
+    // +---------+---------+-------+--------------------+----+---------------+
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+Cross join can be used **without** a relation between the models.
+:::
+
+## Modifying Join Results with Join Options
+
+All join methods (except for cross join) can take an optional `NimbusDBJoinOptions` object as a parameter to modify the results of the join operation. 
+
+We'll use inner join as an example to demonstrate the available options, but the options can be used with left join, right join, and full join as well.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {11, 45}
+    // options for the first overload
+    var shop_items_join = shop_items.inner_join(items, "item_id = id", {
+        // join options here
+    });
+
+    // options for the second overload
+    var shop_items_join = shop_items.inner_join(items, "item_id", "id", {
+        // join options here
+    });
+
+    // (1) column prefix option
+    // by default, if there are columns with the same name in both models
+    // for example, if both models have a column named `name`, 
+    // the resulting model will have two columns named `<model_name>_name` to avoid column name conflicts (for example `shops_name` and `items_name`)
+    var shop_items_join = shop_items.inner_join(items, "item_id = id", {
+        use_prefix: NIMBUSDB_JOIN_PREFIX.ON_DUPLICATE    // default behavior, only add prefix to columns with the same name in both models
+    });
+
+    // result:
+    // +----+---------+---------+-------+-----------+--------+-------+------------+
+    // | id | shop_id | item_id | stock | is_locked | color  | price | name       |
+    // +----+---------+---------+-------+-----------+--------+-------+------------+
+
+    var shop_items_join = shop_items.inner_join(items, "item_id = id", {
+        use_prefix: NIMBUSDB_JOIN_PREFIX.ALWAYS_LEFT,   // always add prefix to columns from the left/source model
+        left_prefix: "left_"                            // prefix for left/source model columns
+    });
+
+    // result:
+    // +--------------+--------------+------------+-----------+--------+-------+------------+---------+
+    // | left_shop_id | left_item_id | left_stock | is_locked | color  | price | name       | left_id |
+    // +--------------+--------------+------------+-----------+--------+-------+------------+---------+
+
+    var shop_items_join = shop_items.inner_join(items, "item_id = id", {
+        use_prefix: NIMBUSDB_JOIN_PREFIX.ALWAYS,    // always add prefix to columns from both models
+        left_prefix: "left_",                       // prefix for left/source model columns
+        right_prefix: "right_"                      // prefix for right/target model columns
+    });
+
+    // result:
+    // +--------------+--------------+------------+-------------+------------+-----------------+-------------+---------+
+    // | left_shop_id | left_item_id | left_stock | right_price | right_name | right_is_locked | right_color | left_id |
+    // +--------------+--------------+------------+-------------+------------+-----------------+-------------+---------+
+
+    // (2) join model options
+    // you can configure the resulting join model like you're creating a new model
+    var shop_items_join = shop_items.inner_join(items, "item_id = id", {
+        column_order: ["id", "shop_id", "item_id", "stock", "name", "price", "is_locked", "color"],
+        custom_id: 1,
+        root: id,
+        // other model options...
+    });
+
+    // result:
+    // +----+---------+---------+-------+------------+-------+-----------+--------+
+    // | id | shop_id | item_id | stock | name       | price | is_locked | color  |
+    // +----+---------+---------+-------+------------+-------+-----------+--------+
+    ```
+    </TabItem>
+</Tabs>
+
 ---
 
 ## References
@@ -280,6 +675,34 @@ Creates an inner join with another model.
     </TabItem>
 </Tabs>
 
+### Model.join()
+
+Creates a join from a selector object.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static join(
+        _selector: NimbusDBJoinSelector
+    ): NimbusDBModel | undefined;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_selector`
+- Type: `NimbusDBJoinSelector`
+- An object that specifies the details of the join operation.
+
+#### Returns
+- Type: `NimbusDBModel` | `undefined`
+- The resulting model, or `undefined` if the operation cannot be completed.
+</section>
+
 ### Model.left_join()
 
 Creates a left join with another model.
@@ -513,3 +936,81 @@ Creates a right join with another model.
     </section>
     </TabItem>
 </Tabs>
+
+### NimbusDBJoinOptions
+
+A type for configuring join operations.
+
+```ts title="relations.d.ts"
+type NimbusDBJoinOptions = Partial<{
+    // join operator options
+    left_prefix: string;                            // prefix for left table (default = from.name + "_")
+    intersection: NIMBUSDB_JOIN_INTERSECTION;       // intersection column behavior (default = DROP_LEFT (right), DROP_RIGHT (other types))
+    right_prefix: string;                           // prefix for right table (default = to.name + "_")
+    type: NIMBUSDB_JOIN_TYPE;                       // join type (default = INNER). will be override `on` if it is defined with specific operator
+    use_prefix: boolean | NIMBUSDB_JOIN_PREFIX;     // default = false, only add prefix if the column name is the same
+
+    // new model options
+    column_order: string[];         // default = undefined, use column_names
+    custom_id: int;                 // default = 0
+    debug: boolean | 2 | 3;         // default = from.debug
+    init_cache: boolean | int[];    // default = false, true/1 = cache all, array = cache specific data by index
+    name: string;                   // default = from.name + "_" + to.name
+    root: Instance | "global";      // default = from.__root
+    start_id: int;                  // default = from.__data_id + 1
+    temp: Struct;                   // set temporary data, default = undefined
+}>;
+```
+
+### NimbusDBJoinSelector
+
+A type for selecting join operations.
+
+```ts title="relations.d.ts"
+type NimbusDBJoinSelector = {
+    with_model: int | string | NimbusDBModel;       // relation.id, relation.model.name, relation.model.custom_id, or model (direct reference)
+    on?: string,                                    // `from_column` and `to_column`. required if `with` is not using relation id and the type is not CROSS
+    from_column?: string;                           // override `on` and required if `with` is using name, custom_id, or direct model and `on` is not defined
+    to_column?: string;                             // override `on` and required if `with` is using name, custom_id, or direct model and `on` is not defined
+} & NimbusDBJoinOptions;
+```
+
+### NIMBUSDB_JOIN_TYPE
+
+An enum for join types.
+
+```ts title="relations.d.ts"
+enum NIMBUSDB_JOIN_TYPE {
+	INNER,
+	LEFT,
+	RIGHT,
+	FULL,
+	CROSS
+}
+```
+
+### NIMBUSDB_JOIN_PREFIX
+
+An enum for join prefix options.
+
+```ts title="relations.d.ts"
+enum NIMBUSDB_JOIN_PREFIX {
+	ON_DUPLICATE,
+	ALWAYS,
+	ALWAYS_LEFT,
+	ALWAYS_RIGHT
+}
+```
+
+### NIMBUSDB_JOIN_INTERSECTION
+
+An enum for join intersection options.
+
+```ts title="relations.d.ts"
+enum NIMBUSDB_JOIN_INTERSECTION {
+    KEEP_BOTH,
+    DROP_RIGHT,
+    DROP_LEFT,
+    DROP_BOTH
+}
+```
