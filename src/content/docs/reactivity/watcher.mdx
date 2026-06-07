@@ -1,0 +1,259 @@
+---
+title: Data Watcher
+description: Learn how to watch for changes in your NimbusDB data using the data watcher, including how to set up watchers, handle change events, and best practices for using watchers to maintain data integrity and consistency in your NimbusDB models.
+---
+
+{/*(NimbusDBWatcher, watch columns, callback, immediate)*/}
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+import "../../../styles/custom.css";
+
+A data watcher allows you to watch for changes in your NimbusDB data and execute custom logic whenever the watched values change. This is useful for triggering side effects or performing any necessary updates based on changes to your data.
+
+We'll use this schema and `items` model for demonstration:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        },
+        owned_count: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: 0
+        }
+    };
+
+    items = new NimbusDBModel("global", "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 },
+        { id: 4, name: "Date", price: 12.5 },
+        { id: 5, name: "Elderberry", price: 8 },
+        { id: 6, name: "Fig", price: 10 },
+        { id: 7, name: "Grape", price: 6 },
+        { id: 8, name: "Honeydew", price: 9 },
+        { id: 9, name: "Kiwi", price: 4 },
+        { id: 10, name: "Lemon", price: 3 }
+    ]);
+    ```
+    </TabItem>
+</Tabs>
+
+## Using Data Watcher
+
+To watch for changes in your NimbusDB data, you can use the `.watch()` method. 
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 12, 33}
+    // (1) watch one column of a record
+    items.watch(1, "price", function(data, new_val, old_val, prop) {
+        show_debug_message($"{data.name}'s price changed from {old_val} to {new_val}");
+    });
+
+    // update the price
+    items.update_by_primary(1, { price: 6 });
+
+    // in the console/output:
+    // Apple price changed from 5 to 6
+
+    // (2) watch multiple columns of a record
+    items.watch(2, ["price", "owned_count"], function(data, new_val, old_val, prop) {
+        show_debug_message($"{data.name}'s {prop} changed from {old_val} to {new_val}");
+    });
+
+    // update the price
+    items.update_by_primary(2, { price: 9.4 });
+
+    // in the console/output:
+    // Banana price changed from 7.2 to 9.4
+
+    // update both price and owned_count
+    items.update_by_primary(2, { 
+        price: 6.9, 
+        owned_count: 10 
+    });
+
+    // in the console/output:
+    // Banana price changed from 9.4 to 6.9
+    // Banana owned_count changed from 0 to 10
+
+    // (3) watch all columns of a record
+    items.watch(3, "*", function(data, new_val, old_val, prop) {
+        show_debug_message($"{data.name}'s {prop} changed from {old_val} to {new_val}");
+    });
+
+    // update any column
+    items.update_by_primary(3, { 
+        name: "Grape", 
+        price: 6.5,
+        owned_count: 7,
+        is_locked: true
+    });
+
+    // in the console/output:
+    // Grape name changed from Cherry to Grape
+    // Grape price changed from 7 to 6.5
+    // Grape owned_count changed from 0 to 7
+    // Grape is_locked changed from 0 to 1
+    ```
+    </TabItem>
+</Tabs>
+
+### With Closures
+
+You can also use closures to create watchers. This is useful when you need to access the watcher value from outside the scope of the callback function.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // these variables are defined outside the scope of the callback function
+    some_var = 2.75;
+    discount = 0.2;
+
+    // define the callback function
+    var banana_watcher_callback = function(data, new_val, old_val, prop) {
+        var discounted_price = data.price * (1 - discount);
+        some_var = discounted_price / 2;    // in case you want to modify the external variable
+        
+        show_debug_message($"Banana's {prop} changed from {old_val} to {new_val}");
+        show_debug_message($"`some_var` has been updated to {some_var}");
+    }
+
+    // create a watcher for the banana price
+    items.watch(2, "price", banana_watcher_callback);
+
+    items.update_by_primary(2, { price: 10 });
+
+    // in the console/output:
+    // Banana's price changed from 7.52 to 10
+    // `some_var` has been updated to 5
+    ```
+    </TabItem>
+</Tabs>
+
+---
+
+## References
+
+### NimbusDBWatcher <Badge text="Internal" variant="caution" size='medium' />
+
+The `NimbusDBWatcher` class is used to watch for changes in NimbusDB data.
+
+```ts title="reactivity.d.ts"
+class NimbusDBWatcher {
+    constructor(
+        _inst_id: Instance,
+        _db_model: NimbusDBModel,
+        _original_data: Struct,
+        _watch_column: string | string[],
+        _callback: (data: Struct, new_val: any, old_val: any, prop: string) => void,
+        _options?: NimbusDBWatcherConstOptions
+    );
+
+    id: int;
+
+    static update(): void;
+
+    static __id: int;
+    __data: Struct;
+    __inst: Instance;
+    __last_vals: any[];
+    __model: NimbusDBModel;
+    __watch_columns: string[];
+
+    __callback: (
+        data: Struct,
+        new_val: any,
+        old_val: any,
+        prop: string
+    ) => void;
+}
+```
+
+### Model.watch()
+
+Watches one or more columns of a NimbusDB data record and fires a callback whenever the watched values change.
+
+<section>
+#### Signature
+<div className="sticky-method">
+```ts title="model.d.ts"
+class NimbusDBModel {
+    // ... other methods and properties ...
+    static watch(
+        _original_data: int | NimbusDBData,
+        _watch_column: string | string[],
+        _callback: (data: Struct, new_val: any, old_val: any, prop: string) => void,
+        _options?: NimbusDBWatchOptions
+    ): int;
+}
+```
+</div>
+
+#### Parameters
+
+##### `_original_data`
+- Type: `int` | `NimbusDBData`
+- The original model data reference (direct-access data) or primary key of the data.
+
+##### `_watch_column`
+- Type: `string` | `string[]`
+- The column(s) to watch for changes. Use `"*"` to watch all columns.
+
+##### `_callback`
+- Type: `(data: Struct, new_val: any, old_val: any, prop: string) => void`
+    - **Parameters**:
+        - `data`: The data that changed.
+        - `new_val`: The new value of the watched column.
+        - `old_val`: The old value of the watched column.
+        - `prop`: The property name of the watched column.
+- The callback to run when the watched column(s) change.
+
+##### `_options`
+- Type: `Partial<{ immediate: boolean; }>`
+- Default: `undefined`
+- Optional configuration for the operation.
+
+#### Returns
+- Type: `int`
+- The watcher ID.
+</section>
+
+### NimbusDBWatcherConstOptions <Badge text="Internal" variant="caution" size='medium' />
+
+An optional configuration object for the `NimbusDBWatcher` constructor.
+
+```ts title="reactivity.d.ts"
+type NimbusDBWatcherConstOptions = Partial<{
+    immediate: boolean;		// call .update() immediately after creation (default = false)
+}>;
+```
+
+### NimbusDBWatchOptions
+
+An optional configuration object for the `NimbusDBModel.watch()` method.
+
+```ts title="reactivity.d.ts"
+type NimbusDBWatchOptions = Partial<{
+    immediate: boolean;     // call .update() immediately after creation (default = false)
+    global: boolean;        // [INTERNAL] use global variable as reference (default = false)
+}>;
+```

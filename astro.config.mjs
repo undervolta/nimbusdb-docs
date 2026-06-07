@@ -103,7 +103,7 @@ export default defineConfig({
 					label: 'Reactivity',
 					items: [
 						{ label: 'Computed', slug: 'reactivity/computed' },
-						{ label: 'Watch', slug: 'reactivity/watch' },
+						{ label: 'Watcher', slug: 'reactivity/watcher' },
 						{ label: 'Derived', slug: 'reactivity/derived' },
 					],
 				},
