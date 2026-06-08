@@ -1,0 +1,65 @@
+---
+interface Props {
+    text: string;
+    align?: "left" | "center" | "right";
+}
+
+const { text, align = "center" } = Astro.props;
+---
+
+<span class="tooltip-container">
+    <slot />
+    <span class={`tooltip tooltip-${align}`}>{text}</span>
+</span>
+
+<style>
+    .tooltip-container {
+        position: relative;
+        display: inline-block;
+        text-decoration: underline;
+        text-decoration-style: dotted;
+        text-underline-offset: 0.3rem;
+        cursor: help;
+    }
+
+    .tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+
+        padding: 0.4rem 0.7rem;
+        border-radius: 0.5rem;
+        white-space: nowrap;
+
+        background: rgb(30 30 30);
+        color: white;
+
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+
+        z-index: 100;
+    }
+
+    .tooltip-container:hover .tooltip {
+        opacity: 1;
+    }
+
+    .tooltip-left {
+        left: 0;
+        right: auto;
+        transform: none;
+    }
+
+    .tooltip-center {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .tooltip-right {
+        left: auto;
+        right: 0;
+        transform: none;
+    }
+</style>

@@ -3,8 +3,6 @@ title: Derived Value
 description: Learn how to use derived values in NimbusDB to create dynamic data that is automatically updated based on changes to other data, including how to define derived values and best practices for using them to maintain data integrity and consistency in your NimbusDB models.
 ---
 
-{/*(NimbusDBDerived, var binding, global prefix, on_update)*/}
-
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../styles/custom.css";
 
@@ -214,7 +212,7 @@ Using derived values on object fields need extra care, so you won't get `undefin
         arr = [
             items.derived("obj[0].normal", 1, "name"),
             [ items.derived("obj[1].arr[0]", 2, "name") ],
-            
+
             // but objects inside arrays are not supported
         -    { some_prop: items.derived("obj[0].some_prop", 1, "name") },
         -    {
