@@ -7,7 +7,7 @@ import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../styles/custom.css";
 import Tooltip from '../../../components/Tooltip.astro';
 
-In this section, we'll learn how to export your NimbusDB models to various file formats. We'll use this `items` model as an example:
+In this section, we'll learn how to export your **NimbusDB** models to various file formats. We'll use this `items` model as an example:
 
 <Tabs syncKey='lang'>
     <TabItem label="GML" value="gml">
@@ -54,7 +54,7 @@ But first, let's take a look at the available file formats and their behaviors.
 
 | Export Feature | CSV | JSON | JSONL | YAML | TOML | NDBIN | Custom |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Available** | Yes | Yes | Yes | Yes | <Tooltip text="You need to activate it first">[Optional](#toml)</Tooltip> | Yes | Yes |
+| **Available** | Yes | Yes | Yes | Yes | <Tooltip text="You need to activate it first">[Optional](#enable-toml-export)</Tooltip> | Yes | Yes |
 | **Data Export** | Yes | Yes | Yes | Yes | Yes | Yes | <Tooltip text="If implemented in the writer function" align="right">Yes</Tooltip> |
 | **Metadata Export** | No | <Tooltip text="Optional">Yes</Tooltip> | No | <Tooltip text="Optional">Yes</Tooltip> | <Tooltip text="Optional">Yes</Tooltip> | Yes | <Tooltip text="If implemented in the writer function" align="right">Yes</Tooltip> |
 | **Model Export** | No | <Tooltip text="Optional">Yes</Tooltip> | No | <Tooltip text="Optional">Yes</Tooltip> | <Tooltip text="Optional">Yes</Tooltip> | Yes | <Tooltip text="If implemented in the writer function" align="right">Yes</Tooltip> |
@@ -73,7 +73,7 @@ But first, let's take a look at the available file formats and their behaviors.
 
 ## Exporting Model Data
 
-Use the `export()` method to export your model data to a file. If you don't specify the file extension, NimbusDB will automatically detect the file format based on the file name.
+Use the `export()` method to export your model data to a file. If you don't specify the file extension, **NimbusDB** will automatically detect the file format based on the file name.
 
 <Tabs>
     <TabItem label="GML" value="gml">
@@ -140,7 +140,7 @@ CSV export only includes the data, and doesn't support exporting the model defin
 :::
 
 :::tip
-CSV export in NimbusDB is not like other CSV libraries that only support primitive values. It supports exporting complex data types like arrays, objects, even nested structures of them.
+CSV export in **NimbusDB** is not like other CSV libraries that only support primitive values. It supports exporting complex data types like arrays, objects, even nested structures of them.
 :::
 
 ### JSON Export
@@ -289,22 +289,22 @@ The YAML export is a human-readable format that's easy to read and write.
 </Tabs>
 
 :::caution
-YAML file format is an export-only feature in NimbusDB, which means you can export your model data to a YAML file, but you can't import data from a YAML file back into NimbusDB. So, if you want to use YAML for data storage, make sure to keep the original model in your code, and use the exported YAML file as a backup or for sharing purposes.
+YAML file format is an export-only feature in **NimbusDB**, which means you can export your model data to a YAML file, but you can't import data from a YAML file back into **NimbusDB**. So, if you want to use YAML for data storage, make sure to keep the original model in your code, and use the exported YAML file as a backup or for sharing purposes.
 :::
 
 ### TOML Export
 
-The TOML export is also a human-readable format that's easy to read and write. In NimbusDB, TOML export is not enabled by default, so you need to enable it manually by following the steps below.
+The TOML export is also a human-readable format that's easy to read and write. In **NimbusDB**, TOML export is not enabled by default, so you need to enable it manually by following the steps below.
 
 #### Enable TOML Export
 
 <Tabs>
     <TabItem label="GML" value="gml">
-    1. Open the extracted NimbusDB package (from the [setup](/getting-started/setup) instructions).
+    1. Open the extracted **NimbusDB** package (from the [setup](/getting-started/setup) instructions).
     2. Open `Options/export-toml.gml` file in the package, and select all then copy the content.
         ![Copying TOML export code](../../../assets/io/export-toml-code.png)
     3. Open `NimbusDB/NimbusDBModel` script asset in the GameMaker IDE.
-    4. Find `/// @options@toml-export` line, select that line and 2 lines below, and paste the copied content.
+    4. Find `/// @options@toml-export` line, select `case NIMBUSDB_FILE.TOML:` until `break` keyword, and paste the copied content.
         ```
         /// @options@toml-export
         ```
@@ -374,7 +374,7 @@ The TOML export is also a human-readable format that's easy to read and write. I
 
 ### NDBIN Export <Badge text="Experimental" variant="caution" size='medium' />
 
-`NDBIN` is a binary file format that's optimized for storing NimbusDB model and data. It's a good choice for large data sets, as it's smaller and faster to read and write than other formats.
+`NDBIN` is a binary file format that's optimized for storing **NimbusDB** model and data. It's a good choice for large data sets, as it's smaller and faster to read and write than other formats.
 
 :::caution
 Though it's already tested to be stable in most cases, NDBIN export is still considered an experimental feature since it's only been tested in limited scenarios. So it's recommended to use it with caution, and don't use it for critical data until it's officially marked as stable.
@@ -427,7 +427,7 @@ Though it's already tested to be stable in most cases, NDBIN export is still con
 
 ### Custom Writer
 
-The custom writer allows you to write your own logic for exporting the model data to a file. This is useful if you want to export the data in a format that's not supported by NimbusDB, or if you want to export the data in a format that's not supported by the built-in file writers.
+The custom writer allows you to write your own logic for exporting the model data to a file. This is useful if you want to export the data in a format that's not supported by **NimbusDB**, or if you want to export the data in a format that's not supported by the built-in file writers.
 
 <Tabs>
     <TabItem label="GML" value="gml">
@@ -516,7 +516,7 @@ Exports model data using the built-in file writer or custom writer.
     class NimbusDBModel {
         // ... other methods and properties ...
         static export(
-            _writer_fn: (model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => boolean | undefined
+            _writer_fn: (model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => boolean | void
         ): NimbusDBExportResult;
     }
     ```
@@ -525,13 +525,13 @@ Exports model data using the built-in file writer or custom writer.
     #### Parameters
 
     ##### `_writer_fn`
-    - Type: `(model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => boolean | undefined`
+    - Type: `(model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => boolean | void`
         - **Parameters**:
             - `model`: The model instance.
             - `data`: The data to export.
             - `temp`: The temporary data.
         - **Returns**:
-            - `true` when the operation succeeds, otherwise `false`.
+            - `true` when the operation succeeds, otherwise `false`, or not returning anything.
     - The custom writer callback used during export.
 
     #### Returns

@@ -3,12 +3,240 @@ title: Model Imports
 description: Learn how to import models into NimbusDB, including best practices for organizing and sharing your model definitions across different projects and teams.
 ---
 
-{/*(import, import_csv, import_json, import_ndbin, async ndbin, custom reader)*/}
-
-import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../styles/custom.css";
 
----
+In this section, we'll learn how to import your NimbusDB models from various file formats. We'll use this `items` model as an example:
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    // empty model
+    items = new NimbusDBModel(id, "items", schema);
+    ```
+    </TabItem>
+</Tabs>
+
+## Importing Model Data
+
+Use the `import()` method to import your model data from a file. If you don't specify the [file extension](/io/exports#file-formats), NimbusDB will automatically detect the file format based on the file name.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 5, 10, 15} ".csv" ".json" "type:" "~/" ".mydat" "type: NIMBUSDB_FILE.JSON"
+    // (1) auto-detect the file format
+    items.import("items.csv");      // will be imported as CSV
+    items.import("items.json");     // will be imported as JSON
+
+    // (2) specify the file format/extension
+    items.import("items.csv", {
+        type: NIMBUSDB_FILE.CSV     // or `extension: NIMBUSDB_FILE.CSV`
+    });
+
+    // (3) use the game path as the root directory
+    items.import("~/items.csv", {       // the path will be resolved to "working_directory/items.csv"
+        // options for the import...     // `working_directory` is your game path
+    });
+
+    // (4) file extension obfuscation
+    // this allows you to import files to certain formats that already obfuscated
+    items.import("items.mydat", {       // a `.mydat` custom file extension
+        type: NIMBUSDB_FILE.JSON        // but the content will still be a JSON
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### CSV Import
+
+You can import CSV files using the `import()` method or the dedicated `import_csv()` method.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 13}
+    // (1) basic usage
+    items.import("items.csv");          // using auto-detect file format
+
+    items.import("items.someext", {     // specify the file format/extension
+        type: NIMBUSDB_FILE.CSV
+    });
+
+    items.import_csv("items.csv");      // using the csv import method
+
+    // (2) import options
+    // all options are usable for both `import()` and `import_csv()`
+
+    // (2.1) headers/columns order
+    items.import_csv("items.csv", {
+        headers: ["id", "name", "price"]    // specify the column order
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### JSON Import
+
+You can import JSON files using the `import()` method or the dedicated `import_json()` method.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts {1}
+    // (1) basic usage
+    items.import("items.json");         // using auto-detect file format
+
+    items.import("items.someext", {     // specify the file format/extension
+        type: NIMBUSDB_FILE.JSON
+    });
+
+    items.import_json("items.json");    // using the json import method
+    ```
+    </TabItem>
+</Tabs>
+
+### JSONL Import
+
+You can import JSONL files using the `import()` method.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 9, 15}
+    // (1) basic usage
+    items.import("items.jsonl");        // using auto-detect file format
+
+    items.import("items.someext", {     // specify the file format/extension
+        type: NIMBUSDB_FILE.JSONL
+    });
+
+    // (2) import options
+    // (2.1) customizing the start line
+    items.import("items.jsonl", {
+        start_line: 3                   // start importing from the 3rd data
+    });
+
+    // (2.2) customizing the line count
+    items.import("items.jsonl", {
+        line_count: 2                   // import only 2 data, starts from the first data
+    });
+
+    items.import("items.jsonl", {
+        start_line: 3,                  // start importing from the 3rd data
+        line_count: 2                   // and import only 2 data
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### NDBIN Import <Badge text="Experimental" variant="caution" size='medium' />
+
+You can import NDBIN files using the `import()` method or the dedicated `import_ndbin()` method.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+        <Tabs>
+            <TabItem label="Any Non-Async Event" value="any">
+            ```ts {1, 13} "items_import" "async: true"
+            // (1) basic usage
+            items.import("items.ndbin");          // using auto-detect file format
+
+            items.import("items.someext", {       // specify the file format/extension
+                type: NIMBUSDB_FILE.NDBIN
+            });
+
+            items.import_ndbin("items.ndbin");    // using the ndbin import method
+
+            // (2) import options
+            // all options are usable for both `import()` and `import_ndbin()`
+
+            // (2.1) cherry-pick the column(s) for each data
+            items.import_ndbin("items.ndbin", {
+                columns: ["name", "price"]          // only import the "name" and "price" columns
+            });
+
+            // (2.2) only import the data
+            items.import_ndbin("items.ndbin", {
+                data_only: true                     // only import the data, without importing the model definition
+            });
+
+            // (2.3) import asynchronously
+            // you must store the returned object in an instance variable
+            items_import = items.import_ndbin("items.ndbin", {
+                async: true
+            });
+            // from this line, there's no guarantee that the import is finished
+            ```
+            </TabItem>
+
+            <TabItem label="Async - Save/Load" value="async">
+            ```ts "items_import" 
+            items.import(items_import);     // `items` is the model instance to import
+            ```
+            </TabItem>
+        </Tabs>
+    </TabItem>
+</Tabs>
+
+### Custom Import
+
+You can also implement your own custom import logic by providing a reader callback function to the `import()` method.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var reader_fn = function(model, data, temp) {
+        // write your own logic here
+        // `model` is the model instance
+        // `data` is the original data in the model (array of structs)
+        // `temp` is the temporary data (struct)
+
+        // let's try to import data 1 and 2
+        ini_open("items.ini");
+
+        items.name = ini_read_string("model", "name", "");
+
+        var curr_data = [];
+        for (var i = 0; i < 2; i++) {
+            array_push(curr_data, {
+                name: ini_read_string($"data{i + 1}", "name", ""),
+                price: ini_read_real($"data{i + 1}", "price", 0),
+                is_locked: ini_read_real($"data{i + 1}", "is_locked", false)
+            });
+        }
+
+        items.migrate(NIMBUSDB_MIGRATION.ARRAY_OF_STRUCT, curr_data, {
+            mode: "replace"
+        });
+
+        ini_close();
+
+        return true;
+    }
+
+    items.import(reader_fn);
+    ```
+    </TabItem>
+</Tabs>
+
+--- 
 
 ## References
 
@@ -115,7 +343,7 @@ Imports model data from a file, raw string, async result, or custom reader.
     class NimbusDBModel {
         // ... other methods and properties ...
         static import(
-            _reader_fn: (model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => void
+            _reader_fn: (model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => boolean | void
         ): NimbusDBImportResult;
     }
     ```
@@ -124,11 +352,13 @@ Imports model data from a file, raw string, async result, or custom reader.
     #### Parameters
 
     ##### `_reader_fn`
-    - Type: `(model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => void`
+    - Type: `(model: NimbusDBModel, data: NimbusDBData[], temp: Struct) => boolean | void`
         - **Parameters**:
             - `model`: The model instance.
             - `data`: The data to import.
             - `temp`: The temporary data.
+        - **Returns**:
+            - `true` when the operation succeeds, otherwise `false`, or not returning anything.
     - The custom reader callback used during import.
 
     #### Returns
