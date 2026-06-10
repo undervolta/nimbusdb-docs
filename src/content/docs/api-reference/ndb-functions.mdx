@@ -6,6 +6,9 @@ description: A reference for all ndb functions in the API.
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../styles/custom.css";
 
+The function API only available if:
+- 
+
 ## Model
 
 ### ndb_computed()
@@ -55,6 +58,36 @@ function ndb_destroy_model(
 ##### `_model`
 - Type: `NimbusDBModel`
 - The model instance to operate on.
+
+#### Example
+
+<Tabs>
+	<TabItem label="GML" value="gml">
+	```ts
+	var model = ndb_create_model("items", {
+		id: {
+			type: NIMBUSDB_DATA_TYPE.INTEGER,
+			const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+		},
+		name: NIMBUSDB_DATA_TYPE.STRING,
+		price: {
+			type: NIMBUSDB_DATA_TYPE.NUMBER,
+			validator: function(data, value) {
+				return value >= 0;
+			},
+			default_value: 0
+		},
+		is_locked: {
+			type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+			const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+			default_value: false
+		}
+	});
+
+	ndb_destroy_model(model);
+	```
+	</TabItem>
+</Tabs>
 </section>
 
 ### ndb_drop_relation()
@@ -258,6 +291,18 @@ function ndb_destroy_catalog(
 ##### `_catalog`
 - Type: `NimbusDBCatalog`
 - The catalog instance to operate on.
+
+#### Example
+
+<Tabs>
+	<TabItem label="GML" value="gml">
+	```ts
+	var catalog = ndb_create_catalog("my_catalog");
+
+	ndb_destroy_catalog(catalog);
+	```
+	</TabItem>
+</Tabs>
 </section>
 
 ### ndb_restore_catalog()

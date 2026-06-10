@@ -201,6 +201,11 @@ The JSON export is the safest and most versatile export format, which can be use
 JSON export supports exporting the model definition and metadata along with the data, but it's optional. You can choose to only export the data if you don't need the extra information, or if you want to keep the file size smaller.
 :::
 
+:::caution
+- You **can't** export `validator` and `default_value` that uses a method in the schema. If you do, those properties will be ignored.
+- You can export the model relations, but you won't be able to import them back into **NimbusDB**. Please use the [Catalog Backup and Restore](/core/catalog/backup-restore) feature instead of exporting and importing each model individually.
+:::
+
 ### JSONL Export
 
 The JSONL export is a lightweight format that's optimized for streaming data. 

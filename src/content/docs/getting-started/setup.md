@@ -20,6 +20,7 @@ Here's a list of the tested versions of GameMaker that are compatible with **Nim
 
 | Platform    | IDE            | Runtime        | Notes |
 |-------------|----------------|----------------|-------|
+| Windows VM  | v2026.0._x_._y_ | v2026.0._x_._y_ | Any version of _x_ and _y_, **tested and working** |
 | Windows VM  | v2024.14._x_._y_ | v2024.14._x_._y_ | Any version of _x_ and _y_, **tested and working** |
 | Windows YYC | v2024.14._x_._y_ | v2024.14._x_._y_ | Any version of _x_ and _y_, **tested and working** |
 | HTML5       | v2024.14._x_._y_ | v2024.14._x_._y_ | Not tested |
@@ -44,7 +45,8 @@ This is the recommended way to install **NimbusDB**, as it allows you to easily 
 6. Click `Import` to import the package into your project. 
 
 :::tip
-You can drag and drop the `NimbusDB-v<VERSION>.yymps` file into the GameMaker IDE to import it as well.
+- You can drag and drop the `NimbusDB-v<VERSION>.yymps` file into the GameMaker IDE to import it as well.
+- You can exclude the `NimbusDBFnAPI` script asset if you don't need a function-based API for **NimbusDB**. So, for OOP users, you're recommended to exclude the `NimbusDBFnAPI` script asset.
 :::
 
 ### Manual Copy

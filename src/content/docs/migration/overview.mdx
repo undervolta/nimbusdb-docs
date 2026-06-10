@@ -3,10 +3,572 @@ title: Data Migration
 description: An overview of data migration in NimbusDB, including strategies for migrating existing data into the database and best practices for ensuring a smooth transition.
 ---
 
-{/*(migrate, all NIMBUSDB_MIGRATION enum variants, MigrationOptions)*/}
-
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import "../../../styles/custom.css";
+
+In this section, we'll learn how to migrate your existing database/data into **NimbusDB**. We'll use this `items` model as an example:
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    // empty model
+    items = new NimbusDBModel(id, "items", schema);
+    ```
+    </TabItem>
+</Tabs>
+
+## Migrating Data into NimbusDB Models
+
+Before you read this section, we already know that you already have your data in some format. Migrating data into **NimbusDB** is super easy, just call the `.migrate()` method on your model and pass in the migration strategy and the data you want to migrate. 
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 4, 9}
+    // (1) basic usage
+    items.migrate(/* migration strategy */, /* data */);
+
+    // (2) with options
+    items.migrate(/* migration strategy */, /* data */, {
+        /* options */
+    });
+
+    // (3) migration mode
+    items.migrate(/* migration strategy */, /* data */, {
+        mode: "replace"     // "append" or "replace" (default = "append")
+    });
+    // "append" mode will use the `upsert` operation, which will update 
+    //          the existing data if the primary key matches, or insert 
+    //          the new data if the primary key doesn't exist
+    // "replace" mode will clear the existing data and insert the new data
+
+    // those styles are available for all migration strategies
+    ```
+    </TabItem>
+</Tabs>
+
+We'll separate the migration strategy based on game engine you're using.
+
+### Array of Struct/Object
+
+The Array of Struct/Object migration strategy is the most commonly used and the cleanest strategy. 
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 }
+    ];
+
+    items.migrate(NIMBUSDB_MIGRATION.ARRAY_OF_STRUCT, my_data);
+    ```
+    </TabItem>
+</Tabs>
+
+### Array of Tuple
+
+The Array of Tuple migration strategy is useful when you have a fixed number of columns in your data. 
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = [
+        [1, "Apple", 5],
+        [2, "Banana", 7.2],
+        [3, "Cherry", 15]
+    ];
+
+    items.migrate(NIMBUSDB_MIGRATION.ARRAY_OF_TUPLE, my_data, {
+        columns: ["id", "name", "price"]    // (required) specify the column names
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Array of Array
+
+The Array of Array migration strategy is useful when you have a fixed number of columns in your data, but you don't want to use the tuple format.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = [
+        [1, 2, 3],
+        ["Apple", "Banana", "Cherry"],
+        [5, 7.2, 15]
+    ];
+
+    items.migrate(NIMBUSDB_MIGRATION.ARRAY_OF_ARRAY, my_data, {
+        columns: ["id", "name", "price"]    // (required) specify the column names
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Array of Map
+
+The Array of Map migration strategy is useful when your data is in the form of an array of maps, where each map represents a row of data with column names as keys.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var map1 = ds_map_create();
+    var map2 = ds_map_create();
+    var map3 = ds_map_create();
+
+    ds_map_add(map1, "id", 1);
+    ds_map_add(map1, "name", "Apple");
+    ds_map_add(map1, "price", 5);
+
+    ds_map_add(map2, "id", 2);
+    ds_map_add(map2, "name", "Banana");
+    ds_map_add(map2, "price", 7.2);
+
+    ds_map_add(map3, "id", 3);
+    ds_map_add(map3, "name", "Cherry");
+    ds_map_add(map3, "price", 15);
+
+    var my_data = [map1, map2, map3];
+
+    items.migrate(NIMBUSDB_MIGRATION.ARRAY_OF_DSMAP, my_data, {
+        destroy: true,          // (optional) destroy the ds_map after the operation
+        keys_equal: true        // (optional) set to true if the keys in the map are the same (look at the "id", "name", and "price" keys in each map)
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Array of List
+
+The Array of List migration strategy is similar to Array of Tuple, but it uses `list` data structure instead of tuple.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var list1 = ds_list_create();
+    var list2 = ds_list_create();
+    var list3 = ds_list_create();
+
+    ds_list_add(list1, 1, "Apple", 5);
+    ds_list_add(list2, 2, "Banana", 7.2);
+    ds_list_add(list3, 3, "Cherry", 15);
+
+    var my_data = [list1, list2, list3];
+
+    items.migrate(NIMBUSDB_MIGRATION.ARRAY_OF_DSLIST, my_data, {
+        columns: ["id", "name", "price"],   // (required) specify the column names
+        destroy: true                       // (optional) destroy the ds_list after the operation
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### List of Struct/Object
+
+The List of Struct/Object migration strategy is similar to Array of Struct/Object, but it uses `list` data structure instead of array.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = ds_list_create();
+
+    ds_list_add(my_data, 
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 },
+        { id: 3, name: "Cherry", price: 15 }
+    );
+
+    items.migrate(NIMBUSDB_MIGRATION.DSLIST_OF_STRUCT, my_data, {
+        columns: ["id", "name", "price"],   // (required) specify the column names
+        destroy: true                       // (optional) destroy the ds_list after the operation
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### List of Tuple
+
+The List of Tuple migration strategy is similar to Array of Tuple, but it uses `list` data structure instead of array.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = ds_list_create();
+
+    ds_list_add(my_data, 
+        [1, "Apple", 5],
+        [2, "Banana", 7.2],
+        [3, "Cherry", 15]
+    );
+
+    items.migrate(NIMBUSDB_MIGRATION.DSLIST_OF_TUPLE, my_data, {
+        columns: ["id", "name", "price"],   // (required) specify the column names
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### List of Array
+
+The List of Array migration strategy is similar to Array of Array, but it uses `list` data structure instead of array.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = ds_list_create();
+
+    ds_list_add(my_data, 
+        [1, 2, 3],
+        ["Apple", "Banana", "Cherry"],
+        [5, 7.2, 15]
+    );
+
+    items.migrate(NIMBUSDB_MIGRATION.DSLIST_OF_ARRAY, my_data, {
+        columns: ["id", "name", "price"],   // (required) specify the column names
+        destroy: true                       // (optional) destroy the ds_list after the operation
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### List of Map
+
+The List of Map migration strategy is similar to Array of Map, but it uses `list` data structure instead of array.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var map1 = ds_map_create();
+    var map2 = ds_map_create();
+    var map3 = ds_map_create();
+
+    ds_map_add(map1, "id", 1);
+    ds_map_add(map1, "name", "Apple");
+    ds_map_add(map1, "price", 5);
+
+    ds_map_add(map2, "id", 2);
+    ds_map_add(map2, "name", "Banana");
+    ds_map_add(map2, "price", 7.2);
+
+    ds_map_add(map3, "id", 3);
+    ds_map_add(map3, "name", "Cherry");
+    ds_map_add(map3, "price", 15);
+
+    var my_data = ds_list_create();
+
+    ds_list_add(my_data, map1, map2, map3);
+
+    items.migrate(NIMBUSDB_MIGRATION.DSLIST_OF_DSMAP, my_data, {
+        destroy: true,                      // (optional) destroy the ds_list after the operation
+        keys_equal: true                    // (optional) set to true if the keys in the map are the same (look at the "id", "name", and "price" keys in each map)
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### List of List
+
+The List of List migration strategy is similar to Array of List, but it uses `list` data structure instead of array.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var list1 = ds_list_create();
+    var list2 = ds_list_create();
+    var list3 = ds_list_create();
+
+    ds_list_add(list1, 1, "Apple", 5);
+    ds_list_add(list2, 2, "Banana", 7.2);
+    ds_list_add(list3, 3, "Cherry", 15);
+
+    var my_data = ds_list_create();
+
+    ds_list_add(my_data, list1, list2, list3);
+
+    items.migrate(NIMBUSDB_MIGRATION.DSLIST_OF_DSLIST, my_data, {
+        columns: ["id", "name", "price"],   // (required) specify the column names
+        destroy: true                       // (optional) destroy the ds_list after the operation
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Struct/Object of Struct/Object
+
+The Struct/Object of Struct/Object migration strategy only uses the value as the data, and the key is ignored.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = {
+        key1: {
+            id: 1,
+            name: "Apple",
+            price: 5
+        },
+        some_key: {
+            id: 2,
+            name: "Banana",
+            price: 7.2
+        },
+        another_key: {
+            id: 3,
+            name: "Cherry",
+            price: 15
+        }
+    };
+
+    items.migrate(NIMBUSDB_MIGRATION.STRUCT_OF_STRUCT, my_data);
+    ```
+    </TabItem>
+</Tabs>
+
+### Struct/Object of Tuple
+
+The Struct/Object of Tuple migration strategy only uses the value as the data, and the key is ignored.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = {
+        key1: [1, "Apple", 5],
+        some_key: [2, "Banana", 7.2],
+        another_key: [3, "Cherry", 15]
+    };
+
+    items.migrate(NIMBUSDB_MIGRATION.STRUCT_OF_TUPLE, my_data, {
+        columns: ["id", "name", "price"]    // (required) specify the column names
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Struct/Object of Array
+
+The Struct/Object of Array migration strategy uses the key as the column name, and the value as the data.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = {
+        id: [1, 2, 3],
+        name: ["Apple", "Banana", "Cherry"],
+        price: [5, 7.2, 15]
+    };
+
+    items.migrate(NIMBUSDB_MIGRATION.STRUCT_OF_ARRAY, my_data);
+    ```
+    </TabItem>
+</Tabs>
+
+### Struct/Object of Map
+
+The Struct/Object of Map migration strategy only uses the value as the data, and the key is ignored.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var map1 = ds_map_create();
+    var map2 = ds_map_create();
+    var map3 = ds_map_create();
+
+    ds_map_add(map1, "id", 1);
+    ds_map_add(map1, "name", "Apple");
+    ds_map_add(map1, "price", 5);
+
+    ds_map_add(map2, "id", 2);
+    ds_map_add(map2, "name", "Banana");
+    ds_map_add(map2, "price", 7.2);
+
+    ds_map_add(map3, "id", 3);
+    ds_map_add(map3, "name", "Cherry");
+    ds_map_add(map3, "price", 15);
+
+    var my_data = {
+        key1: map1,
+        some_key: map2,
+        another_key: map3
+    };
+
+    items.migrate(NIMBUSDB_MIGRATION.STRUCT_OF_DSMAP, my_data, {
+        destroy: true,                      // (optional) destroy the ds_map after the operation
+        keys_equal: true                    // (optional) set to true if the keys in the map are the same (look at the "id", "name", and "price" keys in each map)
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Struct/Object of List
+
+The Struct/Object of List migration strategy only uses the value as the data, and the key is ignored.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var list1 = ds_list_create();
+    var list2 = ds_list_create();
+    var list3 = ds_list_create();
+
+    ds_list_add(list1, 1, "Apple", 5);
+    ds_list_add(list2, 2, "Banana", 7.2);
+    ds_list_add(list3, 3, "Cherry", 15);
+
+    var my_data = {
+        key1: list1,
+        some_key: list2,
+        another_key: list3
+    };
+
+    items.migrate(NIMBUSDB_MIGRATION.STRUCT_OF_DSLIST, my_data, {
+        columns: ["id", "name", "price"],   // (required) specify the column names
+        destroy: true                       // (optional) destroy the ds_list after the operation
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Map of Struct/Object
+
+The Map of Struct/Object migration strategy only uses the value as the data, and the key is ignored.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = ds_map_create();
+
+    ds_map_add(map_struct, "key1", { id: 1, name: "Apple", price: 5 });
+    ds_map_add(map_struct, "key2", { id: 2, name: "Banana", price: 7.2 });
+    ds_map_add(map_struct, "key3", { id: 3, name: "Cherry", price: 15 });
+
+    items.migrate(NIMBUSDB_MIGRATION.DSMAP_OF_STRUCT, my_data);
+    ```
+    </TabItem>
+</Tabs>
+
+### Map of Tuple
+
+The Map of Tuple migration strategy only uses the value as the data, and the key is ignored.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = ds_map_create();
+
+    ds_map_add(map_tuple, "key1", [1, "Apple", 5]);
+    ds_map_add(map_tuple, "key2", [2, "Banana", 7.2]);
+    ds_map_add(map_tuple, "key3", [3, "Cherry", 15]);
+
+    items.migrate(NIMBUSDB_MIGRATION.DSMAP_OF_TUPLE, my_data, {
+        columns: ["id", "name", "price"]    // (required) specify the column names
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Map of Array
+
+The Map of Array migration strategy uses the key as the column name, and the value as the data.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var my_data = ds_map_create();
+
+    ds_map_add(map_array, "id", [1, 2, 3]);
+    ds_map_add(map_array, "name", ["Apple", "Banana", "Cherry"]);
+    ds_map_add(map_array, "price", [5, 7.2, 15]);
+
+    items.migrate(NIMBUSDB_MIGRATION.DSMAP_OF_ARRAY, my_data);
+    ```
+    </TabItem>
+</Tabs>
+
+### Map of Map
+
+The Map of Map migration strategy only uses the value as the data, and the key is ignored.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var map1 = ds_map_create();
+    var map2 = ds_map_create();
+    var map3 = ds_map_create();
+
+    ds_map_add(map1, "id", 1);
+    ds_map_add(map1, "name", "Apple");
+    ds_map_add(map1, "price", 5);
+
+    ds_map_add(map2, "id", 2);
+    ds_map_add(map2, "name", "Banana");
+    ds_map_add(map2, "price", 7.2);
+
+    ds_map_add(map3, "id", 3);
+    ds_map_add(map3, "name", "Cherry");
+    ds_map_add(map3, "price", 15);
+
+    var my_data = ds_map_create();
+
+    ds_map_add(my_data, "key1", map1);
+    ds_map_add(my_data, "key2", map2);
+    ds_map_add(my_data, "key3", map3);
+
+    items.migrate(NIMBUSDB_MIGRATION.DSMAP_OF_DSMAP, my_data, {
+        destroy: true,                      // (optional) destroy the ds_map after the operation
+        keys_equal: true                    // (optional) set to true if the keys in the map are the same (look at the "id", "name", and "price" keys in each map)
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+### Map of List
+
+The Map of List migration strategy only uses the value as the data, and the key is ignored.
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts
+    var list1 = ds_list_create();
+    var list2 = ds_list_create();
+    var list3 = ds_list_create();
+
+    ds_list_add(list1, 1, "Apple", 5);
+    ds_list_add(list2, 2, "Banana", 7.2);
+    ds_list_add(list3, 3, "Cherry", 15);
+
+    var my_data = ds_map_create();
+
+    ds_map_add(my_data, "key1", list1);
+    ds_map_add(my_data, "key2", list2);
+    ds_map_add(my_data, "key3", list3);
+
+    items.migrate(NIMBUSDB_MIGRATION.DSMAP_OF_DSLIST, my_data, {
+        columns: ["id", "name", "price"],   // (required) specify the column names
+        destroy: true                       // (optional) destroy the ds_list after the operation
+    });
+    ```
+    </TabItem>
+</Tabs>
 
 ---
 
@@ -57,11 +619,14 @@ An optional configuration object for the `NimbusDBModel.migrate()` method.
 
 ```ts title="io.d.ts"
 type NimbusDBMigrationOptions = Partial<{
-    columns: string[];              // required for ARRAY_OF_ARRAY, ARRAY_OF_TUPLE, or ARRAY_OF_DSLIST
-    destroy: boolean;               // destroy ds_* or struct after converting (default = false)
-    keys_equal: boolean;            // whether the keys in a struct/ds_map is the same (default = false)
+    columns: string[];              // specify the column names 
+    destroy: boolean;               // destroy ds_* or struct after operation (default = false)
+    keys_equal: boolean;            // whether the keys in a struct/ds_map are the same (default = false)
     mode: "append" | "replace";     // append = append to existing data (upsert on primary key, default), replace = clear existing data and import
-}> & NimbusDBUpsertOptions;
+}> & (
+	| NimbusDBUpsertOptions
+	| NimbusDBInsertOptions
+);
 ```
 
 ### NIMBUSDB_MIGRATION
