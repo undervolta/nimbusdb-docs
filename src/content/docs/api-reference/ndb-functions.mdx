@@ -6,8 +6,35 @@ description: A reference for all ndb functions in the API.
 import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
 import "../../../styles/custom.css";
 
-The function API only available if:
-- 
+The function API only available if you've imported the `NimbusDBFnAPI` script asset. The `ndb` functions are designed for users who prefer a functional programming style over the object-oriented (OOP) approach provided by **NimbusDB** core classes. 
+
+## Using the `ndb` API
+
+Before you can use the `ndb` functions, ensure that you've included the `NimbusDBFnAPI` script in your project. 
+
+To use the `ndb` functions, you can call them directly in your code, with the first parameter being the class instance they operate on. 
+
+<Tabs>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 5, 9}
+    // (1) creating a new class instance
+    var my_model = new NimbusDBModel(id, "my_model");       // OOP style
+    var my_model = ndb_create_model(id, "my_model");        // functional style
+
+    // (2) calling a method on the class instance
+    my_model.insert({ id: 1, name: "Apple", price: 5 });        // OOP style
+    ndb_insert(my_model, { id: 1, name: "Apple", price: 5 });   // functional style
+
+    // (3) getting a return value from the function
+    var apple = my_model.get_by_primary(1);             // OOP style
+    var apple = ndb_get_by_primary(my_model, 1);        // functional style
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+As you can see from the examples, it just swaps the order of the class instance and the function parameters. The `ndb` functions are essentially wrappers around the core class methods, allowing you to use a functional programming style if you prefer.
+:::
 
 ## Model
 
@@ -45,10 +72,10 @@ Destroys a model instance.
 
 <section>
 #### Signature
-<div className="sticky-method">
+<div className="sticky-class">
 ```ts title="model.d.ts"
 function ndb_destroy_model(
-	_model: NimbusDBModel
+    _model: NimbusDBModel
 ): void;
 ```
 </div>
@@ -62,31 +89,31 @@ function ndb_destroy_model(
 #### Example
 
 <Tabs>
-	<TabItem label="GML" value="gml">
-	```ts
-	var model = ndb_create_model("items", {
-		id: {
-			type: NIMBUSDB_DATA_TYPE.INTEGER,
-			const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
-		},
-		name: NIMBUSDB_DATA_TYPE.STRING,
-		price: {
-			type: NIMBUSDB_DATA_TYPE.NUMBER,
-			validator: function(data, value) {
-				return value >= 0;
-			},
-			default_value: 0
-		},
-		is_locked: {
-			type: NIMBUSDB_DATA_TYPE.BOOLEAN,
-			const: NIMBUSDB_CONSTRAINT.OPTIONAL,
-			default_value: false
-		}
-	});
+    <TabItem label="GML" value="gml">
+    ```ts
+    var model = ndb_create_model("items", {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    });
 
-	ndb_destroy_model(model);
-	```
-	</TabItem>
+    ndb_destroy_model(model);
+    ```
+    </TabItem>
 </Tabs>
 </section>
 
@@ -278,10 +305,10 @@ Destroys a catalog instance.
 
 <section>
 #### Signature
-<div className="sticky-method">
+<div className="sticky-class">
 ```ts title="catalog.d.ts"
 function ndb_destroy_catalog(
-	_catalog: NimbusDBCatalog
+    _catalog: NimbusDBCatalog
 ): void;
 ```
 </div>
@@ -295,13 +322,13 @@ function ndb_destroy_catalog(
 #### Example
 
 <Tabs>
-	<TabItem label="GML" value="gml">
-	```ts
-	var catalog = ndb_create_catalog("my_catalog");
+    <TabItem label="GML" value="gml">
+    ```ts
+    var catalog = ndb_create_catalog("my_catalog");
 
-	ndb_destroy_catalog(catalog);
-	```
-	</TabItem>
+    ndb_destroy_catalog(catalog);
+    ```
+    </TabItem>
 </Tabs>
 </section>
 
