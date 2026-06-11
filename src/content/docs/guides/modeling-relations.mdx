@@ -1,0 +1,196 @@
+---
+title: Modeling Relations
+description: Learn how to create and manage relations between your models in NimbusDB, including directional and mutual relations, as well as advanced join operations.
+---
+
+{/*<!--(practical: FK, mutual, catalog relations, joins)-->*/}
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+In this guide, we will explore how to model/design relations between your models in **NimbusDB**.
+
+## Designing Models
+
+Before we dive into modeling relations, let's first discuss the best practices for designing/modeling your table (model) instances.
+
+### Instance's Root
+
+You should use the root parameter properly, because it can improve the performance in reactivity scenarios.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 4} "id" "\"global\""
+    // (1) use `id` if the model meant to be used in an instance context
+    items = new NimbusDBModel(id, "items");
+
+    // (2) use `"global"` if the model meant to be used in global variable context
+    global.items = new NimbusDBModel("global", "items");
+    ```
+    </TabItem>
+</Tabs>
+
+### Naming Conventions
+
+You can choose any naming convention for your model names, but it's recommended to follow a consistent naming convention to make it easier to understand and work with your data. 
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {1, 5}
+    // (1) use singular nouns
+    var item = new NimbusDBModel(id, "item");
+    var shop = new NimbusDBModel(id, "shop");
+
+    // (2) use plural nouns
+    var items = new NimbusDBModel(id, "items");
+    var shops = new NimbusDBModel(id, "shops");
+    ```
+    </TabItem>
+</Tabs>
+
+You should stay consistent with your naming conventions throughout your project. So, if you decide to use plural nouns for your model names, make sure to use the same convention for all your models/catalogs.
+
+### Primary Keys
+
+Each model should have a primary key (PK), which is a unique identifier for each record in the model. We recommend that you use the `id` column as the primary key, as it's the most commonly used column for this purpose.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {2-5}
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) {
+                return value >= 0;
+            },
+            default_value: 0
+        },
+        is_locked: {
+            type: NIMBUSDB_DATA_TYPE.BOOLEAN,
+            const: NIMBUSDB_CONSTRAINT.OPTIONAL,
+            default_value: false
+        }
+    };
+
+    items = new NimbusDBModel(id, "items", schema);
+    ```
+    </TabItem>
+</Tabs>
+
+### Foreign Keys
+
+Foreign keys (FK) are used to establish relationships between tables. They are used to link records from one table to another table based on a common column. 
+
+We recommend that you:
+1. use the `<other_table>_id` convention for naming foreign keys, as it's a common practice in database design, and
+2. use the `INTEGER` or `ARRAY_OF_INTEGER` data type for foreign keys, because the PK is always serialized as an integer.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {6-7}
+    var schema = {
+        id: {                                   // `id` column is the PK of this model
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        item_id: NIMBUSDB_DATA_TYPE.INTEGER,              // FK to `items` model
+        item_ids: NIMBUSDB_DATA_TYPE.ARRAY_OF_INTEGER,    // multiple FK to `items` model
+        stock: NIMBUSDB_DATA_TYPE.INTEGER
+    };
+
+    shop_items = new NimbusDBModel(id, "shop_items", schema);
+    ```
+    </TabItem>
+</Tabs>
+
+### Rule of Thumbs
+
+Here are other rules of thumb for defining models:
+
+1. `snake_case` is recommended for everything in the model, including the model name and column name.
+2. For columns with `BOOLEAN` data type, use `is_<column_name>` or `has_<column_name>` format.
+3. Use singular nouns for non-array columns, and plural nouns for array columns.
+
+## Modeling Relations
+
+Now that we have covered the basics of modeling your models, let's dive into modeling relations between your models.
+
+### Deciding the Relation Type
+
+To decide the relation type, you should ask yourself, _"How many of B can one A have, and vice versa?"_ 
+
+:::note
+The relation type only happens when you're designing the relation between two models. In **NimbusDB** context, you don't need to decide the relation type beforehand, because **NimbusDB** doesn't enforce any relation type. It's up to you to decide the relation type based on your business logic.
+:::
+
+#### 1:1 Relation
+
+One row in A maps to exactly one row in B. Use when you're splitting a model for performance or logical separation.
+
+```sql
+players.id ──> player_profiles.player_id
+```
+
+#### 1:N Relation
+
+One A has many B's, but each B belongs to one A.
+
+```sql
+shops.id ──> shop_items.shop_id
+```
+
+#### M:N Relation
+
+Many A's relate to many B's. You may need a junction/pivot model. 
+
+```sql
+shops.id <──> shop_items.shop_id, shop_items.item_id <──> items.id
+```
+
+### Junction/Pivot Model
+
+A junction/pivot model is a model that's used as a bridge between two other models with M:N relations. It's used to store the intermediate data that's needed to resolve the relation.
+
+```
+┏━━━━━━━━━━┓             ┏━━━━━━━━━━━━┓             ┏━━━━━━━━━━━┓
+┃  shops   ┃             ┃ shop_items ┃             ┃   items   ┃
+┣━━━━━━━━━━┫             ┣━━━━━━━━━━━━┫             ┣━━━━━━━━━━━┫ 
+│ id       │<─────┐      │ id         │      ┌─────>│ id        │
+├──────────┤      │      ├────────────┤      │      ├───────────┤
+│ name     │      └─────>│ shop_id    │      │      │ name      │
+├──────────┤             ├────────────┤      │      ├───────────┤
+│ location │             │ item_id    │<─────┘      │ price     │
+└──────────┘             ├────────────┤             ├───────────┤
+                         │ stock      │             │ is_locked │
+                         └────────────┘             └───────────┘
+```
+
+The `shop_items` model is the junction/pivot model. It has two foreign keys pointing to `shops` and `items` models.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts {6-7}
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        shop_id: NIMBUSDB_DATA_TYPE.INTEGER,
+        item_id: NIMBUSDB_DATA_TYPE.INTEGER,
+        stock: NIMBUSDB_DATA_TYPE.INTEGER
+    };
+
+    shop_items = new NimbusDBModel(id, "shop_items", schema);
+    ```
+    </TabItem>
+</Tabs>
+
+#### Naming Conventions
+
+You can choose any naming convention for your junction/pivot model, but it's recommended to name it with:
+- a combo `<source_model>_<target_model>` format, e.g. `shops_items`, or
+- an action/meaning based format, e.g. `item_details`.

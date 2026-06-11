@@ -12,6 +12,10 @@ Joins mean combining schema and data from two models based on a model relation b
 You should have the relation between the models defined before you can perform a join. Read [Model Relations](/core/catalog/relations) for more information on how to define relations between models.
 :::
 
+:::tip
+Always prioritize [Resolving Data](/core/data/resolve) over joining models when you just need to combine 1 or few records from a related model, because resolving data is more efficient than joining models. Joining models is only recommended when you need to combine whole datasets from one or both models.
+:::
+
 We'll use this diagram for our examples:
 
 ```

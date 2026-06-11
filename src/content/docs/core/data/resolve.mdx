@@ -110,7 +110,7 @@ We'll use this diagram for our examples:
 
 ## Resolving Data 
 
-**Resolving data** means we fetch and add the related record(s) into the current record(s). It's a clean way to get combined records from current model with other model(s) without need to `.join()` the related model(s).
+**Resolving data** means we fetch and add the related record(s) into the current record(s) by using the provided foreign-key column. It's a clean way to get combined records from current model with other model(s) without need to `.join()` the related model(s).
 
 :::note
 You need to use data with [`LINKED`](/concepts/data-access#linked-access) or [`DIRECT`](/concepts/data-access#direct-access) access to use the `.resolve()` method.
@@ -300,6 +300,46 @@ This form is great for when you have multiple columns to resolve at once.
     ```
     </TabItem>
 </Tabs>
+
+## Resolving Multiple Foreign Keys
+
+Let's add another record to the `shop_items` model for demonstration.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    shop_items.insert({ 
+        id: 6, 
+        shop_id: 3, 
+        item_id: [1, 2, 4, 6],  // multiple foreign keys
+        stock: 3,
+        __force: true           // force insert, only for example
+    });
+
+    var shop_item6_res = shop_items.find(6).resolve("item_id", items, {
+        on: "id",
+        as: "items"
+    });
+    // resolve `shop_items.item_id` -> `items.id`
+    // shop_item6_res has value: { 
+    //     id : 6, 
+    //     shop_id : 3, 
+    //     items : [ 
+    //         { id : 1, price : 5, name : "Apple", is_locked : 0, color : "red" },
+    //         { id : 2, price : 7.20, name : "Banana", is_locked : 0, color : "yellow" },
+    //         { id : 4, price : 12.50, name : "Date", is_locked : 0, color : "green" },
+    //         { id : 6, price : 10, name : "Fig", is_locked : 0, color : "purple" } 
+    //     ], 
+    //     item_id : [ 1,2,4,6 ], 
+    //     stock : 2 
+    // }
+    ```
+    </TabItem>
+</Tabs>
+
+:::tip
+For the foreign-key column in the schema definition, you must choose one data type, either `INTEGER` or `ARRAY_OF_INTEGER`. Make sure the data type and column name are consistent with the foreign-key column in the related model (e.g. `items_ids: ARRAY_OF_INTEGER` in the `shop_items` model).
+:::
 
 ## Expanding Resolved Data
 

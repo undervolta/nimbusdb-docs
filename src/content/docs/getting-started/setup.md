@@ -12,20 +12,21 @@ To use **NimbusDB**, you need to have the following:
 
 | Name | Version | Supported | 
 | ---- | ---- | ---- |
-| GameMaker | 2.3+ | ✅ |
+| GameMaker | 2.3+ | Yes |
 
 #### GameMaker
 
-Here's a list of the tested versions of GameMaker that are compatible with **NimbusDB**:
+Here's a list of the tested versions and platforms of GameMaker that are compatible with **NimbusDB**:
 
 | Platform    | IDE            | Runtime        | Notes |
 |-------------|----------------|----------------|-------|
 | Windows VM  | v2026.0._x_._y_ | v2026.0._x_._y_ | Any version of _x_ and _y_, **tested and working** |
 | Windows VM  | v2024.14._x_._y_ | v2024.14._x_._y_ | Any version of _x_ and _y_, **tested and working** |
+| Windows YYC | v2026.0._x_._y_ | v2026.0._x_._y_ | Any version of _x_ and _y_, **tested and working** |
 | Windows YYC | v2024.14._x_._y_ | v2024.14._x_._y_ | Any version of _x_ and _y_, **tested and working** |
-| HTML5       | v2024.14._x_._y_ | v2024.14._x_._y_ | Not tested |
+<!--| HTML5       | v2024.14._x_._y_ | v2024.14._x_._y_ | Not tested |-->
 
-It should work on any version of GameMaker 2.3 or later, but the above versions are the ones that have been tested and confirmed to be working.
+It should work on any version and platform of GameMaker 2.3 or later, but the above versions and platforms are the ones that have been tested and confirmed to be working.
 
 
 ## Installation

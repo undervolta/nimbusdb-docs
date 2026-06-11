@@ -128,8 +128,8 @@ export default defineConfig({
 					label: 'Guides',
 					items: [
 						{ label: 'Modeling Relations', slug: 'guides/modeling-relations' },
-						{ label: 'Pipeline Patterns', slug: 'guides/pipeline-patterns' },
-						{ label: 'Performance Tips', slug: 'guides/performance-tips' },
+						// { label: 'Pipeline Patterns', slug: 'guides/pipeline-patterns' },
+						// { label: 'Performance Tips', slug: 'guides/performance-tips' },
 					],
 				},
 			],
