@@ -1,49 +1,93 @@
-# Starlight Starter Kit: Basics
+# NimbusDB Docs
 
-[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+This repository contains the documentation site for **NimbusDB**, a next-generation in-memory ORM and reactive query engine for GameMaker.
 
-```
-pnpm create astro@latest -- --template starlight
-```
+Built with [Astro](https://astro.build) and [Starlight](https://starlight.astro.build).
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+**Live docs:** [NimbusDB Docs](https://nimbusdb.lefinitas.com)
+**Main library:** [NimbusDB](https://github.com/undervolta/NimbusDB)
 
-## 🚀 Project Structure
 
-Inside of your Astro + Starlight project, you'll see the following folders and files:
+## Project Structure
 
 ```
-.
 ├── public/
 ├── src/
 │   ├── assets/
 │   ├── content/
 │   │   └── docs/
+│   │       ├── getting-started/
+│   │       ├── concepts/
+│   │       ├── core/
+│   │       ├── pipeline/
+│   │       ├── joins/
+│   │       ├── reactivity/
+│   │       ├── io/
+│   │       ├── migration/
+│   │       ├── api-reference/
+│   │       └── guides/
 │   └── content.config.ts
 ├── astro.config.mjs
-├── package.json
-└── tsconfig.json
+└── package.json
 ```
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
+Each `.md`/`.mdx` file in `src/content/docs/` corresponds to a page on the docs site, routed based on its folder structure. Sidebar navigation is configured in `astro.config.mjs`.
 
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
 
-Static assets, like favicons, can be placed in the `public/` directory.
+## Development
 
-## 🧞 Commands
+Install dependencies:
 
-All commands are run from the root of the project, from a terminal:
+```sh
+pnpm install
+```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+Start the local dev server:
 
-## 👀 Want to learn more?
+```sh
+pnpm dev
+```
 
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+This starts a local server at `localhost:4321`.
+
+Build for production:
+
+```sh
+pnpm build
+```
+
+Preview the production build:
+
+```sh
+pnpm preview
+```
+
+## Contributing
+
+Found a typo, unclear explanation, or missing docs? Contributions are welcome!
+
+1. Fork this repository
+2. Make your changes
+3. Open a pull request with a brief description of what you changed and why
+
+For larger changes (new sections, restructuring), consider opening a [discussion](https://github.com/undervolta/NimbusDB/discussions) or issue first to align on direction.
+
+
+## Community
+
+- [GitHub Discussions](https://github.com/undervolta/NimbusDB/discussions), questions, suggestions, feedback
+- [GitHub Issues](https://github.com/undervolta/NimbusDB/issues), bug reports and feature requests
+- [Discord](#), chat with the community
+
+## Support
+
+NimbusDB is free and open source, maintained in my spare time. If it's useful to you, consider supporting development:
+
+- [Ko-fi](https://ko-fi.com/undervolta)
+- [Trakteer](https://trakteer.id/undervolta)
+
+Every bit helps keep the project going!
+
+## License
+
+This documentation is licensed under [MIT License](LICENSE), same as the main NimbusDB project.

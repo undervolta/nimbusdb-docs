@@ -1,40 +1,149 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: NimbusDB
+description: A next-generation in-memory ORM and reactive query engine for Game Engines, bringing TypeScript-level database tooling to GML.
+template: splash 
+head:
+  - tag: title
+    content: A next-generation in-memory ORM for Game Engines
 hero:
-  tagline: Congrats on setting up a new Starlight project!
+  tagline: Full-featured ORM, reactive query engine, and lazy pipeline queries for GameMaker
   image:
-    file: ../../assets/houston.webp
+    file: ../../assets/houston.webp	# change later
   actions:
-    - text: Example Guide
+    - text: Get Started
       link: /getting-started/introduction
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+    - text: GitHub
+      link: https://github.com/undervolta/NimbusDB
       icon: external
       variant: minimal
+lastUpdated: false
+editUrl: false
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, Tabs, TabItem, LinkButton } from '@astrojs/starlight/components';
 
-## Next steps
+## Why NimbusDB?
 
 <CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
-	</Card>
-	<Card title="Change page layout" icon="document">
-		Delete `template: splash` in `src/content/docs/index.mdx` to display a
-		sidebar on this page.
-	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
-	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
-	</Card>
+    <Card title="Models & Catalogs" icon="seti:db">
+        Schema-backed models with constraints and validators, grouped into catalogs with aware relations.
+    </Card>
+    <Card title="Relations & Joins" icon="random">
+        Connect your data with directional or mutual relations, and advanced joins (`INNER`, `LEFT`, `RIGHT`, `FULL`, `CROSS`).
+    </Card>
+    <Card title="Pipelines" icon="setting">
+        Lazy, chainable query pipelines (filter, map, reduce, group, sort, and more), only run when you need them.
+    </Card>
+    <Card title="Reactivity" icon="approve-check-circle">
+        Computed values, watchers, and derived state keep your game in sync with your data automatically.
+    </Card>
+    <Card title="Transactions" icon="document">
+        Buffered transactions with full commit, rollback, and replay for atomic operations.
+    </Card>
+    <Card title="Import / Export" icon="open-book">
+        Migrate data with CSV, JSON, JSONL, and NDBIN, plus catalog backup and restore.
+    </Card>
+</CardGrid>
+
+## Quick Look
+
+Define a schema, insert data, query it, and react to changes, all in one place.
+
+<Tabs syncKey='lang'>
+    <TabItem label="GML" value="gml">
+    ```ts
+    // Define a schema and create a model
+    var schema = {
+        id: {
+            type: NIMBUSDB_DATA_TYPE.INTEGER,
+            const: NIMBUSDB_CONSTRAINT.PRIMARY_KEY
+        },
+        name: NIMBUSDB_DATA_TYPE.STRING,
+        price: {
+            type: NIMBUSDB_DATA_TYPE.NUMBER,
+            validator: function(data, value) { return value >= 0; },
+            default_value: 0
+        }
+    };
+
+    items = new NimbusDBModel(id, "items", schema, [
+        { id: 1, name: "Apple", price: 5 },
+        { id: 2, name: "Banana", price: 7.2 }
+    ]);
+
+    // Query with a pipeline
+    var cheap_items = items.pipe()
+        .filter(function(data) { return data.price < 10; })
+        .map(function(data) { return { name: data.name, price: data.price }; })
+        .exec();
+
+    // React to changes
+    items.watch(1, "price", function(data, new_val, old_val) {
+        show_debug_message($"{data.name}'s price changed from {old_val} to {new_val}");
+    });
+    ```
+    </TabItem>
+</Tabs>
+
+<div style="text-align: center; margin-top: 1rem;">
+    <LinkButton href="/getting-started/introduction" variant="minimal" icon="right-arrow">See full guide</LinkButton>
+</div>
+
+---
+
+## How It Works
+
+NimbusDB organizes your data around three core layers.
+
+<CardGrid>
+    <Card title="Models & Catalogs" icon="seti:db">
+        Define schemas with typed columns, constraints, and validators. Group related models into catalogs with aware relations.
+    </Card>
+    <Card title="Pipelines" icon="random">
+        Chain lazy operations, filter, map, sort, join, and aggregate, that only run when you call `.exec()` or its derivatives.
+    </Card>
+    <Card title="Reactivity" icon="approve-check-circle">
+        Bind `Computed`, `Watcher`, and `Derived` values to your data so your game state updates automatically.
+    </Card>
+</CardGrid>
+
+<LinkButton href="/concepts/architecture" variant="minimal" icon="right-arrow">Explore the architecture</LinkButton>
+
+---
+
+## Engine Support
+
+NimbusDB currently runs on **GameMaker**, with support for other engines planned as the library grows.
+
+<CardGrid>
+    <Card title="GameMaker" icon="approve-check">
+        **Supported** (2.3+). NimbusDB's primary platform, fully implemented and actively maintained.
+    </Card>
+    {/*<Card title="Godot" icon="rocket">
+        **Planned**. Support via GDExtension is being explored for a future release.
+    </Card>
+    <Card title="Unity" icon="rocket">
+        **Planned**. C# bindings are being considered for a future release.
+    </Card>*/}
+</CardGrid>
+
+Want to help bring NimbusDB to your engine of choice? [Join the discussion](https://github.com/undervolta/NimbusDB/discussions).
+
+---
+
+## Get Involved
+
+NimbusDB is free and open source, built by the community, for the community.
+
+<CardGrid>
+    <Card title="Documentation" icon="open-book">
+        [Browse the full docs](/getting-started/introduction) to learn core concepts, pipelines, and reactivity.
+    </Card>
+    <Card title="GitHub" icon="github">
+        [Star the repo](https://github.com/undervolta/NimbusDB), report issues, or contribute.
+    </Card>
+    <Card title="Community" icon="seti:notebook">
+        Got questions, feature requests, or feedback? Join the discussion on [GitHub](https://github.com/undervolta/NimbusDB/discussions) or [Discord](#).
+    </Card>
 </CardGrid>

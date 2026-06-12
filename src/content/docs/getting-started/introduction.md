@@ -6,67 +6,54 @@ description: Learn about NimbusDB, its features, and how it can help you manage 
 
 ## What's NimbusDB?
 
-**NimbusDB** is a powerful, modular, and super-fast in-memory DBMS, ORM, and reactive query engine for GameMaker 2.3+. Bringing TypeScript/Node-level database abstractions to GML with support for relations, migrations, pipelines, and reactive bindings.
+**NimbusDB** is an in-memory, ORM-style database engine and reactive query system for GameMaker 2.3+. It combines relational concepts (models, schemas, relations, joins), an ORM-like CRUD and pipeline API, and a reactivity layer (`Computed`, `Watcher`, `Derived`), all running entirely in memory inside your GameMaker project.
+
+If you're coming from TypeScript/Node tools like Prisma, TypeORM, or Redis OM, many of NimbusDB's concepts will feel familiar, just adapted for GML and GameMaker's single-threaded runtime.
 
 
 ## Why NimbusDB?
 
-**NimbusDB** is designed to provide a comprehensive and efficient solution for managing data in GameMaker projects. It offers a wide range of features that allow developers to easily create, manage, and query their data, while also providing powerful tools for handling complex relationships and ensuring data integrity. Whether you're building a simple game or a complex one, **NimbusDB** can help you manage your data effectively and efficiently.
+Managing structured data in GameMaker usually means juggling DS structures, arrays of structs, and a lot of manual bookkeeping for relationships and updates. **NimbusDB** wraps all of that into a single, consistent API: define your data once as a model, query it with a fluent API or pipelines, and let reactivity handle keeping your game state in sync.
+
+Whether you're building a simple save system or a complex game with many interconnected entities, NimbusDB gives you the tools to manage your data without reinventing the wheel each time.
 
 
-## Key Features
+## How it Works
 
-- **Models**: Fast, schema-backed data storage featuring comprehensive CRUD operations and robust querying capabilities.
+NimbusDB is built around three interacting layers:
 
-- **Catalogs**: Collection of models, designed to efficiently manage multiple models in a single database.
+**Models & Catalogs**
 
-- **Relations & Joins**: Connect your data seamlessly using directional or mutual relations, with full support for advanced joins (`INNER`, `LEFT`, `RIGHT`, `FULL`, `CROSS`).
+A **Model** represents a single collection of records, similar to a table, with an optional **Schema** that defines column types, constraints (`PRIMARY_KEY`, `UNIQUE`, `OPTIONAL`), validators, and default values. Models can also be schemaless if you want full flexibility.
 
-- **Reactivity**: Keep your UI and game states perfectly synchronized using `Computed`, `Watcher`, and `Derived` bindings.
+Multiple models can be grouped into a **Catalog**, which manages relations between models, since relations defined directly on a model are "blind", while catalog-level relations are aware of both sides.
 
-- **Pipelines**: Chainable, lazy data transformation pipelines (`filter`, `map`, `reduce`, `group`, etc.) for streamlined data processing.
+**Pipelines**
 
-- **Transactions**: Isolated transaction contexts ensuring data integrity with complete commit and rollback capabilities.
+Beyond simple `.get()` and `.find()` queries, NimbusDB provides **Pipelines**, chainable, lazy data transformation workflows. You can filter, map, sort, join, and aggregate data, with operations only executing when you call `.exec()` or `.get()`. Pipelines also support cursor-based step control, letting you re-run, skip, or overwrite steps as needed.
 
-- **Import / Export** : Seamless data migration, with built-in export/import support for `CSV`, `JSON`, `JSONL`, and `NDBIN` formats.
+**Reactivity**
 
+The reactivity layer is what sets NimbusDB apart from typical database libraries. `Computed` values recompute automatically when their source data changes, `Watcher`s run custom logic whenever specific columns update, and `Derived` values keep instance or global variables in sync with model data, no manual refresh logic required.
 
-## How it Works?
-
-**NimbusDB** operates as an in-memory database management system, allowing you to create and manage your data using models and catalogs. With a combination of relational database principles, object relational mapping, and reactive programming, **NimbusDB** provides a powerful and flexible way to handle your data.
-
-You can define your data structures using models, establish relationships between them, and perform complex queries with ease. Additionally, the reactive features ensure that your game state and UI remain in sync with your data, providing a seamless experience for both developers and players.
+For a deeper dive into how these layers fit together, see [Architecture](/concepts/architecture).
 
 
 ## Limitations
 
-1. **Client-Side Only** 
+1. **Client-Side Only**
 
-    **NimbusDB** is designed to run entirely on the client side, which means it does not support server-side operations (yet). Primarily, all data is stored in memory and will be lost when the game is closed, though it can be exported and imported using various formats.
+	**NimbusDB** is designed to run entirely on the client side, which means it does not support server-side operations (yet). Primarily, all data is stored in memory and will be lost when the game is closed, though it can be exported and imported using various formats.
 
 2. **Safety**
 
-    **NimbusDB** currenly only uses basic safety measures, such as input validation, error handling, and simple encryption. It does not implement advanced security features like authentication or access control, so it is not recommended for storing sensitive data, such as player information or game progress. Always ensure that you have proper backups of your data and consider using additional security measures if necessary.
+	**NimbusDB** currently only uses basic safety measures, such as input validation, error handling, and simple encryption. It does not implement advanced security features like authentication or access control, so it is not recommended for storing sensitive data, such as player information or game progress. Always ensure that you have proper backups of your data and consider using additional security measures if necessary.
 
 3. **No Test For GameMaker <2.3**
 
-    **NimbusDB** is built specifically for GameMaker 2.3 and later versions, and it may not be compatible with older versions of GameMaker.
+	**NimbusDB** is built specifically for GameMaker 2.3 and later versions, and it may not be compatible with older versions of GameMaker.
 
 
-## Extras
+---
 
-### Questions & Feedback
-
-If you have any questions or feedback, feel free to join the [Discord server](https://discord.gg/pBrRGSXU96) or open an issue on the [GitHub repository](https://github.com/undervolta/NimbusDB).
-
-### License
-
-**NimbusDB** is licensed under the [MIT License](https://github.com/undervolta/NimbusDB/blob/main/LICENSE).
-
-### Contributing
-
-Contributions are welcome! Please see the [Contributing guide](https://github.com/undervolta/NimbusDB/blob/main/CONTRIBUTING.md) for more information.
-
-### Support
-
-If **NimbusDB** is useful to you, please consider sponsoring or supporting this project through [Ko-Fi](https://ko-fi.com/undervolta) or [Trakteer](https://trakteer.id/undervolta). Your support helps keep the project alive and thriving!
+Ready to get started? Head over to [Setup](/getting-started/setup) to install NimbusDB in your project. Have questions or feedback? Join the [Discord server](https://discord.gg/pBrRGSXU96) or [GitHub Discussions](https://github.com/undervolta/NimbusDB/discussions).
