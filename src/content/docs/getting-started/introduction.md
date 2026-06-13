@@ -3,6 +3,7 @@ title: Introduction
 description: Learn about NimbusDB, its features, and how it can help you manage your data effectively.
 ---
 
+![NimbusDB Banner](../../../assets/banner1-4-1.webp)
 
 ## What's NimbusDB?
 
@@ -22,17 +23,17 @@ Whether you're building a simple save system or a complex game with many interco
 
 NimbusDB is built around three interacting layers:
 
-**Models & Catalogs**
+### Models & Catalogs
 
 A **Model** represents a single collection of records, similar to a table, with an optional **Schema** that defines column types, constraints (`PRIMARY_KEY`, `UNIQUE`, `OPTIONAL`), validators, and default values. Models can also be schemaless if you want full flexibility.
 
 Multiple models can be grouped into a **Catalog**, which manages relations between models, since relations defined directly on a model are "blind", while catalog-level relations are aware of both sides.
 
-**Pipelines**
+### Pipelines
 
 Beyond simple `.get()` and `.find()` queries, NimbusDB provides **Pipelines**, chainable, lazy data transformation workflows. You can filter, map, sort, join, and aggregate data, with operations only executing when you call `.exec()` or `.get()`. Pipelines also support cursor-based step control, letting you re-run, skip, or overwrite steps as needed.
 
-**Reactivity**
+### Reactivity
 
 The reactivity layer is what sets NimbusDB apart from typical database libraries. `Computed` values recompute automatically when their source data changes, `Watcher`s run custom logic whenever specific columns update, and `Derived` values keep instance or global variables in sync with model data, no manual refresh logic required.
 
@@ -56,4 +57,6 @@ For a deeper dive into how these layers fit together, see [Architecture](/concep
 
 ---
 
-Ready to get started? Head over to [Setup](/getting-started/setup) to install NimbusDB in your project. Have questions or feedback? Join the [Discord server](https://discord.gg/pBrRGSXU96) or [GitHub Discussions](https://github.com/undervolta/NimbusDB/discussions).
+Ready to get started? Head over to [Setup](/getting-started/setup) to install NimbusDB in your project. 
+
+Have questions or feedback? Join the [Discord server](https://discord.gg/UsqbHSN23h) or [GitHub Discussions](https://github.com/undervolta/NimbusDB/discussions).

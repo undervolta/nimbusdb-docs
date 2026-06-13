@@ -77,7 +77,7 @@ For larger changes (new sections, restructuring), consider opening a [discussion
 
 - [GitHub Discussions](https://github.com/undervolta/NimbusDB/discussions), questions, suggestions, feedback
 - [GitHub Issues](https://github.com/undervolta/NimbusDB/issues), bug reports and feature requests
-- [Discord](#), chat with the community
+- [Discord](https://discord.gg/UsqbHSN23h), chat with the community
 
 ## Support
 

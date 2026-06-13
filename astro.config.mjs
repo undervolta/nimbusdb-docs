@@ -8,14 +8,14 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'NimbusDB',
-			//logo: {
-			//	light: './src/assets/logo-light.png',
-			//	dark: './src/assets/logo-dark.png',
-			//	alt: 'NimbusDB Logo',
-			//	replacesTitle: true
-			//},
+			logo: {
+				light: './src/assets/logo-light.png',
+				dark: './src/assets/logo-dark.png',
+				alt: 'NimbusDB Logo',
+				replacesTitle: true
+			},
 			social: [
-				{ icon: 'discord', label: 'Discord', href: 'https://discord.gg/pBrRGSXU96' },
+				{ icon: 'discord', label: 'Discord', href: 'https://discord.gg/UsqbHSN23h' },
 				// { icon: 'facebook', label: 'Facebook', href: 'https://www.facebook.com/undervolta.npc' },
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/undervolta/NimbusDB' },
 			],
