@@ -2,7 +2,20 @@
 
 This repository contains the documentation site for **NimbusDB**, a next-generation in-memory ORM and reactive query engine for GameMaker.
 
-[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+<p align="center">
+    <a href="https://starlight.astro.build">
+        <img src="https://astro.badg.es/v2/built-with-starlight/tiny.svg" alt="Built with Starlight">
+    </a>
+    <a href="https://pnpm.io">
+        <img src="https://img.shields.io/badge/package_manager-pnpm-F69220" alt="pnpm">
+    </a>
+    <a href="https://opensource.org">
+        <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
+    </a>
+    <a href="https://app.netlify.com/projects/nimbusdb-docs/deploys">
+        <img src="https://api.netlify.com/api/v1/badges/d87d2179-ede9-494c-b9a1-15cc5b31c62b/deploy-status" alt="Netlify Status">
+    </a>
+</p>
 
 **Live docs:** [NimbusDB Docs](https://nimbusdb.lefinitas.com)
 **Main library:** [NimbusDB](https://github.com/undervolta/NimbusDB)
