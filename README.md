@@ -2,7 +2,7 @@
 
 This repository contains the documentation site for **NimbusDB**, a next-generation in-memory ORM and reactive query engine for GameMaker.
 
-Built with [Astro](https://astro.build) and [Starlight](https://starlight.astro.build).
+[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
 
 **Live docs:** [NimbusDB Docs](https://nimbusdb.lefinitas.com)
 **Main library:** [NimbusDB](https://github.com/undervolta/NimbusDB)
