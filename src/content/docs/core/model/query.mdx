@@ -1344,7 +1344,7 @@ A type for the options parameter of the `.get` method and its variants.
 ```ts title="query-get.d.ts"
 type NimbusDBGetOptions = Partial<{
     access: NIMBUSDB_DATA_ACCESS;           // data access type (default = ISOLATED, DIRECT if schema is undefined)
-    destruct: boolean | NIMBUSDB_DESTRUCT;  // return destructured data (default = false)
+    destruct: boolean;                      // return destructured data (default = false)
     keep_systemp: boolean;                  // [INTERNAL] keep system data after the operation (default = false)
     keep_temp: boolean;                     // keep temporary data after the operation (default = false)
     length: int;                            // length for search (default = data.length)    
@@ -1384,9 +1384,9 @@ type NimbusDBGetOptions = Partial<{
 - The data access type. See the [NIMBUSDB_DATA_ACCESS](#nimbusdbdata_access) enum for the available options, and check out how **NimbusDB** handles data access in the [Data Access](/concepts/data-access) section.
 
 #### `destruct`
-- Type: `boolean` | `NIMBUSDB_DESTRUCT`
+- Type: `boolean`
 - Default: `false`
-- Whether to return the result as an array of values. See the [NIMBUSDB_DESTRUCT](#nimbusdbdestruct) enum for the available options.
+- Whether to return the result as an array of values.
 
 #### `keep_systemp` <Badge text="Internal" variant="caution" size='medium' />
 - Type: `boolean`
@@ -1500,18 +1500,6 @@ enum NIMBUSDB_DATA_ACCESS {
     DIRECT,
     LINKED,
     ISOLATED
-}
-```
-
-### NIMBUSDB_DESTRUCT
-
-An enum for the destructure type parameter of the `.get` method and its variants.
-
-```ts title="query-get.d.ts"
-enum NIMBUSDB_DESTRUCT {
-    NONE,               // keep each resulting data as a struct/object
-    INCLUDE_ARRAY,      // unwrap the value if the resulting array data only contains 1 value
-    KEEP_ARRAY          // keep the value as an array
 }
 ```
 
