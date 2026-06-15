@@ -15,6 +15,9 @@ This repository contains the documentation site for **NimbusDB**, a next-generat
     <a href="https://app.netlify.com/projects/nimbusdb-docs/deploys">
         <img src="https://api.netlify.com/api/v1/badges/d87d2179-ede9-494c-b9a1-15cc5b31c62b/deploy-status" alt="Netlify Status">
     </a>
+    <a href="https://wakatime.com/badge/user/9b4a8591-67d0-436c-ad06-640807092852/project/c5c313b2-b8f8-4279-aac0-733c8957c4c7">
+		<img src="https://wakatime.com/badge/user/9b4a8591-67d0-436c-ad06-640807092852/project/c5c313b2-b8f8-4279-aac0-733c8957c4c7.svg" alt="wakatime">
+	</a>
 </p>
 
 **Live docs:** [NimbusDB Docs](https://nimbusdb.lefinitas.com)

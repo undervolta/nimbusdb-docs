@@ -61,6 +61,10 @@ This is the recommended way to install **NimbusDB**, as it allows you to easily 
 
 ## Definition Files (Optional)
 
+:::caution[WARNING]
+The definition files' JSDoc was **initially written by AI**. So, it may be inaccurate or outdated compared to the website's documentation. Please don't use them if you, your team, or your project does not support AI-generated content.
+:::
+
 **NimbusDB** package comes with TypeScript definition files (`.d.ts`) that provide type information for the NimbusDB API. These files are useful for code editors that support TypeScript.
 
 You can use these definition files in your secondary code editor to get better development experience when working with **NimbusDB**, even if GameMaker doesn't support TypeScript. Here's how you can set it up:
