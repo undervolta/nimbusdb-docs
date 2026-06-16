@@ -81,32 +81,6 @@ Preview the production build:
 pnpm preview
 ```
 
-## Contributing
-
-Found a typo, unclear explanation, or missing docs? Contributions are welcome!
-
-1. Fork this repository
-2. Make your changes
-3. Open a pull request with a brief description of what you changed and why
-
-For larger changes (new sections, restructuring), consider opening a [discussion](https://github.com/undervolta/NimbusDB/discussions) or issue first to align on direction.
-
-
-## Community
-
-- [GitHub Discussions](https://github.com/undervolta/NimbusDB/discussions), questions, suggestions, feedback
-- [GitHub Issues](https://github.com/undervolta/NimbusDB/issues), bug reports and feature requests
-- [Discord](https://discord.gg/UsqbHSN23h), chat with the community
-
-## Support
-
-NimbusDB is free and open source, maintained in my spare time. If it's useful to you, consider supporting development:
-
-- [Ko-fi](https://ko-fi.com/undervolta)
-- [Trakteer](https://trakteer.id/undervolta)
-
-Every bit helps keep the project going!
-
 ## License
 
 This documentation is licensed under [MIT License](LICENSE), same as the main NimbusDB project.

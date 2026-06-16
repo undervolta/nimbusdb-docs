@@ -54,9 +54,3 @@ For a deeper dive into how these layers fit together, see [Architecture](/concep
 
 	**NimbusDB** is built specifically for GameMaker 2.3 and later versions, and it may not be compatible with older versions of GameMaker.
 
-
----
-
-Ready to get started? Head over to [Setup](/getting-started/setup) to install NimbusDB in your project. 
-
-Have questions or feedback? Join the [Discord server](https://discord.gg/UsqbHSN23h) or [GitHub Discussions](https://github.com/undervolta/NimbusDB/discussions).

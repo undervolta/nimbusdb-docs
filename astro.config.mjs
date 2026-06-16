@@ -15,7 +15,7 @@ export default defineConfig({
 				replacesTitle: true
 			},
 			social: [
-				{ icon: 'discord', label: 'Discord', href: 'https://discord.gg/UsqbHSN23h' },
+				// { icon: 'discord', label: 'Discord', href: 'https://discord.gg/UsqbHSN23h' },
 				// { icon: 'facebook', label: 'Facebook', href: 'https://www.facebook.com/undervolta.npc' },
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/undervolta/NimbusDB' },
 			],
