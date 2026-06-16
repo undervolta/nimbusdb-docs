@@ -145,5 +145,5 @@ export default defineConfig({
 		}),
 		mdx(),
 	],
-	site: 'https://nimbusdb.lefinitas.com',
+	site: 'https://nimbusdb-docs.netlify.app',
 });

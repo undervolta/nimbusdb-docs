@@ -20,7 +20,10 @@ This repository contains the documentation site for **NimbusDB**, a next-generat
 	</a>
 </p>
 
-**Live docs:** [NimbusDB Docs](https://nimbusdb.lefinitas.com)
+> [!IMPORTANT]
+> This project is archived due to the author no longer using GameMaker and has no plans for further development.
+
+**Live docs:** [NimbusDB Docs](https://nimbusdb-docs.netlify.app)
 **Main library:** [NimbusDB](https://github.com/undervolta/NimbusDB)
 
 
